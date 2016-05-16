@@ -1,0 +1,5 @@
+KSearch
+----------
+
+This library contains various search algorithms for computing the best
+k simple paths in any domain.
