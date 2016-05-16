@@ -50,7 +50,8 @@ nobase_libksearch_include_HEADERS = ksearch.h \
 				src/structs/KHSset_t.h \
 				src/algorithm/KHSsolver.h \
 				src/algorithm/KHSmsolver.h \
-				src/algorithm/KHSmhsolver.h
+				src/algorithm/KHSmhsolver.h \
+				src/algorithm/KHSlazymsolver.h
 
 ## The generated configuration header is installed in its own subdirectory of
 ## $(libdir).  The reason for this is that the configuration information put

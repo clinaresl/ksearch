@@ -378,7 +378,8 @@ nobase_libksearch_include_HEADERS = ksearch.h \
 				src/structs/KHSset_t.h \
 				src/algorithm/KHSsolver.h \
 				src/algorithm/KHSmsolver.h \
-				src/algorithm/KHSmhsolver.h
+				src/algorithm/KHSmhsolver.h \
+				src/algorithm/KHSlazymsolver.h
 
 libksearch_libincludedir = $(libdir)/libksearch-$(LIBKSEARCH_API_VERSION)/include
 nodist_libksearch_libinclude_HEADERS = libksearchconfig.h
