@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Thu Feb  6 16:51:44 2014 Carlos Linares Lopez>
-  Last update <lunes, 16 mayo 2016 17:44:13 Carlos Linares Lopez (clinares)>
+  Last update <miércoles, 18 mayo 2016 13:51:56 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   Made by Carlos Linares Lopez
@@ -67,9 +67,7 @@ namespace khs {
     unsigned long long int get_size () const
     { return _size; }
     unsigned int get_size (const unsigned int f) const
-    { return ( (f>=_minf && f<=_maxf)
-	       ? _queue [f].size ()
-	       : 0); }
+    { return _queue [f].size (); }
     unsigned int get_minf () const
     { return _minf; }
     unsigned int get_maxf () const
@@ -77,11 +75,11 @@ namespace khs {
     
     // methods
 
-    // insert adds the given item to the front of the bucket with the specified
-    // f-value. It returns true if the operation was successful and false
-    // otherwise. It also takes care of preserving the consistency of other
-    // internal data
-    bool insert (const T& item, unsigned int f);
+    // insert_front adds the given item to the front of the bucket with the
+    // specified f-value. It returns true if the operation was successful and
+    // false otherwise. It also takes care of preserving the consistency of
+    // other internal data
+    bool insert_front (const T& item, unsigned int f);
 
     // insert_back adds the given item to the back of the bucket with the
     // specified f-value. It returns true if the operation was successful and
@@ -94,17 +92,14 @@ namespace khs {
     // preserving the consistency of other internal data
     T remove (const unsigned int f);
 
-    // remove the item in the specified position in the f-th bucket.  If the
-    // combination (f, pos) is not valid, an exception might be thrown. It also
-    // takes care of preserving the consistency of internal data
-    void remove (const unsigned int f, const unsigned long long int pos);
+    // remove returns and erases the item in the specified position in the f-th
+    // bucket.  If the combination (f, pos) is not valid, an exception might be
+    // thrown. It also takes care of preserving the consistency of internal data
+    T remove (const unsigned int f, const unsigned long long int pos);
 
-    // pop_front has two variants: the first one extracts the first item
+    // pop_front extracts the first item
     T pop_front ()
     { return remove (_minf); }
-
-    // the second variant returns a vector with the first k items
-    void pop_front (const unsigned int k, vector<T>& items);
 
     // clear removes all elements restoring the factory settings
     void clear ();
@@ -141,16 +136,6 @@ namespace khs {
     iterator end ()
     { return bucketvditerator_t<T> (*this, _size); }
     
-    // search_in returns a pointer to the location of the specified item if it
-    // exists in the specified bucket and nullptr otherwise. This item can be
-    // used to access directly the item
-    T* search_in (unsigned int id, const T& item);
-
-    // search returns a pointer to the location of the specified item if it
-    // exists and nullptr otherwise. This item can be used to access directly
-    // the item
-    T* search (const T& item);
-
   private:
 
     // Iterators: the following attributes enable iterators on buckets
@@ -219,16 +204,16 @@ namespace khs {
     offset += pos;
   }
 
-  // insert adds the given item to the front of the bucket with the specified
-  // f-value. It returns true if the operation was successful and false
-  // otherwise. It also takes care of preserving the consistency of other
+  // insert_front adds the given item to the front of the bucket with the
+  // specified f-value. It returns true if the operation was successful and
+  // false otherwise. It also takes care of preserving the consistency of other
   // internal data
-  template<class T> bool bucketvd_t<T>::insert (const T& item, unsigned int f)
+  template<class T> bool bucketvd_t<T>::insert_front (const T& item, unsigned int f)
   {
 
     // checks
     if (f >= _queue.max_size ())    // in case the corresponding bucket exceeds
-      return false;                     // the maximum capacity exit with error
+      throw domain_error ("khs::bucketvd_t::insert_front (f >= _queue.max_size ())");
       
     if (f >= _queue.size ()) {        // extend the current bucket if necessary
 
@@ -238,7 +223,7 @@ namespace khs {
 			  (unsigned long long int) 2*_queue.size ()));
 
       if (f >= _queue.size ())             // make sure there is room available
-	return false;
+	throw domain_error ("khs::bucketvd_t::insert_front (f >= _queue.size ())");
 
       // and initialize all the new positions
       for (register unsigned int index = prev; index < _queue.size (); index++) {
@@ -267,7 +252,7 @@ namespace khs {
 
     // checks
     if (f >= _queue.max_size ())    // in case the corresponding bucket exceeds
-      return false;                     // the maximum capacity exit with error
+      throw domain_error ("khs::bucketvd_t::insert_back (f >= _queue.max_size ())");
       
     if (f >= _queue.size ()) {        // extend the current bucket if necessary
 
@@ -277,7 +262,7 @@ namespace khs {
 			  (unsigned long long int) 2*_queue.size ()));
 
       if (f >= _queue.size ())             // make sure there is room available
-	return false;
+	throw domain_error ("khs::bucketvd_t::insert_back (f >= _queue.size ())");
 
       // and initialize all the new positions
       for (register unsigned int index = prev; index < _queue.size (); index++) {
@@ -333,8 +318,8 @@ namespace khs {
   // remove the item in the specified position in the f-th bucket.  If the
   // combination (f, pos) is not valid, an exception might be thrown. It also
   // takes care of preserving the consistency of internal data
-  template<class T> void bucketvd_t<T>::remove (const unsigned int f,
-						const unsigned long long int pos)
+  template<class T> T bucketvd_t<T>::remove (const unsigned int f,
+					     const unsigned long long int pos)
   {
     if (!_queue [f].size ())
       throw domain_error ("khs::bucketvd_t::remove (iterator) - no such f");
@@ -342,6 +327,7 @@ namespace khs {
       throw domain_error ("khs::bucketvd_t::remove (iterator) - pos out of bounds");
 
     // effectively remove this item
+    T item = _queue[f][pos];
     _queue[f].erase (_queue[f].begin () + pos);
 
     // internal data
@@ -359,19 +345,11 @@ namespace khs {
       if (f == _maxf)       // if we removed the last item from the last bucket
 	for (_maxf=f;_maxf>=_minf && !_queue[_maxf].size ();_maxf--);//move bwd
     }
+
+    // and exit
+    return item;
   }
   
-  // return a vector with the first k items from the list
-  template<class T> void bucketvd_t<T>::pop_front (const unsigned int k,
-						   vector<T>& items)
-  {
-
-    // extract items until either k is reached or the queue is empty
-    unsigned int nbitems = min ((unsigned long long int) k, _size);
-    for (register unsigned int i=0;i<nbitems;i++)
-      items.push_back (remove (_minf));
-  }
-
   // clear removes all elements restoring the factory settings
   template<class T> void bucketvd_t<T>::clear ()
   {
@@ -390,8 +368,7 @@ namespace khs {
 
     // and initialize all attributes to factory settings
     _size = 0;
-    _minf = 1;
-    _maxf = 1;
+    _minf = _maxf = 1;
   }
 
   // operator overloading
@@ -410,51 +387,6 @@ namespace khs {
 
     // and return it
     return _queue [id][item];
-  }
-
-  // search_in returns a pointer to the location of the specified item if it
-  // exists in the specified bucket and nullptr otherwise. This item can be used
-  // to access directly the item
-  template<class T> T* bucketvd_t<T>::search_in (unsigned int id, const T& item)
-  {
-    T* found = nullptr;                              // have we found the item?
-    unsigned long long int pos = 0;                 // position within a bucket
-
-    // basic checkings
-    if (id > _maxf)
-      return nullptr;
-
-    // while there are items to verify and the item has not been found
-    while (pos < _queue [id].size () && !found)
-      if (_queue [id][pos] == item)        // if it is found at _queue[id][pos]
-	found = (T*) (&_queue [id][pos]); // then store a reference to the item
-      else                                                         // otherwise
-	++pos;                      // increment the location within the bucket
-
-    // and return whether the item has been found or not
-    return found;
-  }
-
-  // search returns a pointer to the location of the specified item if it exists
-  // and nullptr otherwise. This item can be used to access directly the item
-  template<class T> T* bucketvd_t<T>::search (const T& item)
-  {
-    T* found = nullptr;                              // have we found the item?
-    unsigned int id = _minf;         // start searching from the minimum bucket
-
-    // while there are buckets to verify and the item has not been found
-    while (id <= _maxf && !found) {
-
-      // Is the item found in the current bucket?
-      found = search_in (id, item);
-
-      // if not, then look for the next bucket with items
-      if (!found)
-	for (id++; id <= _maxf && !_queue [id].size (); id++);
-    }
-
-    // and return whether the item has been found or not
-    return found;
   }
 
   // ----------------------------------------------------------------------- //
@@ -565,9 +497,56 @@ namespace khs {
       return *this;
     }
 
+    // insert_front adds a new item to the front of the specified bucket. It
+    // returns true if the operation was successful and false otherwise. An
+    // exception might be raised if the bucket is inconsistent. The iterator is
+    // still valid after the insertion. 
+    bool insert_front (const T& item, unsigned int id)
+    {
+      // first of all, effectively insert the data into the bucket
+      bool result = _bucket.insert_front (item, id);
+
+      // now, if the item was inserted before the current location of the
+      // iterator
+      if (id <= _id) {
+
+	// then update the position of this iterator to make it point to the
+	// same location it was pointing before
+	_pos++;
+	_offset++;
+      }
+
+      // and exit
+      return result;
+    }
+    
+    // insert_back adds a new item to the back of the specified bucket. It
+    // returns true if the operation was successful and false otherwise. An
+    // exception might be raised if the bucket is inconsistent.  The iterator is
+    // still valid after the insertion.
+    bool insert_back (const T& item, unsigned int id)
+    {
+      // first of all, effectively insert the data into the bucket
+      bool result = _bucket.insert_back (item, id);
+
+      // now, if the item was inserted before the current location of the
+      // iterator
+      if (id < _id) {
+
+	// then update the position of this iterator to make it point to the
+	// same location it was pointing before
+	_pos++;
+	_offset++;
+      }
+
+      // and exit
+      return result;
+    }
+    
     // remove the item pointed to by this iterator. If the iterator is not valid
     // an exception might be thrown. The iterator is still valid after the
-    // deletion.
+    // deletion and it points to the next item, which might be the end of the
+    // sequence
     void remove ()
     {
 
@@ -594,7 +573,6 @@ namespace khs {
 
 	  // but if we removed the last item of the last bucket
 	  if (_id >= _bucket.get_maxf ())
-
 	    *this = _bucket.end ();         // point to the end of the sequence
 
 	  // if we removed the last item of a bucket different than the last one
@@ -630,8 +608,7 @@ namespace khs {
     bucketvd_t<T>& _bucket;                                  // bucket iterated
 
     // counters
-    unsigned long long int _offset;  // 0-based index to the next item over the
-				                                      // bucket
+    unsigned long long int _offset;           // 0-based index to the next item 
     unsigned int _id;           // 0-based index to the bucket of the next item
     unsigned long long int _pos;         // 0-based index within the bucket _id
   }; // bucketvditerator_t

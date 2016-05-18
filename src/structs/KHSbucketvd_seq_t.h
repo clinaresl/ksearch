@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Fri May 13 13:41:30 2016 Carlos Linares Lopez>
-  Last update <domingo, 15 mayo 2016 13:55:59 Carlos Linares Lopez (clinares)>
+  Last update <martes, 17 mayo 2016 19:54:27 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -56,9 +56,9 @@ namespace khs {
     { return _bucket.get_minf (); }
     unsigned int get_maxf () const
     { return _bucket.get_maxf (); }
-    bucketvd_t<T> get_bucket () const
+    bucketvd_t<T>& get_bucket () const
     { return _bucket; }
-    typename bucketvd_t<T>::iterator get_iterator () const
+    typename bucketvd_t<T>::iterator& get_iterator () const
     { return _iterator; }
     
     // methods
@@ -68,7 +68,7 @@ namespace khs {
     // otherwise. It also takes care of preserving the consistency of other
     // internal data
     bool insert_front (const T& item, unsigned int f)
-    { return _bucket.insert (item, f); }
+    { return _bucket.insert_front (item, f); }
     
     // insert_back adds the given item to the back of the specified f-bucket. It
     // returns true if the operation was successful and false otherwise. It also

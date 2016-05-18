@@ -4,7 +4,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Thu May 12 16:26:25 2016 Carlos Linares Lopez>
-  Last update <jueves, 12 mayo 2016 16:33:05 Carlos Linares Lopez (clinares)>
+  Last update <martes, 17 mayo 2016 21:31:39 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -126,7 +126,7 @@ namespace khs {
 	  // visited in the path to its parent. Use f=g to sort nodes in OPEN as
 	  // this is a variant of A*
 	  if (!node.find (it->get_state ()))
-	    open.insert (*it, it->get_f ());
+	    open.insert_front (*it, it->get_f ());
 	}
       }
     }
@@ -156,7 +156,7 @@ namespace khs {
 		      solver<T>::_start.get_state ().h (solver<T>::_goal.get_state ()));
 
     // and finally insert it into the open list in the f-th bucket where f=g+h
-    open.insert (start, solver<T>::_start.get_f ());
+    open.insert_front (start, solver<T>::_start.get_f ());
 
     // compute the solution 
     _solve (open);

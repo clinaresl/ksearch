@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Tue May 10 18:46:43 2016 Carlos Linares Lopez>
-  Last update <jueves, 12 mayo 2016 16:21:54 Carlos Linares Lopez (clinares)>
+  Last update <martes, 17 mayo 2016 14:28:06 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -238,12 +238,14 @@ namespace khs {
       }
 
       // verify that the cost of this path is greater or equal than the cost of
-      // the preceding path (which is initialized by default to 0)
+      // the preceding path (which is initialized by default to 0) and update c
+      // otherwise
       if (g < c) {
 	cerr << " Error: solution #" << idx << " has cost " << path.back ().get_g () << " which is less than the cost of the preceding solution (" << c << ")" << endl << endl;
 	exit (EXIT_FAILURE);
       }
-
+      c = g;                   // update the cost of the last solution examined
+      
       // and update the counter of solutions
       idx++;
     }
