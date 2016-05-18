@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Thu Feb  6 16:51:44 2014 Carlos Linares Lopez>
-  Last update <miércoles, 18 mayo 2016 13:51:56 Carlos Linares Lopez (clinares)>
+  Last update <miércoles, 18 mayo 2016 17:34:53 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   Made by Carlos Linares Lopez
@@ -406,22 +406,22 @@ namespace khs {
     
     // Explicit constructors
     bucketvditerator_t (bucketvd_t<T>& bucket, unsigned long long int offset)
-      : _bucket   { bucket },
+      : _bucket { bucket },
         _offset { offset }
     { 
       if (!bucket.get_size ())
-	_id = _pos = 0;
+	_id = _pos = _offset = 0;
       else
 	bucket._get_idbucket (offset, _id, _pos); 
     }
 
     bucketvditerator_t (bucketvd_t<T>& bucket, unsigned int id, unsigned long long int pos)
-      : _bucket   { bucket },
+      : _bucket { bucket },
         _id     { id },
         _pos    { pos}
     { 
       if (!bucket.get_size ())
-	_offset = 0;
+	_offset = _id = _pos = 0;
       else
 	bucket._get_offset (id, pos, _offset);
     }
@@ -592,12 +592,15 @@ namespace khs {
 	}
       }
     }
-    
-    // substitute the item referenced by the given iterator with the specified
-    // item
-    void substitute (const iterator& it, const T& item)
-    { _bucket._queue [_id][_pos] = item; }
 
+    // rewind places the iterator at the beginning of the whole sequence
+    void rewind () {
+
+      // make all attributes point to the beginning of the sequence
+      _id = _bucket.get_minf ();
+      _pos = _offset = 0;
+    }
+    
   private:
 
     // Invariants: every iterator over an instance of bucketvd_t contains a

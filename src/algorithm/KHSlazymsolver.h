@@ -4,7 +4,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Mon May 16 16:09:01 2016 Carlos Linares Lopez>
-  Last update <miércoles, 18 mayo 2016 17:06:22 Carlos Linares Lopez (clinares)>
+  Last update <miércoles, 18 mayo 2016 17:36:35 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -90,7 +90,8 @@ namespace khs {
     _closed.clear ();
 
     // while we have not reached the end of the OPEN list
-    while (it!=open.end ()) {
+    // while (it!=open.end ()) {
+    while (open.get_size ()) {
 
       // by default, the last node is not a solution
       solution = false;
@@ -131,7 +132,7 @@ namespace khs {
 
 	// in case we are currently at the beginning of OPEN, solution will be
 	// initialized to false in the next iteration and we won't get stuck
-	it = open.begin ();                                      // rewind OPEN
+	it.rewind ();                                            // rewind OPEN
 	continue;
       }
       
