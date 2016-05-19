@@ -4,7 +4,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Mon May 16 16:09:01 2016 Carlos Linares Lopez>
-  Last update <miércoles, 18 mayo 2016 17:36:35 Carlos Linares Lopez (clinares)>
+  Last update <miércoles, 18 mayo 2016 23:36:53 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -85,7 +85,7 @@ namespace khs {
 
     bool solution;                    // the last node examined was a solution?
     bucketvditerator_t<mnode_t<T>> it = open.begin ();    // iterator over OPEN
-    
+
     // clear the closed list
     _closed.clear ();
 
@@ -145,11 +145,8 @@ namespace khs {
 
       // in case this node has been already expanded as many times as _m, then
       // preserve it in OPEN and move to the next one
-      if (prev && prev->get_m ()>=_m) {
-
+      if (prev && prev->get_m ()>=_m)
 	++it;
-	continue;
-      }
 
       // otherwise
       else {

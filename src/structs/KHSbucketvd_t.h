@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Thu Feb  6 16:51:44 2014 Carlos Linares Lopez>
-  Last update <miércoles, 18 mayo 2016 17:34:53 Carlos Linares Lopez (clinares)>
+  Last update <jueves, 19 mayo 2016 18:33:16 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   Made by Carlos Linares Lopez
@@ -40,18 +40,11 @@ namespace khs {
   protected:
 
     // return the bucket and index within the bucket of a given position so that
-    // bucketvd_t [pos] = _queue [id][item]. No error checking is performed so
-    // that if a position is given beyond the size of the container, a runtime
-    // error will be raised
+    // bucketvd_t [pos] = _queue [id][item]. In case the position given goes
+    // beyond the size of the bucket, the iterator is located at end, ie., to
+    // the first position of a bucket beyond maxf
     void _get_idbucket (unsigned long long int pos,
 			unsigned int& id, unsigned long long int& item) const;
-
-    // likewise, the following function returns the location (as offset) of the
-    // item located at a particular bucket id and position pos within the
-    // bucket. No error checking is performed so that if an unreachable location
-    // is given a runtime error will be raised
-    void _get_offset (const unsigned int id, const unsigned long long int pos, 
-		      unsigned long long int& offset) const;
 
   public:
 
@@ -129,10 +122,16 @@ namespace khs {
 
     // Typedef alias
     typedef bucketvditerator_t<T> iterator;
-    
+
+    // begin points to the very first item of the sequence, in spite of its
+    // physical location, it is identified with offset=0
     iterator begin ()
     { return bucketvditerator_t<T> (*this, 0); }
-    
+
+    // end points to the element next to the last one, in spite of its physical
+    // location so that if items are indexed in the range [0,n) then the offset
+    // of end equals n. Iterators represent the end as the first position (0) in
+    // the bucket next to maxf
     iterator end ()
     { return bucketvditerator_t<T> (*this, _size); }
     
@@ -153,9 +152,9 @@ namespace khs {
   }; // class bucketvd_t<T>
 
   // return the bucket and index within the bucket of a given position so that
-  // bucketvd_t [pos] = _queue [id][item]. No error checking is performed so that
-  // if a position is given beyond the size of the container, a runtime error
-  // will be raised
+  // bucketvd_t [pos] = _queue [id][item]. In case the position given goes
+  // beyond the size of the bucket, the iterator is located at end, ie., to the
+  // first position of a bucket beyond maxf
   template<class T> void bucketvd_t<T>::_get_idbucket (unsigned long long int pos,
 						       unsigned int& id, 
 						       unsigned long long int& item) const
@@ -163,45 +162,18 @@ namespace khs {
     // start searching from the minimum bucket
     id = _minf;
 
-    // if this item can not be found in the current bucket
-    while (pos >= _queue [id].size ()) {
+    // and now, until the whole sequence has been examined or the right bucket
+    // has been found ---note that empty buckets are always skipped
+    while (id <= _maxf && pos >= _queue[id].size ())
 
-      // then jump over it
-      pos -= _queue [id].size ();
-
-      // and seek the next non-empty bucket
-      for (id++; id <= _maxf && !_queue [id].size (); id++);
-    }
+      // prevent underflows due to the usage of unsigned arithmetic
+      if (!pos && _queue[id].size ())
+	break;
+      else
+	pos -=_queue [id++].size ();
 
     // and the location within the bucket is stored in pos
     item = pos;
-  }
-
-  // likewise, the following function returns the location (as offset) of the
-  // item located at a particular bucket id and position pos within the
-  // bucket. No error checking is performed so that if an unreachable location
-  // is given a runtime error will be raised
-  template<class T> void bucketvd_t<T>::_get_offset (const unsigned int id, 
-						     const unsigned long long int pos, 
-						     unsigned long long int& offset) const
-  {
-    // start from the minimum bucket
-    offset = 0;
-    unsigned int curr = _minf;
-
-    // if we are not at the specified bucket yet
-    while (curr < id) {
-
-      // then add the number of items of this bucket to the offset
-      offset += _queue [curr].size ();
-
-      // and seek the next non-empty bucket
-      for (curr++; curr <= _maxf && !_queue [curr].size (); curr++);
-    }
-
-    // at this point we are located at the right bucket so that we just simply
-    // add the given pos to the current offset
-    offset += pos;
   }
 
   // insert_front adds the given item to the front of the bucket with the
@@ -408,22 +380,15 @@ namespace khs {
     bucketvditerator_t (bucketvd_t<T>& bucket, unsigned long long int offset)
       : _bucket { bucket },
         _offset { offset }
-    { 
-      if (!bucket.get_size ())
-	_id = _pos = _offset = 0;
-      else
-	bucket._get_idbucket (offset, _id, _pos); 
-    }
+    {
+      if (offset > bucket._size) {             // if offset goes beyond the end
+	_id = bucket._maxf + 1;       // then make the iterator equal to end ()
+	_pos = 0;
+      }
 
-    bucketvditerator_t (bucketvd_t<T>& bucket, unsigned int id, unsigned long long int pos)
-      : _bucket { bucket },
-        _id     { id },
-        _pos    { pos}
-    { 
-      if (!bucket.get_size ())
-	_offset = _id = _pos = 0;
+      // otherwise
       else
-	bucket._get_offset (id, pos, _offset);
+	bucket._get_idbucket (offset, _id, _pos);   // compute the right values
     }
 
     // get accessors
@@ -438,6 +403,7 @@ namespace khs {
     
     // operator overloading
 
+    // assignment operator
     bucketvditerator_t& operator=(const bucketvditerator_t& right)
     {
       // copy the attributes of the right operand
@@ -485,7 +451,8 @@ namespace khs {
       if (_bucket._queue [_id].size () <= _pos) {
 
 	// then look for the next non-empty bucket and initialize the position
-	// within it to 0
+	// within it to 0 or, in case the iterator was originally pointing to
+	// the last item, then make it point to end ()
 	for (_id++; _id <= _bucket._maxf && !_bucket._queue [_id].size (); _id++);
 	_pos = 0;
       }
@@ -500,47 +467,86 @@ namespace khs {
     // insert_front adds a new item to the front of the specified bucket. It
     // returns true if the operation was successful and false otherwise. An
     // exception might be raised if the bucket is inconsistent. The iterator is
-    // still valid after the insertion. 
+    // still valid after the insertion. In case the bucket is empty, then the
+    // iterator will point to the beginning of the sequence; otherwise, it will
+    // still point to the same item than before the insertion
     bool insert_front (const T& item, unsigned int id)
     {
-      // first of all, effectively insert the data into the bucket
-      bool result = _bucket.insert_front (item, id);
+      // now, there are two cases, either the bucket is empty before the
+      // insertion or not
+      if (!_bucket._size) {
 
-      // now, if the item was inserted before the current location of the
-      // iterator
-      if (id <= _id) {
+	// if the bucket was empty, then either begin () or end () would point
+	// to the end of the sequence
+	if (_id == 1 + _bucket._maxf) {         // iterator = begin () / end ()
 
-	// then update the position of this iterator to make it point to the
-	// same location it was pointing before
-	_pos++;
-	_offset++;
+	  // make the iterator effectively point to the beginning of the bucket
+	  _id = id;
+	  _pos = _offset = 0;
+	  return _bucket.insert_front (item, id);
+	}
+
+	// in any other case, throw an exception, since it means that the
+	// iterator was invalid before the insertion
+	throw domain_error ("khs::bucketvditerator_t::insert_front (empty bucket)");
       }
 
-      // and exit
-      return result;
+      // in case the bucket already contain items
+      else {
+
+	// now, if the item is about to be inserted before the current location
+	// of the iterator, update the overall position of this iterator
+	if (id <= _id)
+	  _offset++;
+
+	// and in case it is about to be inserted in the same bucket of this
+	// iterator then update the location of this iterator within the same
+	// bucket
+	if (id == _id)
+	  _pos++;
+      }
+
+      // effectively insert the item in the bucket and exit
+      return _bucket.insert_front (item, id);
     }
-    
+
     // insert_back adds a new item to the back of the specified bucket. It
     // returns true if the operation was successful and false otherwise. An
     // exception might be raised if the bucket is inconsistent.  The iterator is
-    // still valid after the insertion.
+    // still valid after the insertion. In case the bucket is empty, then the
+    // iterator will point to the beginning of the sequence; otherwise, it will
+    // still point to the same item than before the insertion
     bool insert_back (const T& item, unsigned int id)
     {
-      // first of all, effectively insert the data into the bucket
-      bool result = _bucket.insert_back (item, id);
+      // now, there are two cases, either the bucket is empty before the
+      // insertion or not
+      if (!_bucket._size) {
 
-      // now, if the item was inserted before the current location of the
-      // iterator
-      if (id < _id) {
+	// if the bucket was empty, then either begin () or end () would point
+	// to the end of the sequence
+	if (_id == 1 + _bucket._maxf) {         // iterator = begin () / end ()
 
-	// then update the position of this iterator to make it point to the
-	// same location it was pointing before
-	_pos++;
-	_offset++;
+	  // make the iterator effectively point to the beginning of the bucket
+	  _id = id;
+	  _pos = _offset = 0;
+	  return _bucket.insert_back (item, id);
+	}
+
+	// in any other case, throw an exception, since it means that the
+	// iterator was invalid before the insertion
+	throw domain_error ("khs::bucketvditerator_t::insert_back (empty bucket)");
       }
 
-      // and exit
-      return result;
+      // in case the bucket already contain items
+      else
+
+	// now, if the item is about to be inserted before the current location
+	// of the iterator, update the overall position of this iterator
+	if (id < _id)
+	  _offset++;
+
+      // effectively insert the item in the bucket and exit
+      return _bucket.insert_back (item, id);
     }
     
     // remove the item pointed to by this iterator. If the iterator is not valid
@@ -583,7 +589,7 @@ namespace khs {
 
 	      // then we should look for the next non-empty bucket and make the
 	      // iterator point to the beginning of it
-	      for (;
+	      for (_id++;
 		   _id <= _bucket.get_maxf () && !_bucket.get_size (_id);
 		   _id++);
 	      _pos=0;
