@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Thu Feb  6 16:51:44 2014 Carlos Linares Lopez>
-  Last update <jueves, 19 mayo 2016 18:33:16 Carlos Linares Lopez (clinares)>
+  Last update <viernes, 20 mayo 2016 12:13:50 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   Made by Carlos Linares Lopez
@@ -65,6 +65,9 @@ namespace khs {
     { return _minf; }
     unsigned int get_maxf () const
     { return _maxf; }
+
+    const deque<T>& get_bucket (const unsigned int idx) const
+    { return _queue[idx]; }
     
     // methods
 
@@ -442,6 +445,11 @@ namespace khs {
     iterator& operator++()                             // prefix auto-increment
     {
 
+      // in case we are currently at the last location of the bucket
+      if (_pos==_bucket.get_size ()-1)
+	*this = _bucket.end ();
+
+      else {                                                       // otherwise
       // compute incrementally the new bucket and the position within the
       // bucket: first, tentatively increment the position within the current
       // bucket
@@ -459,6 +467,7 @@ namespace khs {
 
       // and update also the global position over the whole bucket
       _offset++;
+      }
 
       // and finally return a reference to this iterator
       return *this;
@@ -574,26 +583,19 @@ namespace khs {
 	// which case, the iterator shall point to end.
 	if (_pos >= _bucket.get_size (_id)) {      // if at the last pos of _id
 	  
-	  // decrement the position within the bucket
-	  _pos--;
-
 	  // but if we removed the last item of the last bucket
 	  if (_id >= _bucket.get_maxf ())
-	    *this = _bucket.end ();         // point to the end of the sequence
+	    *this = _bucket.end ();             // then make it equal to end ()
 
 	  // if we removed the last item of a bucket different than the last one
 	  else {
 
-	    // in case there were no items left
-	    if (!_bucket.get_size (_id)) {
-
-	      // then we should look for the next non-empty bucket and make the
-	      // iterator point to the beginning of it
-	      for (_id++;
-		   _id <= _bucket.get_maxf () && !_bucket.get_size (_id);
-		   _id++);
-	      _pos=0;
-	    }
+	    // then we should look for the next non-empty bucket and make the
+	    // iterator point to the beginning of it
+	    for (_id++;
+		 _id <= _bucket.get_maxf () && !_bucket.get_size (_id);
+		 _id++);
+	    _pos=0;
 	  }
 	}
       }
