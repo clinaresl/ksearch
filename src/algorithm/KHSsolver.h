@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Tue May 10 18:46:43 2016 Carlos Linares Lopez>
-  Last update <martes, 17 mayo 2016 14:28:06 Carlos Linares Lopez (clinares)>
+  Last update <lunes, 23 mayo 2016 18:06:19 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -198,6 +198,13 @@ namespace khs {
       exit (EXIT_FAILURE);
     }
 
+    // issue a warning in case that less than _k solutions have been
+    // generated. This is not necessarily an error as there might be not _k
+    // solutions
+    if (_n < _k) {
+      cerr << " Warning: " << _n << " solutions have been generated but " << _k << " were requested" << endl << endl;
+    }
+
     // second, verify that all paths are sorted in increasing order of cost and
     // that all descendants are correct
     unsigned int c=0;       // cost of the last solution examined, 0 by default
@@ -250,8 +257,8 @@ namespace khs {
       idx++;
     }
     
-    // the complexity of this algorithm is quadratic in the number of paths as
-    // every path is compared with all the others
+    // the complexity of the following check is quadratic in the number of paths
+    // as every path is compared with all the others
     for (unsigned int i=0;i<_solution.size ();i++)
       for (unsigned int j=i+1;j<_solution.size ();j++) {
 

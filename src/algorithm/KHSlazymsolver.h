@@ -4,7 +4,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Mon May 16 16:09:01 2016 Carlos Linares Lopez>
-  Last update <miércoles, 18 mayo 2016 23:36:53 Carlos Linares Lopez (clinares)>
+  Last update <miércoles, 25 mayo 2016 20:04:41 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -90,8 +90,7 @@ namespace khs {
     _closed.clear ();
 
     // while we have not reached the end of the OPEN list
-    // while (it!=open.end ()) {
-    while (open.get_size ()) {
+    while (it != open.end ()) {
 
       // by default, the last node is not a solution
       solution = false;
@@ -132,7 +131,7 @@ namespace khs {
 
 	// in case we are currently at the beginning of OPEN, solution will be
 	// initialized to false in the next iteration and we won't get stuck
-	it.rewind ();                                            // rewind OPEN
+	it = open.begin ();
 	continue;
       }
       
@@ -168,7 +167,12 @@ namespace khs {
 	// expand this node using the descendants service which does not use the
 	// heuristic information
 	deque<mnode_t<T>> children;
+	
+#ifdef __HEURISTIC__
+	solver<T>::_h_descendants (*it, children);
+#else
 	solver<T>::_descendants (*it, children);
+#endif	// __HEURISTIC__
 
 	// and insert all descendants into the open list
 	for (typename deque<mnode_t<T>>::iterator descendant=children.begin ();
@@ -180,6 +184,22 @@ namespace khs {
 	  // this is a variant of Dijkstra
 	  if (!it->find (descendant->get_state ())) {
 
+#ifdef __HEURISTIC__
+
+	    it.insert_front (*descendant, descendant->get_f ());
+
+	    cout << " Position in OPEN: " << it.get_id () << " / " << it.get_pos () << endl;
+	    
+	    // // in case this is a goal, then insert it by the front
+	    // if (descendant->get_h () == 0)
+	    //   it.insert_front (*descendant, descendant->get_f ());
+	      
+	    // // otherwise, insert it at the back
+	    // else
+	    //   it.insert_back (*descendant, descendant->get_f ());
+	    
+#else
+	      
 	    // in case this is a goal, then insert it by the front
 	    if (descendant->get_state () == solver<T>::_goal.get_state ())
 	      it.insert_front (*descendant, descendant->get_f ());
@@ -187,13 +207,17 @@ namespace khs {
 	    // otherwise, insert it at the back
 	    else
 	      it.insert_back (*descendant, descendant->get_f ());
+	  
+#endif	// __HEURISTIC__
 	  }
 	}
 
-	// consume this node and proceed to its expansion
+	// finally, consume this node from OPEN
 	it.remove ();
       }
     }
+
+    cout << " #items in OPEN: " << open.get_size () << endl << endl;
   }
 
   // the following service returns a couple of vectors: the first contains the
@@ -252,9 +276,18 @@ namespace khs {
     // create an initial open list that only contains the start state
     bucketvd_t<mnode_t<T>> open;
 
+#ifdef __HEURISTIC__
+
+    // create the start state with information about the heuristic
+    mnode_t<T> start (solver<T>::_start.get_state (), solver<T>::_start.get_h ());
+    
+#else
+    
     // create the start state
     mnode_t<T> start (solver<T>::_start.get_state ());
-
+    
+#endif
+    
     // and insert it into the open list in the f-th bucket where f=g
     open.insert_back (start, start.get_f ());
 

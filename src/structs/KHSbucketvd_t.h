@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Thu Feb  6 16:51:44 2014 Carlos Linares Lopez>
-  Last update <viernes, 20 mayo 2016 12:13:50 Carlos Linares Lopez (clinares)>
+  Last update <lunes, 23 mayo 2016 13:12:26 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   Made by Carlos Linares Lopez
@@ -381,7 +381,7 @@ namespace khs {
     
     // Explicit constructors
     bucketvditerator_t (bucketvd_t<T>& bucket, unsigned long long int offset)
-      : _bucket { bucket },
+      : _bucket { &bucket },
         _offset { offset }
     {
       if (offset > bucket._size) {             // if offset goes beyond the end
@@ -395,7 +395,7 @@ namespace khs {
     }
 
     // get accessors
-    const bucketvd_t<T>& get_bucket () const
+    bucketvd_t<T>* get_bucket () const
     { return _bucket; }
     unsigned long long int get_offset () const
     { return _offset; }
@@ -424,21 +424,21 @@ namespace khs {
     // attributes (it is an invariant)
     bool operator==(const bucketvditerator_t& bucket) const
     {
-      return (&_bucket == &bucket.get_bucket () &&   // either the container is
+      return (_bucket == bucket.get_bucket () &&     // either the container is
 	      _offset == bucket.get_offset());//different or the offset differs
     }
     bool operator!=(const bucketvditerator_t& bucket) const
     {
-      return (&_bucket != &bucket.get_bucket () ||
+      return (_bucket != bucket.get_bucket () ||
 	      _offset != bucket.get_offset ());
     }
 
     // the following operator uses the incremental counters to speed up access
     T& operator* ()
-    { return _bucket._queue [_id][_pos]; }
+    { return _bucket->_queue [_id][_pos]; }
 
     T* operator->()
-    { return (T*)&_bucket._queue [_id][_pos]; }      
+    { return (T*)&_bucket->_queue [_id][_pos]; }      
 
     // only prefix auto-increment is defined since it is more efficient (it
     // saves a copy)
@@ -446,8 +446,8 @@ namespace khs {
     {
 
       // in case we are currently at the last location of the bucket
-      if (_pos==_bucket.get_size ()-1)
-	*this = _bucket.end ();
+      if (_pos==_bucket->get_size ()-1)
+	*this = _bucket->end ();
 
       else {                                                       // otherwise
       // compute incrementally the new bucket and the position within the
@@ -456,12 +456,12 @@ namespace khs {
       _pos++;
 
       // if we are at the end of the current bucket
-      if (_bucket._queue [_id].size () <= _pos) {
+      if (_bucket->_queue [_id].size () <= _pos) {
 
 	// then look for the next non-empty bucket and initialize the position
 	// within it to 0 or, in case the iterator was originally pointing to
 	// the last item, then make it point to end ()
-	for (_id++; _id <= _bucket._maxf && !_bucket._queue [_id].size (); _id++);
+	for (_id++; _id <= _bucket->_maxf && !_bucket->_queue [_id].size (); _id++);
 	_pos = 0;
       }
 
@@ -483,16 +483,16 @@ namespace khs {
     {
       // now, there are two cases, either the bucket is empty before the
       // insertion or not
-      if (!_bucket._size) {
+      if (!_bucket->_size) {
 
 	// if the bucket was empty, then either begin () or end () would point
 	// to the end of the sequence
-	if (_id == 1 + _bucket._maxf) {         // iterator = begin () / end ()
+	if (_id == 1 + _bucket->_maxf) {        // iterator = begin () / end ()
 
 	  // make the iterator effectively point to the beginning of the bucket
 	  _id = id;
 	  _pos = _offset = 0;
-	  return _bucket.insert_front (item, id);
+	  return _bucket->insert_front (item, id);
 	}
 
 	// in any other case, throw an exception, since it means that the
@@ -516,7 +516,7 @@ namespace khs {
       }
 
       // effectively insert the item in the bucket and exit
-      return _bucket.insert_front (item, id);
+      return _bucket->insert_front (item, id);
     }
 
     // insert_back adds a new item to the back of the specified bucket. It
@@ -529,16 +529,16 @@ namespace khs {
     {
       // now, there are two cases, either the bucket is empty before the
       // insertion or not
-      if (!_bucket._size) {
+      if (!_bucket->_size) {
 
 	// if the bucket was empty, then either begin () or end () would point
 	// to the end of the sequence
-	if (_id == 1 + _bucket._maxf) {         // iterator = begin () / end ()
+	if (_id == 1 + _bucket->_maxf) {        // iterator = begin () / end ()
 
 	  // make the iterator effectively point to the beginning of the bucket
 	  _id = id;
 	  _pos = _offset = 0;
-	  return _bucket.insert_back (item, id);
+	  return _bucket->insert_back (item, id);
 	}
 
 	// in any other case, throw an exception, since it means that the
@@ -555,7 +555,7 @@ namespace khs {
 	  _offset++;
 
       // effectively insert the item in the bucket and exit
-      return _bucket.insert_back (item, id);
+      return _bucket->insert_back (item, id);
     }
     
     // remove the item pointed to by this iterator. If the iterator is not valid
@@ -566,10 +566,10 @@ namespace khs {
     {
 
       // first, remove this position from the bucket pointed to by this iterator
-      _bucket.remove (_id, _pos);
+      _bucket->remove (_id, _pos);
 
       // now, in case this was the last element in the bucket
-      if (!_bucket.get_size ()) {
+      if (!_bucket->get_size ()) {
 
 	// make all attributes to take their default values
 	_id = _pos = _offset = 0;
@@ -581,11 +581,11 @@ namespace khs {
 	// when erasing an item, the iterator shall point to the next item in
 	// the bucket unless the last item of the last bucket was removed, in
 	// which case, the iterator shall point to end.
-	if (_pos >= _bucket.get_size (_id)) {      // if at the last pos of _id
+	if (_pos >= _bucket->get_size (_id)) {     // if at the last pos of _id
 	  
 	  // but if we removed the last item of the last bucket
-	  if (_id >= _bucket.get_maxf ())
-	    *this = _bucket.end ();             // then make it equal to end ()
+	  if (_id >= _bucket->get_maxf ())
+	    *this = _bucket->end ();            // then make it equal to end ()
 
 	  // if we removed the last item of a bucket different than the last one
 	  else {
@@ -593,7 +593,7 @@ namespace khs {
 	    // then we should look for the next non-empty bucket and make the
 	    // iterator point to the beginning of it
 	    for (_id++;
-		 _id <= _bucket.get_maxf () && !_bucket.get_size (_id);
+		 _id <= _bucket->get_maxf () && !_bucket->get_size (_id);
 		 _id++);
 	    _pos=0;
 	  }
@@ -601,14 +601,6 @@ namespace khs {
       }
     }
 
-    // rewind places the iterator at the beginning of the whole sequence
-    void rewind () {
-
-      // make all attributes point to the beginning of the sequence
-      _id = _bucket.get_minf ();
-      _pos = _offset = 0;
-    }
-    
   private:
 
     // Invariants: every iterator over an instance of bucketvd_t contains a
@@ -616,7 +608,7 @@ namespace khs {
     // what item is been referenced: counters. There are two types of counters:
     // over the whole bucket and incremental ones which store the bucket and the
     // relative position within the bucket. They should be always consistent.
-    bucketvd_t<T>& _bucket;                                  // bucket iterated
+    bucketvd_t<T>* _bucket;                                  // bucket iterated
 
     // counters
     unsigned long long int _offset;           // 0-based index to the next item 
