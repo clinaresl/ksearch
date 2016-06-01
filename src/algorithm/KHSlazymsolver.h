@@ -4,7 +4,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Mon May 16 16:09:01 2016 Carlos Linares Lopez>
-  Last update <miércoles, 25 mayo 2016 20:04:41 Carlos Linares Lopez (clinares)>
+  Last update <miércoles, 01 junio 2016 16:32:35 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -22,7 +22,7 @@
 #include <algorithm>
 
 #include "../structs/KHSmnode_t.h"
-#include "../structs/KHSbucketvd_t.h"
+#include "../structs/KHSbucketvl_t.h"
 #include "../structs/KHSset_t.h"
 
 #include "KHSsolver.h"
@@ -64,7 +64,7 @@ namespace khs {
 
     // this function actually applies Lazy m-Dijkstra to the contents of the
     // specified open list until the goal node is found
-    void _solve (bucketvd_t<mnode_t<T>>& open);
+    void _solve (bucketvl_t<mnode_t<T>>& open);
 
   protected:
 
@@ -80,72 +80,61 @@ namespace khs {
     
   }; // class lazymsolver<T>
 
-  template<class T> void lazymsolver<T>::_solve (bucketvd_t<mnode_t<T>>& open)
+  template<class T> void lazymsolver<T>::_solve (bucketvl_t<mnode_t<T>>& open)
   {
 
     bool solution;                    // the last node examined was a solution?
-    bucketvditerator_t<mnode_t<T>> it = open.begin ();    // iterator over OPEN
 
+    // create a specific OPEN list to store the goals
+    bucketvl_t<mnode_t<T>> goals;
+    
     // clear the closed list
     _closed.clear ();
 
-    // while we have not reached the end of the OPEN list
-    while (it != open.end ()) {
+    // -- Main loop
+    while (open.get_size ()) {                 // while there are items in OPEN
 
-      // by default, the last node is not a solution
-      solution = false;
+      mnode_t<T>* goal = goals.front ();                  // get the first goal
+      mnode_t<T>* node = open.front ();           // get the first item in OPEN
+      solution = false;                     // by default, it is not a solution
 
-      // consume all solutions if any is found
-      while (it->get_state () == solver<T>::_goal.get_state ()) {
+      // -- firstly, consume all solutions if any is found
+      while (goal && goal->get_f () <= node->get_f ()) {
 
 	// copy this solution, its cost, step length, the number of expansions
 	// and the time required to find this solution since the beginning
-	solver<T>::_solution.push_back (it->get_path ());
-	solver<T>::_cost.push_back (it->get_g ());
-	solver<T>::_length.push_back (it->get_path ().size () - 1);
+	solver<T>::_solution.push_back (goal->get_path ());
+	solver<T>::_cost.push_back (goal->get_g ());
+	solver<T>::_length.push_back (goal->get_path ().size () - 1);
 	solver<T>::_nodes.push_back (solver<T>::_totalnodes);
 	solver<T>::_cpu_time.push_back (((double) (clock () - solver<T>::_tstart)) / 
 					CLOCKS_PER_SEC);
-
-	// increment the number of found solutions
-	solver<T>::_n++;
-
-	// remember the last node examined was a solution
-	solution = true;
-
-	// in case the requested number has been found exit
-	if (solver<T>::_n >= solver<T>::_k)
-	  return;
-
-	// otherwise, remove this node from OPEN and move forward
-	it.remove ();
+	solver<T>::_n++;             // increment the number of found solutions
+	solution = true;      // remember the last node examined was a solution
+	if (solver<T>::_n >= solver<T>::_k)  // if _k solutions have been found
+	  return;                                                // exit nicely
+	goals.remove ();              // otherwise, remove this node from GOALS
+	goal = goals.front ();    // and take a pointer to the next goal if any
       }
 
-      // secondly, in case we just examined a solution in the previous
+      // -- secondly, in case we just examined a solution in the previous
       // iteration, then rewind the OPEN list giving the algorithm another
       // chance to find more solutions
       if (solution) {
-
-	// increment the maximum allowed number of expansions per node
-	_m++;
-
-	// in case we are currently at the beginning of OPEN, solution will be
-	// initialized to false in the next iteration and we won't get stuck
-	it = open.begin ();
-	continue;
+	_m++;                  // increment the allowed number of re-expansions
+	open.rewind ();                          // go to the beginning of OPEN
+	continue;                                  // and start a new iteration
       }
       
-      // thirdly, consider expanding this node.
-
-      // check if this node has ever been expanded before. If it has been
-      // expanded a number of times less than the allowed number of expansions
-      // per node, then proceed
-      mnode_t<T>* prev = _closed.search (*it);
+      // -- thirdly, consider expanding this node. Check if this node has ever
+      // been expanded before. If it has been expanded a number of times less
+      // than the allowed number of expansions per node, then proceed
+      mnode_t<T>* prev = _closed.search (*node);
 
       // in case this node has been already expanded as many times as _m, then
       // preserve it in OPEN and move to the next one
       if (prev && prev->get_m ()>=_m)
-	++it;
+	open.next ();
 
       // otherwise
       else {
@@ -153,8 +142,8 @@ namespace khs {
 	// if this node has not been expanded before, insert it now with m=0
 	// (which is the default value) and locate it in the closed list
 	if (!prev) {
-	  _closed.insert (*it);
-	  prev = _closed.search (*it);
+	  _closed.insert (*node);
+	  prev = _closed.search (*node);
 	}
 
 	// anyway increment m so that the m-value of a node equals precisely the
@@ -169,9 +158,9 @@ namespace khs {
 	deque<mnode_t<T>> children;
 	
 #ifdef __HEURISTIC__
-	solver<T>::_h_descendants (*it, children);
+	solver<T>::_h_descendants (*node, children);
 #else
-	solver<T>::_descendants (*it, children);
+	solver<T>::_descendants (*node, children);
 #endif	// __HEURISTIC__
 
 	// and insert all descendants into the open list
@@ -182,42 +171,36 @@ namespace khs {
 	  // add this node to open only in case this descendant has not been
 	  // visited in the path to its parent. Use f=g to sort nodes in OPEN as
 	  // this is a variant of Dijkstra
-	  if (!it->find (descendant->get_state ())) {
+	  if (!node->find (descendant->get_state ())) {
 
 #ifdef __HEURISTIC__
 
-	    it.insert_front (*descendant, descendant->get_f ());
+	    // in case this is a goal, insert it in the GOALS list
+	    if (descendant->get_f ()==0)
+	      goals.insert (*descendant, descendant->get_f ());
 
-	    cout << " Position in OPEN: " << it.get_id () << " / " << it.get_pos () << endl;
-	    
-	    // // in case this is a goal, then insert it by the front
-	    // if (descendant->get_h () == 0)
-	    //   it.insert_front (*descendant, descendant->get_f ());
-	      
-	    // // otherwise, insert it at the back
-	    // else
-	    //   it.insert_back (*descendant, descendant->get_f ());
+	    // otherwise, insert it into OPEN
+	    else
+	      open.insert (*descendant, descendant->get_f ());
 	    
 #else
 	      
-	    // in case this is a goal, then insert it by the front
+	    // in case this is a goal, then insert it in the GOALS list
 	    if (descendant->get_state () == solver<T>::_goal.get_state ())
-	      it.insert_front (*descendant, descendant->get_f ());
+	      goals.insert (*descendant, descendant->get_f ());
 	      
-	    // otherwise, insert it at the back
+	    // otherwise, insert it into OPEN
 	    else
-	      it.insert_back (*descendant, descendant->get_f ());
+	      open.insert (*descendant, descendant->get_f ());
 	  
 #endif	// __HEURISTIC__
 	  }
 	}
 
 	// finally, consume this node from OPEN
-	it.remove ();
+	open.remove ();
       }
     }
-
-    cout << " #items in OPEN: " << open.get_size () << endl << endl;
   }
 
   // the following service returns a couple of vectors: the first contains the
@@ -274,7 +257,7 @@ namespace khs {
     solver<T>::_tstart = clock ();
 
     // create an initial open list that only contains the start state
-    bucketvd_t<mnode_t<T>> open;
+    bucketvl_t<mnode_t<T>> open;
 
 #ifdef __HEURISTIC__
 
@@ -289,7 +272,7 @@ namespace khs {
 #endif
     
     // and insert it into the open list in the f-th bucket where f=g
-    open.insert_back (start, start.get_f ());
+    open.insert (start, start.get_f ());
 
     // compute the solution 
     _solve (open);

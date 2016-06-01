@@ -45,7 +45,6 @@ nobase_libksearch_include_HEADERS = ksearch.h \
 				src/KHSinit.h \
 				src/structs/KHSbucketvd_t.h \
 				src/structs/KHSbucketvl_t.h \
-				src/structs/KHSbucketvd_seq_t.h \
 				src/structs/KHSnode_t.h \
 				src/structs/KHSmnode_t.h \
 				src/structs/KHSset_t.h \

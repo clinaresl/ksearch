@@ -14,7 +14,6 @@
 // --- open list
 #include <src/structs/KHSbucketvd_t.h>
 #include <src/structs/KHSbucketvl_t.h>
-#include <src/structs/KHSbucketvd_seq_t.h>
 
 // --- closed list
 #include <src/structs/KHSset_t.h>
