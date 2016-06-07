@@ -6,7 +6,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Sun May 29 14:48:38 2016 Carlos Linares Lopez>
-  Last update <miércoles, 01 junio 2016 12:44:18 Carlos Linares Lopez (clinares)>
+  Last update <domingo, 05 junio 2016 11:55:42 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -80,18 +80,23 @@ namespace khs {
     { return _size; }
     unsigned int get_size (const unsigned int f) const
     { return _queue [f].size (); }
+    typename list<T>::iterator get_pointer () const
+    { return _pointer; }
     unsigned int get_pf () const
     { return _pf; } 
     unsigned int get_minf () const
     { return _minf; }
     unsigned int get_maxf () const
     { return _maxf; }
-
+    const list<T>& get_bucket (const unsigned int idx) const
+    { return _queue[idx]; }
+    
     // methods
 
-    // return true if the public region is empty and false otherwise
+    // return true if the public region is empty and false otherwise. Note that
+    // if the sequence is empty, the end is reached implicitly
     bool end ()
-    { return _pointer == _queue[_maxf].end (); }
+    { return _size == 0 || _pointer == _queue[_maxf].end (); }
     
     // front returns the first item from the sequence, if any, or nullptr in
     // case the sequence is exhausted. It does not remove it.
@@ -196,11 +201,20 @@ namespace khs {
       }
     }
 
-    // -- insertion --- if this bucket has a shaded segment
-    if (f == _pf)
+    // -- insertion
 
-      // then insert the new item before the current location of the pointer and
-      // make the new item to be first in the active region
+    // if this item has to be inserted before the current bucket
+    if (f < _pf) {
+
+      // then add it to the beginning - though maybe that adding it to the end
+      // might be more beneficial, since the whole bucket is shaded
+      _pointer = _queue[f].insert (_queue[f].begin (), item);
+      _pf = f;                                 // and update the current bucket
+    }	
+    else if (f == _pf)
+
+      // if this item has to be inserted in the current bucket, then insert the
+      // new item before the current location of the pointer
       _pointer = _queue[_pf].insert (_pointer, item);
 
     else

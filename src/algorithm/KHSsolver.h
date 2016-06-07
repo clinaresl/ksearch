@@ -5,7 +5,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Tue May 10 18:46:43 2016 Carlos Linares Lopez>
-  Last update <lunes, 23 mayo 2016 18:06:19 Carlos Linares Lopez (clinares)>
+  Last update <lunes, 06 junio 2016 17:31:06 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <map>
 #include <vector>
 
 #include "../KHSdefs.h"
@@ -80,6 +81,13 @@ namespace khs {
     // return true if the solutions in this solver are correct, ie., they are
     // all different and are sorted in increasing order of cost
     bool validate ();
+
+    // critical_paths returns the collection of states that appear in all
+    // solutions found by any solver inheriting from this one. It returns the
+    // collection of states grouped by the optimal cost of the solutions (cost)
+    // and also the overall collection which is computed for all paths
+    // independently of the cost.
+    void critical_paths (map<unsigned int, vector<T>>& cost, vector<T>& overall);
     
   protected:
 
@@ -271,6 +279,61 @@ namespace khs {
     
     // if this point is reached, then the solution is correct
     return true;    
+  }
+
+  // critical_paths returns the collection of states that appear in all
+  // solutions found by any solver inheriting from this one. It returns the
+  // collection of states grouped by the optimal cost of the solutions (cost)
+  // and also the overall collection which is computed for all paths
+  // independently of the cost.
+  template<class T> void solver<T>::critical_paths (map<unsigned int, vector<T>>& cost,
+						    vector<T>& overall)
+  {
+
+    map<T, unsigned int> overallHist;    // number of occurrences of each state
+    
+    for (unsigned int i=0;i<_solution.size ();i++) {       // for each solution
+
+      unsigned int g=0;                // g-value of each node in this solution
+      for (unsigned int j=0;j<_solution[i].size ();j++) {
+
+	// add this node to the histogram of overall occurrences
+	typename map<T,unsigned int>::const_iterator it = overallHist.find(_solution[i][j]);
+	if (it == overallHist.end())
+	  overallHist[_solution[i][j]] = 1;
+	else
+	  overallHist[_solution[i][j]]++;
+	
+	mnode_t<T> node (_solution[i][j], 0, g);        // create a new mnode_t
+	deque<mnode_t<T>> children;
+	_descendants (node, children);             // and compute its descendants
+
+	// now, compute the g value of the next node in this path
+	if (j<_solution[i].size ()-1) {
+	  mnode_t<T> descendant ((T&) _solution[i][j+1]);
+	  typename deque<mnode_t<T>>::iterator next = find (children.begin (), children.end (), descendant);
+	  if (next == children.end ()) {
+	    cerr << " Fatal Error: One descendant could not be found! Validate the solution!" << endl;
+	    cerr << " Descendant: " << *next << endl << endl;
+	    exit (EXIT_FAILURE);
+	  }
+	  else
+	    g = next->get_g ();    // otherwise, update the g-cost of this node
+	}
+      }
+
+      // now, add all the states in this path, but the start and goal states to
+      // a histogram
+    }
+
+    // analyze the overall critical states
+    for (typename map<T, unsigned int>::const_iterator it=overallHist.begin ();
+	 it != overallHist.end () ;
+	 ++it)
+
+      // now, if this state appears as many times as solutions
+      if (it->second >= _solution.size ())
+	overall.push_back (it->first);
   }
   
 } // namespace khs

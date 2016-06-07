@@ -4,7 +4,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Mon May 16 16:09:01 2016 Carlos Linares Lopez>
-  Last update <miércoles, 01 junio 2016 16:32:35 Carlos Linares Lopez (clinares)>
+  Last update <martes, 07 junio 2016 12:51:33 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -99,8 +99,17 @@ namespace khs {
       solution = false;                     // by default, it is not a solution
 
       // -- firstly, consume all solutions if any is found
+#ifdef __HEURISTIC__
+      while (goal && ((goals.get_size () + solver<T>::_n >= solver<T>::_k) ||
+		      (goal->get_f () <= node->get_f ()))) {
+#else
       while (goal && goal->get_f () <= node->get_f ()) {
+#endif	// __HEURISTIC__
 
+	// cout << " \tLength (GOALS): " << goals.get_size () << endl;
+	// cout << " \tC*[" << solver<T>::_n << "]: " << goal->get_g () << endl;
+	// cout << " \tf (node): " << node->get_f () << endl << endl; cout.flush ();
+	
 	// copy this solution, its cost, step length, the number of expansions
 	// and the time required to find this solution since the beginning
 	solver<T>::_solution.push_back (goal->get_path ());
@@ -121,6 +130,7 @@ namespace khs {
       // iteration, then rewind the OPEN list giving the algorithm another
       // chance to find more solutions
       if (solution) {
+	// cout << " # solutions: " << solver<T>::_n << endl; cout.flush ();
 	_m++;                  // increment the allowed number of re-expansions
 	open.rewind ();                          // go to the beginning of OPEN
 	continue;                                  // and start a new iteration
@@ -153,14 +163,21 @@ namespace khs {
 	// expand also the total number of expansions
 	solver<T>::_totalnodes++;
 
+	// consume this node from OPEN. It is important to remove the current
+	// node before its descendants are inserted into OPEN as they are
+	// inserted by the front. Preserve, however, the current node as it will
+	// be used later
+	mnode_t<T> current (*node);
+	open.remove ();
+
 	// expand this node using the descendants service which does not use the
 	// heuristic information
 	deque<mnode_t<T>> children;
-	
+
 #ifdef __HEURISTIC__
-	solver<T>::_h_descendants (*node, children);
+	solver<T>::_h_descendants (current, children);
 #else
-	solver<T>::_descendants (*node, children);
+	solver<T>::_descendants (current, children);
 #endif	// __HEURISTIC__
 
 	// and insert all descendants into the open list
@@ -171,12 +188,12 @@ namespace khs {
 	  // add this node to open only in case this descendant has not been
 	  // visited in the path to its parent. Use f=g to sort nodes in OPEN as
 	  // this is a variant of Dijkstra
-	  if (!node->find (descendant->get_state ())) {
+	  if (!current.find (descendant->get_state ())) {
 
 #ifdef __HEURISTIC__
 
 	    // in case this is a goal, insert it in the GOALS list
-	    if (descendant->get_f ()==0)
+	    if (descendant->get_h ()==0)
 	      goals.insert (*descendant, descendant->get_f ());
 
 	    // otherwise, insert it into OPEN
@@ -196,9 +213,6 @@ namespace khs {
 #endif	// __HEURISTIC__
 	  }
 	}
-
-	// finally, consume this node from OPEN
-	open.remove ();
       }
     }
   }
@@ -252,6 +266,10 @@ namespace khs {
     solver<T>::_length     = vector<unsigned int>();
     solver<T>::_totalnodes = 0;
     solver<T>::_nodes      = vector<unsigned long long int>();
+
+    // and also initialize the maximum number of expansions per node ---even if
+    // the constructor already does that job explicitly
+    _m = 1;
     
     // start the clock
     solver<T>::_tstart = clock ();

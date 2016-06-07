@@ -4,7 +4,7 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Sun Apr  6 16:53:27 2014 Carlos Linares Lopez>
-  Last update <martes, 10 mayo 2016 12:40:24 Carlos Linares Lopez (clinares)>
+  Last update <viernes, 03 junio 2016 13:46:25 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -41,6 +41,8 @@ namespace khs {
     // get accessors
     unsigned long long int get_size () const
     { return _set.size (); }
+    set<T>& get_set ()
+    { return _set; }
 
     // methods
 
