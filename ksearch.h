@@ -10,6 +10,7 @@
 // --- node
 #include <src/structs/KHSnode_t.h>
 #include <src/structs/KHSmnode_t.h>
+#include <src/structs/KHSfmnode_t.h>
 
 // --- open list
 #include <src/structs/KHSbucketvd_t.h>
@@ -29,5 +30,8 @@
 
 // Lazy m-Dijkstra / m-A*
 #include <src/algorithm/KHSlazymsolver.h>
+
+// Goal-driven Lazy m-Dijkstra / m-A*
+#include <src/algorithm/KHSgdlazymsolver.h>
 
 #endif // LIBKSEARCH_H_

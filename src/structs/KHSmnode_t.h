@@ -1,11 +1,11 @@
 /* 
   KHSmnode_t.h
-  Description: information of a tree node with information on the
-  number of expansions
+  Description: information of a tree node with information on the number of
+  expansions
   ----------------------------------------------------------------------------- 
 
   Started on  <Tue May 10 13:01:55 2016 Carlos Linares Lopez>
-  Last update <lunes, 06 junio 2016 17:31:36 Carlos Linares Lopez (clinares)>
+  Last update <martes, 07 junio 2016 15:44:09 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   Made by Carlos Linares Lopez

@@ -1,10 +1,10 @@
 /* 
-  KHSlazymsolver.h
-  Description: Implementation of Lazy m-Dijkstra/m-A*
+  KHSgdlazymsolver.h
+  Description: Implementation of goal-driven Lazy m-Dijkstra/m-A*
   ----------------------------------------------------------------------------- 
 
   Started on  <Mon May 16 16:09:01 2016 Carlos Linares Lopez>
-  Last update <martes, 07 junio 2016 16:03:42 Carlos Linares Lopez (clinares)>
+  Last update <martes, 07 junio 2016 20:25:33 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   $Id::                                                                      $
@@ -16,12 +16,14 @@
   Login   <clinares@atlas>
 */
 
-#ifndef   	KHSLAZYMSOLVER_H_
-# define   	KHSLAZYMSOLVER_H_
+#ifndef   	KHSGDLAZYMSOLVER_H_
+# define   	KHSGDLAZYMSOLVER_H_
 
 #include <algorithm>
+#include <exception>
+#include <stdexcept>
 
-#include "../structs/KHSmnode_t.h"
+#include "../structs/KHSfmnode_t.h"
 #include "../structs/KHSbucketvl_t.h"
 #include "../structs/KHSset_t.h"
 
@@ -32,12 +34,12 @@ namespace khs {
   using namespace std;
 
   template<class T>
-  class lazymsolver : public solver<T> {
+  class gdlazymsolver : public solver<T> {
 
   public:
     
     // Explicit constructor
-    lazymsolver (const mnode_t<T>& start, const mnode_t<T>& goal, unsigned int k)
+    gdlazymsolver (const fmnode_t<T>& start, const fmnode_t<T>& goal, unsigned int k)
       : solver<T> (start, goal, k),
       _m {1}            // originally, nodes cannot be expanded more than once!
     { }
@@ -45,7 +47,7 @@ namespace khs {
     // get accessors
     unsigned int get_m () const
     { return _m; }
-    const set_t<mnode_t<T>>& get_closed () const
+    const set_t<fmnode_t<T>>& get_closed () const
     { return _closed; }
     
     // methods
@@ -62,31 +64,117 @@ namespace khs {
 
   private:
 
+    // return a vector with all the descendants of the given node. It does not
+    // compute the heuristic value of any node
+    void _descendants (const fmnode_t<T>& node, deque<fmnode_t<T>>& children) const;
+        
+    // return a vector with all the descendants of the given node. It does
+    // compute the heuristic value of each descendant generated
+    void _h_descendants (const fmnode_t<T>& node, deque<fmnode_t<T>>& children) const;
+    
     // this function actually applies Lazy m-Dijkstra to the contents of the
     // specified open list until the goal node is found
-    void _solve (bucketvl_t<mnode_t<T>>& open);
+    void _solve (bucketvl_t<fmnode_t<T>>& open);
 
   protected:
 
-    // Lazy m-Dijkstra defers the expansion of nodes instead of expanding them
-    // eagerly. To do this, the maximum number of expansions per node is managed
-    // in a separate variable, called "m" for historical reasons
+    // Goal-driven Lazy m-Dijkstra defers the expansion of nodes instead of
+    // expanding them eagerly. To do this, the maximum number of expansions per
+    // node is managed in a separate variable, called "m" for historical
+    // reasons. Additionally, it only re-expands those nodes that have been
+    // discovered to be part of an optimal solution path.
     unsigned int _m;                   // maximum number of expansions per node
     
     // every search algorithm uses a closed list to store information about all
     // expanded nodes. Since this information is shared among various services,
     // it is stored as a data member of this class
-    set_t<mnode_t<T>> _closed;                                   // closed list
+    set_t<fmnode_t<T>> _closed;                                  // closed list
     
-  }; // class lazymsolver<T>
+  }; // class gdlazymsolver<T>
 
-  template<class T> void lazymsolver<T>::_solve (bucketvl_t<mnode_t<T>>& open)
+  template<class T> void gdlazymsolver<T>::_descendants (const fmnode_t<T>& node, 
+							 deque<fmnode_t<T>>& children) const
+  {
+    unsigned int g = node.get_g ();              // retrieve the current g-cost
+    T state = node.get_state ();               // retrieve the underlying state
+    
+    // get all the successors of the state specified in the node along with the
+    // cost of the edge
+    deque<pair<unsigned int, T>> successors = state.pair_descendants ();
+    for (typename deque<pair<unsigned int, T>>::iterator isuccessor = successors.begin ();
+	 isuccessor != successors.end ();
+	 isuccessor++) {
+
+      // create a child with all the neccesssary information including: the
+      // state, its m-value, its flag, its g-cost and the full path from the
+      // start state. Note that all children are generated. It is the task of
+      // the search algorithm using this expansion procedure to take care of not
+      // reexpanding nodes (e.g., using closed lists or maybe just checking the
+      // path of this node). Also, m (the number of times this node has been
+      // expanded) is initialized to zero and it is the responsibility of the
+      // function using this expansion procedure to compute it correctly (e.g.,
+      // by looking up the closed list). Likewise, the flag is set to false by
+      // default.
+      vector<T> path = node.get_path ();     // get the full path to the parent
+      path.push_back (isuccessor->second);    // add this successor to the path
+      fmnode_t<T> child (isuccessor->second,
+			 0,
+			 g+isuccessor->first,
+			 0,
+			 false,
+			 path);
+      
+      // and add it to the set of (legal) descendants
+      children.push_back (child);
+    }
+  }
+
+  // return a vector with all the descendants of the given node. It does
+  // compute the heuristic value of each descendant generated
+  template<class T> void gdlazymsolver<T>::_h_descendants (const fmnode_t<T>& node, 
+							   deque<fmnode_t<T>>& children) const
+  {
+    unsigned int g = node.get_g ();              // retrieve the current g-cost
+    T state = node.get_state ();               // retrieve the underlying state
+    
+    // get all the successors of the state specified in the node along with the
+    // cost of the edge
+    deque<pair<unsigned int, T>> successors = state.pair_descendants ();
+    for (typename deque<pair<unsigned int, T>>::iterator isuccessor = successors.begin ();
+	 isuccessor != successors.end ();
+	 isuccessor++) {
+
+      // create a child with all the neccesssary information including: the
+      // state, its m-value, its h-value, its g-cost and the full path from the
+      // start state. Note that all children are generated. It is the task of
+      // the search algorithm using this expansion procedure to take care of not
+      // reexpanding nodes (e.g., using closed lists or maybe just checking the
+      // path of this node). Also, m (the number of times this node has been
+      // expanded) is initialized to zero and it is the responsibility of the
+      // function using this expansion procedure to compute it correctly (e.g.,
+      // by looking up the closed list). Likewise, the flag is set to false by
+      // default.
+      vector<T> path = node.get_path ();     // get the full path to the parent
+      path.push_back (isuccessor->second);    // add this successor to the path
+      fmnode_t<T> child (isuccessor->second, 
+			 isuccessor->second.h (solver<T>::_goal.get_state ()),
+			 g+isuccessor->first,
+			 0,
+			 false,
+			 path);
+      
+      // and add it to the set of (legal) descendants
+      children.push_back (child);
+    }
+  }
+  
+  template<class T> void gdlazymsolver<T>::_solve (bucketvl_t<fmnode_t<T>>& open)
   {
 
     bool solution;                    // the last node examined was a solution?
 
     // create a specific OPEN list to store the goals
-    bucketvl_t<mnode_t<T>> goals;
+    bucketvl_t<fmnode_t<T>> goals;
     
     // clear the closed list
     _closed.clear ();
@@ -94,8 +182,8 @@ namespace khs {
     // -- Main loop
     while (open.get_size ()) {                 // while there are items in OPEN
 
-      mnode_t<T>* goal = goals.front ();                  // get the first goal
-      mnode_t<T>* node = open.front ();           // get the first item in OPEN
+      fmnode_t<T>* goal = goals.front ();                 // get the first goal
+      fmnode_t<T>* node = open.front ();          // get the first item in OPEN
       solution = false;                     // by default, it is not a solution
 
       // -- firstly, consume all solutions if any is found
@@ -106,9 +194,28 @@ namespace khs {
       while (goal && goal->get_f () <= node->get_f ()) {
 #endif	// __HEURISTIC__
 
-	// cout << " \tLength (GOALS): " << goals.get_size () << endl;
-	// cout << " \tC*[" << solver<T>::_n << "]: " << goal->get_g () << endl;
-	// cout << " \tf (node): " << node->get_f () << endl << endl; cout.flush ();
+	// first of all, mark all nodes in this solution as been part of a
+	// previous optimal solution path
+	for (typename vector<T>::const_iterator inode = goal->get_path ().begin ();
+	     inode != goal->get_path ().end ();
+	     ++inode) {
+
+	  // skip the goal since it is never expanded
+	  if (!(*inode == solver<T>::_goal.get_state ())) {
+	  
+	    // look for this specific node in closed
+	    fmnode_t<T>* isol = _closed.search (fmnode_t<T>(*inode));
+	    if (!isol) {
+	      cout << " Goal            : " << *goal << endl;
+	      cout << " Offending node  : " << *inode << endl;
+	      cout << " Offending fmnode: " << fmnode_t<T>(*inode) << endl << endl;
+	      cout.flush ();
+	      throw domain_error ("khs::gdlazymsolver<T>::_solve Node not found in CLOSED!");
+	    }
+	    
+	    isol->set_flag (true);           // and make its flag equal to true
+	  }
+	}
 	
 	// copy this solution, its cost, step length, the number of expansions
 	// and the time required to find this solution since the beginning
@@ -130,7 +237,6 @@ namespace khs {
       // iteration, then rewind the OPEN list giving the algorithm another
       // chance to find more solutions
       if (solution) {
-	// cout << " # solutions: " << solver<T>::_n << endl; cout.flush ();
 	_m++;                  // increment the allowed number of re-expansions
 	open.rewind ();                          // go to the beginning of OPEN
 	continue;                                  // and start a new iteration
@@ -139,11 +245,12 @@ namespace khs {
       // -- thirdly, consider expanding this node. Check if this node has ever
       // been expanded before. If it has been expanded a number of times less
       // than the allowed number of expansions per node, then proceed
-      mnode_t<T>* prev = _closed.search (*node);
+      fmnode_t<T>* prev = _closed.search (*node);
 
-      // in case this node has been already expanded as many times as _m, then
-      // preserve it in OPEN and move to the next one
-      if (prev && prev->get_m ()>=_m)
+      // in case this node has been already expanded as many times as _m, or it
+      // has been already expanded but it is not known to be part of any optimal
+      // solution then preserve it in OPEN and move to the next one
+      if (prev && (prev->get_m ()>=_m || !prev->get_flag ()))
 	open.next ();
 
       // otherwise
@@ -167,21 +274,21 @@ namespace khs {
 	// node before its descendants are inserted into OPEN as they are
 	// inserted by the front. Preserve, however, the current node as it will
 	// be used later
-	mnode_t<T> current (*node);
+	fmnode_t<T> current (*node);
 	open.remove ();
 
 	// expand this node using the descendants service which does not use the
 	// heuristic information
-	deque<mnode_t<T>> children;
+	deque<fmnode_t<T>> children;
 
 #ifdef __HEURISTIC__
-	solver<T>::_h_descendants (current, children);
+	_h_descendants (current, children);
 #else
-	solver<T>::_descendants (current, children);
+	_descendants (current, children);
 #endif	// __HEURISTIC__
 
 	// and insert all descendants into the open list
-	for (typename deque<mnode_t<T>>::iterator descendant=children.begin ();
+	for (typename deque<fmnode_t<T>>::iterator descendant=children.begin ();
 	     descendant != children.end ();
 	     ++descendant) {
 
@@ -221,8 +328,8 @@ namespace khs {
   // average number of expansions per node with a specific f-value. The second
   // contains the absolute number of nodes found in closed with a specific
   // f-value.
-  template<class T> void lazymsolver<T>::statistics (vector<double>& stats,
-						     vector<unsigned long long int>& samples)
+  template<class T> void gdlazymsolver<T>::statistics (vector<double>& stats,
+						       vector<unsigned long long int>& samples)
   {
 
     // initialization - stats is indexed by the f-value of each node. Thus, the
@@ -239,7 +346,7 @@ namespace khs {
     
     // the number of expansions of each node is stored in the closed list once
     // solve has been invoked. Hence, the closed list is traversed here
-    for (typename set<mnode_t<T>>::iterator it = _closed.begin () ;
+    for (typename set<fmnode_t<T>>::iterator it = _closed.begin () ;
 	 it != _closed.end () ;
 	 ++it ) {
 
@@ -256,7 +363,7 @@ namespace khs {
   
   // the main service of this class initializes some private attributes and
   // invokes the private methods that actually implement Lazy m-Dijkstra
-  template<class T> void lazymsolver<T>::solve ()
+  template<class T> void gdlazymsolver<T>::solve ()
   {
 
     // initialize all the statistics
@@ -275,17 +382,17 @@ namespace khs {
     solver<T>::_tstart = clock ();
 
     // create an initial open list that only contains the start state
-    bucketvl_t<mnode_t<T>> open;
+    bucketvl_t<fmnode_t<T>> open;
 
 #ifdef __HEURISTIC__
 
     // create the start state with information about the heuristic
-    mnode_t<T> start (solver<T>::_start.get_state (), solver<T>::_start.get_h ());
+    fmnode_t<T> start (solver<T>::_start.get_state (), solver<T>::_start.get_h ());
     
 #else
     
     // create the start state
-    mnode_t<T> start (solver<T>::_start.get_state ());
+    fmnode_t<T> start (solver<T>::_start.get_state ());
     
 #endif
     
@@ -305,7 +412,7 @@ namespace khs {
   
 } // namespace khs
 
-#endif 	    /* !KHSLAZYMSOLVER_H_ */
+#endif 	    /* !KHSGDLAZYMSOLVER_H_ */
 
 
 
