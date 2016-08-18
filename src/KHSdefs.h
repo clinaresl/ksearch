@@ -4,12 +4,14 @@
   ----------------------------------------------------------------------------- 
 
   Started on  <Mon Feb 25 17:03:20 2013 Carlos Linares Lopez>
-  Last update <miércoles, 11 mayo 2016 16:47:45 Carlos Linares Lopez (clinares)>
+  Last update <jueves, 21 julio 2016 10:20:00 Carlos Linares Lopez (clinares)>
   -----------------------------------------------------------------------------
 
   Made by Carlos Linares Lopez
   Login   <clinares@psyche>
 */
+
+#include <vector>
 
 #ifndef   	KHSDEFS_H_
 # define   	KHSDEFS_H_
