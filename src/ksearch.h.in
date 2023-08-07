@@ -18,29 +18,27 @@
 
 // ***initialization ***
 #include "KHSdefs.h"
-#include "KHSinit.h"
 
 // *** data structures
 
 // --- node
 #include "structs/KHSnode_t.h"
-#include "structs/KHSmnode_t.h"
-#include "structs/KHSfmnode_t.h"
+#include "structs/KHSbacknode_t.h"
 
-// --- open list
-#include "structs/KHSbucketvd_t.h"
-#include "structs/KHSbucketvl_t.h"
+// // --- open list
+// #include "structs/KHSbucketvd_t.h"
+// #include "structs/KHSbucketvl_t.h"
 
-// --- closed list
-#include "structs/KHSset_t.h"
+// // --- closed list
+// #include "structs/KHSset_t.h"
 
-// *** search algorithms
+// // *** search algorithms
 
-// --- base definition
-#include "algorithm/KHSsolver.h"
+// // --- base definition
+// #include "algorithm/KHSsolver.h"
 
-// m-Dijkstra
-#include "algorithm/KHSmsolver.h"
+// // m-Dijkstra
+// #include "algorithm/KHSmsolver.h"
 
 #endif // _KSEARCH_H_
 

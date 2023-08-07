@@ -8,13 +8,13 @@
   -----------------------------------------------------------------------------
 
   Made by Carlos Linares Lopez
-  Login   <clinares@psyche>
+  Login   <carlos.linares@uc3m.es>
 */
 
 #include <vector>
 
-#ifndef   	KHSDEFS_H_
-# define   	KHSDEFS_H_
+#ifndef KHSDEFS_H_
+# define KHSDEFS_H_
 
 #define EXIT_FAILURE 1
 #define NUMBER_BUCKETS 501                         // initial number of buckets
@@ -36,11 +36,11 @@ namespace khs {
       return false;
 
     // second, traverse all the elements of each path
-    for (unsigned int idx=0;idx<path1.size ();idx++)
+    for (unsigned int idx=0 ; idx < path1.size () ; idx++)
 
       // if they differ in one item, then they are different
-      if (!(path1[idx]==path2[idx]))
-	return false;
+      if ( !(path1[idx] == path2[idx]) )
+        return false;
 
     // if this point was reached, then both paths are the same
     return true;
@@ -48,7 +48,7 @@ namespace khs {
   
 } // namespace khs
 
-#endif 	    /* !KHSDEFS_H_ */
+#endif /* !KHSDEFS_H_ */
 
 
 
