@@ -6,7 +6,8 @@ add_executable(gtest
   TSThelpers.cc
   # ../domains/n-puzzle/npuzzle_t.cc
   structs/TSTnode_t.cc
-  structs/TSTbacknode_t.cc)
+  structs/TSTbacknode_t.cc
+  structs/TSTbucket_t.cc)
   # structs/TSTclosed_t.cc
   # structs/TSTclassical_perimeter_t.cc
   # structs/TSTcompressed_perimeter_t.cc

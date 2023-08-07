@@ -29,6 +29,9 @@ constexpr int MAX_VALUE = std::numeric_limits<int>::max ();
 // predefined number of values
 constexpr int MAX_VALUES = 100;
 
+// maximum number of buckets
+constexpr int MAX_NB_BUCKETS = 1'000'000;
+
 // minimum and maximum number of characters in strings randomly generated
 constexpr int MIN_NB_CHARS = 40;
 constexpr int MAX_NB_CHARS = 80;

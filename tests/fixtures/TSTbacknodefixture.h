@@ -7,7 +7,7 @@
 //
 
 //
-// Test fixture for testing back nodes
+// Test fixture for testing backnodes
 //
 
 #ifndef _TSTBACKNODEFIXTURE_H_
@@ -24,7 +24,7 @@
 
 // Class definition
 //
-// Defines a Google test fixture for testing nodes
+// Defines a Google test fixture for testing backnodes
 class BackNodeFixture : public ::testing::Test {
 
     protected:
