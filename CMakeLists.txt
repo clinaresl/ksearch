@@ -8,5 +8,5 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Recurse into the src/, domains/ and tests/ subdirectories
 add_subdirectory (src)
-#add_subdirectory (domains)
+add_subdirectory (domains)
 add_subdirectory (tests)
