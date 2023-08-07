@@ -1,0 +1,50 @@
+// -*- coding: utf-8 -*-
+// ksearch.h
+// -----------------------------------------------------------------------------
+//
+// Started on <lun 07-08-2023 13:53:29.565134107 (1691409209)>
+// Carlos Linares López <carlos.linares@uc3m.es>
+//
+
+//
+// Main include file
+//
+
+#ifndef _KSEARCH_H_
+#define _KSEARCH_H_
+
+// definitions
+#define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+
+// ***initialization ***
+#include "KHSdefs.h"
+#include "KHSinit.h"
+
+// *** data structures
+
+// --- node
+#include "structs/KHSnode_t.h"
+#include "structs/KHSmnode_t.h"
+#include "structs/KHSfmnode_t.h"
+
+// --- open list
+#include "structs/KHSbucketvd_t.h"
+#include "structs/KHSbucketvl_t.h"
+
+// --- closed list
+#include "structs/KHSset_t.h"
+
+// *** search algorithms
+
+// --- base definition
+#include "algorithm/KHSsolver.h"
+
+// m-Dijkstra
+#include "algorithm/KHSmsolver.h"
+
+#endif // _KSEARCH_H_
+
+// Local Variables:
+// mode:cpp
+// fill-column:80
+// End:

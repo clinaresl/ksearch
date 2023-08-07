@@ -1,75 +1,45 @@
-K optimal paths -- May, 2016
-
-
 # Introduction #
 
 This library implements a number of search algorithms to compute *K*
-optimal paths. It provides both *brute-force* and *heuristic* search
-algorithms.
-
-All algorithms are implemented in the method `solve` of different
-classes:
-
-1. *m-Dijkstra* and *m-A* are implemented in the `msolver` and
-`mhsolver` respectively. This algorithm expands each node up to *K*
-times, guaranteeing that the best *K* solutions are found. To force
-the algorithms to compute simple paths, the descendants of each node
-are compared with all the nodes in the path that led to its parent.
+(non-simple) optimal paths. It provides both *brute-force* and *heuristic*
+search algorithms.
 
 
 # Install #
 
-To compile the libksearch library you can use the following command:
+To download the code type the following:
 
-    $ ./configure; make
-
-The first command, `./configure`, will go through a number of tests
-and, if it does not find any error, it will create the `Makefile` that
-is executed with the second command.
-
-To install the library just type:
-
-    $ make install
-
-By default, the library is installed in `/usr/local/lib` and the
-header files are installed in
-`/usr/local/include/libksearch-MAJOR.MINOR` (where *MAJOR* and *MINOR*
-are substituted by the version numbers of this library) To change the
-include and lib dirs use `--prefix` with `./configure`:
-
-    $ ./configure --prefix=/home/myuser/local; make
-
-It will automatically create a `Makefile` which is specifically
-instructed to copy all the binaries and headers in
-`/home/myuser/local`
-
-To uninstall the binaries and headers of the libksearch library just
-execute:
-
-    $ make uninstall
-
-Finally, be aware that it might be necessary to prepend both `make
-install` and `make uninstall` with `sudo` in case you are installing
-in su-protected directories such as `/usr/local`
-
+``` sh
+    $ git clone https://github.com/clinaresl/libksearch.git
+```
 
 # License #
 
-libksearch is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation, either version 3 of the License, or (at your
-option) any later version.
+MIT License
 
-libksearch is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+Copyright (c) 2016, 2023, Carlos Linares López
 
-You should have received a copy of the GNU General Public License
-along with libksearch.  If not, see <http://www.gnu.org/licenses/>.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 
 # Author #
 
-Carlos Linares Lopez <carlos.linares@uc3m.es>
-
+Carlos Linares Lopez <carlos.linares@uc3m.es>  
+Computer Science and Engineering Department <https://www.inf.uc3m.es/en>  
+Universidad Carlos III de Madrid <https://www.uc3m.es/home>
