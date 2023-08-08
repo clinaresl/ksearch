@@ -21,6 +21,7 @@
 #include "TSTdefs.h"
 #include "../src/structs/KHSnode_t.h"
 #include "../src/structs/KHSbacknode_t.h"
+#include "../domains/n-pancake/npancake_t.h"
 
 // Generate a random string with length characters in the sequence ASCII(32) -
 // ASCII(126) which do not appear in the string exclude
@@ -42,10 +43,10 @@ std::vector<std::string> randVectorString (int n, int m, bool remove_duplicates=
 // return a vector with n backpointers, each one randomly created with two
 // values in the range [0, MAX_VALUE)
 template <typename T>
-std::vector<khs::backpointer_t<T>> randVectorBackpointer (int n) {
+std::vector<khs::backpointer_t> randVectorBackpointer (int n) {
 
     // create a vector of backpointers
-    std::vector<khs::backpointer_t<T>> backpointers;
+    std::vector<khs::backpointer_t> backpointers;
 
     // create a random number generator
     std::random_device rd;
@@ -54,12 +55,15 @@ std::vector<khs::backpointer_t<T>> randVectorBackpointer (int n) {
 
     // create n backpointers
     for (auto i = 0 ; i < n ; i++) {
-        auto bp = khs::backpointer_t<T> {size_t (dis (gen)), size_t (dis (gen))};
+        auto bp = khs::backpointer_t {size_t (dis (gen)), size_t (dis (gen))};
         backpointers.push_back (bp);
     }
 
     return backpointers;
 }
+
+// create a random instance of the N-Pancake with the given length
+const npancake_t randInstance (int n);
 
 #endif // _TSTHELPERS_H_
 

@@ -16,6 +16,7 @@
 #include<algorithm>
 #include<cstdlib>
 #include<ctime>
+#include<deque>
 #include<random>
 #include<vector>
 
@@ -25,6 +26,7 @@
 #include "../TSThelpers.h"
 #include "../../src/structs/KHSclosed_t.h"
 #include "../../src/structs/KHSbacknode_t.h"
+#include "../../domains/n-pancake/npancake_t.h"
 
 // Class definition
 //
@@ -38,6 +40,32 @@ protected:
         // just initialize the random seed to make sure that every iteration
         // is performed over different random data
         srand (time (nullptr));
+    }
+
+    // Generate a vector with n random instances of backnodes of the N-pancake
+    // with up to length discs each
+    std::vector<khs::backnode_t<npancake_t>> randNBackNodes (const int n, const int length) {
+
+        std::set<khs::backnode_t<npancake_t>> prev;
+        std::vector<khs::backnode_t<npancake_t>> instances;
+
+        // now, create as many random instances as requested of the given length
+        for (auto i = 0 ; i < n ; i++){
+
+            // create a backnode with a random instance of a pancake
+            auto iperm = randInstance (length);
+
+            // and ensure it is unique
+            while (prev.find (iperm) != prev.end ()) {
+                iperm = randInstance (length);
+            }
+
+            // and add it to the vector of instances to return
+            khs::backnode_t ipancake {iperm};
+            instances.push_back (ipancake);
+        }
+
+        return instances;
     }
 };
 

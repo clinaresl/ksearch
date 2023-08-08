@@ -97,6 +97,24 @@ vector<string> randVectorString (int n, int m, bool remove_duplicates) {
     return result;
 }
 
+// create a random instance of the N-Pancake with the given length
+const npancake_t randInstance (int n) {
+
+    // first, create the identity permutation of the given length
+    std::vector<int> goal;
+    for (auto i = 0 ; i < n ; goal.push_back (i++));
+
+    // and just shuffle the goal
+    std::random_device rd;
+    std::mt19937 generator (rd());
+    std::shuffle (goal.begin (), goal.end (), generator);
+
+    // and return the random instance
+    npancake_t result {goal};
+    return result;
+}
+
+
 // Local Variables:
 // mode:cpp
 // fill-column:80

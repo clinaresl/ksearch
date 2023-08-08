@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "../TSTdefs.h"
+#include "../TSThelpers.h"
 #include "../../domains/n-pancake/npancake_t.h"
 
 // Class definition
@@ -33,23 +34,6 @@ protected:
         // just initialize the random seed to make sure that every iteration is
         // performed over different random data
         srand (time (nullptr));
-    }
-
-    // create a random instance of the N-Pancake with the given length
-    const npancake_t randInstance (int n) {
-
-        // first, create the identity permutation of the given length
-        std::vector<int> goal;
-        for (auto i = 0 ; i < n ; goal.push_back (i++));
-
-        // and just shuffle the goal
-        std::random_device rd;
-        std::mt19937 generator (rd());
-        std::shuffle (goal.begin (), goal.end (), generator);
-
-        // and return the random instance
-        npancake_t result {goal};
-        return result;
     }
 
     // given two instances of the N-Pancake, it returns the number of discs of

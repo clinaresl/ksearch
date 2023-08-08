@@ -43,8 +43,7 @@ namespace khs {
     public:
 
         // Default constructor
-        closed_t ()
-            {}
+        closed_t () = default;
 
         // modifiers
 

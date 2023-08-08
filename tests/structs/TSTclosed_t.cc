@@ -26,241 +26,235 @@ TEST_F (ClosedFixture, Empty) {
     }
 }
 
-// // checks that instances of the sliding-tile puzzle can be inserted in closed
-// // lists
-// // ----------------------------------------------------------------------------
-// TEST_F (ClosedFixture, NPuzzleInsertion) {
+// checks that instances of the N-Pancake can be inserted in closed lists
+// ----------------------------------------------------------------------------
+TEST_F (ClosedFixture, BackNPancakeInsertion) {
 
-//     for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
-//         // create an empty closed list (of n-puzzles)
-//         khs::closed_t<khs::node_t<npuzzle_t>> closed;
+        // create an empty closed list (of n-pancakes)
+        khs::closed_t<khs::backnode_t<npancake_t>> closed;
 
-//         // create a random number of different nodes of npuzzles. Since the
-//         // closed list does not store duplicates make sure that all nodes are
-//         // unique
-//         auto values = randNNodes<npuzzle_t> (1 + rand () % MAX_VALUES, NB_TILES);
+        // create a random number of different nodes of npancakes. Since the
+        // closed list does not store duplicates make sure that all nodes are
+        // unique
+        auto values = randNBackNodes (1 + rand () % MAX_VALUES, NB_DISCS);
 
-//         // Insert them all into closed
-//         int idx = 0;
-//         for (auto value : values) {
-//             auto ptr = closed.insert (value);
+        // Insert them all into closed
+        int idx = 0;
+        for (auto value : values) {
+            auto ptr = closed.insert (value);
 
-//             // check this item is inserted next to the last one
-//             ASSERT_EQ (ptr, idx);
+            // check this item is inserted next to the last one
+            ASSERT_EQ (ptr, idx);
 
-//             // and verify the size is correct
-//             idx++;
-//             ASSERT_EQ (closed.size (), idx);
-//         }
-//     }
-// }
+            // and verify the size is correct
+            idx++;
+            ASSERT_EQ (closed.size (), idx);
+        }
+    }
+}
 
-// // checks that lookups work correctly in closed lists of nodes of n-puzzles
-// // ----------------------------------------------------------------------------
-// TEST_F (ClosedFixture, NPuzzleLookup) {
+// checks that lookups work correctly in closed lists of nodes of n-pancakes
+// ----------------------------------------------------------------------------
+TEST_F (ClosedFixture, BackNPancakeLookup) {
 
-//     for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
-//         // create an empty closed list (of n-puzzles)
-//         khs::closed_t<khs::node_t<npuzzle_t>> closed;
+        // create an empty closed list (of n-pancakes)
+        khs::closed_t<khs::node_t<npancake_t>> closed;
 
-//         // create a random number of diffferent nodes of npuzzles. Since the
-//         // closed list does not store duplicates make sure that all nodes are
-//         // unique
-//         auto values = randNNodes<npuzzle_t> (2*(1 + rand () % MAX_VALUES), NB_TILES);
+        // create a random number of diffferent nodes of npancakes. Since the
+        // closed list does not store duplicates make sure that all nodes are
+        // unique
+        auto values = randNBackNodes (2*(1 + rand () % MAX_VALUES), NB_DISCS);
 
-//         // Insert only half of the nodes in the closed list
-//         auto idx = 0;
-//         for (auto item : values) {
-//             closed.insert (item);
+        // Insert only half of the nodes in the closed list
+        auto idx = 0;
+        for (auto item : values) {
+            closed.insert (item);
 
-//             // and verify the size is correct
-//             idx++;
-//             ASSERT_EQ (closed.size (), idx);
+            // and verify the size is correct
+            idx++;
+            ASSERT_EQ (closed.size (), idx);
 
-//             // in case that half of the nodes have been already processed, exit
-//             if (idx >= values.size ()/2) {
-//                 break;
-//             }
-//         }
+            // in case that half of the nodes have been already processed, exit
+            if (idx >= values.size ()/2) {
+                break;
+            }
+        }
 
-//         // Now, ensure that all those nodes that have been inserted are actually
-//         // found. Likewise, that those not being inserted are not found
-//         idx = 0;
-//         for (auto item : values) {
+        // Now, ensure that all those nodes that have been inserted are actually
+        // found. Likewise, that those not being inserted are not found
+        idx = 0;
+        for (auto item : values) {
 
-//             // lookup for this value in closed
-//             auto lookup = closed.find (item);
+            // lookup for this value in closed
+            auto lookup = closed.find (item);
 
-//             // inserted values
-//             if (idx < values.size ()/2) {
+            // inserted values
+            if (idx < values.size ()/2) {
 
-//                 // verify the information returned is correct
-//                 ASSERT_TRUE (lookup != string::npos);
-//                 ASSERT_EQ (closed[lookup], item);
-//             } else {
+                // verify the information returned is correct
+                ASSERT_TRUE (lookup != string::npos);
+                ASSERT_EQ (closed[lookup], item);
+            } else {
 
-//                 // unexisting values. Note that when an entry does not exist
-//                 // there is no need to check the value of the iterator
-//                 ASSERT_TRUE (lookup == string::npos);
-//             }
+                // unexisting values. Note that when an entry does not exist
+                // there is no need to check the value of the iterator
+                ASSERT_TRUE (lookup == string::npos);
+            }
 
-//             // and increment the number of nodes processed so far
-//             idx++;
-//         }
-//     }
-// }
+            // and increment the number of nodes processed so far
+            idx++;
+        }
+    }
+}
 
-// // Check that nodes in the closed list are indeed inserted sequentially
-// // ----------------------------------------------------------------------------
-// TEST_F (ClosedFixture, NPuzzleSequential) {
+// Check that nodes in the closed list are indeed inserted sequentially
+// ----------------------------------------------------------------------------
+TEST_F (ClosedFixture, BackNPancakeSequential) {
 
-//     for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
-//         // create an empty closed list (of n-puzzles)
-//         khs::closed_t<khs::node_t<npuzzle_t>> closed;
+        // create an empty closed list (of n-pancakes)
+        khs::closed_t<khs::node_t<npancake_t>> closed;
 
-//         // create a random number of diffferent nodes of npuzzles. Since the
-//         // closed list does not store duplicates make sure that all nodes are
-//         // unique
-//         auto values = randNNodes<npuzzle_t> (1+rand () % MAX_VALUES, NB_TILES);
+        // create a random number of diffferent nodes of npancakes. Since the
+        // closed list does not store duplicates make sure that all nodes are
+        // unique
+        auto values = randNBackNodes (1+rand () % MAX_VALUES, NB_DISCS);
 
-//         // Insert them all into closed and populate a vector of nodes of
-//         // n-puzzles with the same information. Nodes in closed are inserted in
-//         // the private vector in sequential order so that the same ordering is
-//         // followed here
-//         vector<khs::node_t<npuzzle_t>> nodes;
-//         for (auto value : values) {
-//             auto ptr = closed.insert (value);
-//             nodes.push_back (value);
+        // Insert them all into closed and also in a vector of backnodes of
+        // n-pancakes. Nodes in closed are inserted in the private vector in
+        // sequential order so that the same ordering should be followed by the
+        // vector.
+        vector<khs::node_t<npancake_t>> nodes;
+        for (auto value : values) {
+            auto ptr = closed.insert (value);
+            nodes.push_back (value);
 
-//             // ensure that nodes have been correctly inserted in the vector
-//             // nodes
-//             ASSERT_EQ (ptr, nodes.size ()-1);
-//         }
+            // ensure that nodes have been correctly inserted in the vector
+            // nodes
+            ASSERT_EQ (ptr, nodes.size ()-1);
+        }
 
-//         // Now, traverse the vector of nodes to verify that they are inserted in
-//         // the expected order
-//         for (auto idx = 0 ; idx < nodes.size () ; idx++) {
+        // Now, traverse the vector of nodes to verify that they are inserted in
+        // the expected order
+        for (auto idx = 0 ; idx < nodes.size () ; idx++) {
 
-//             // check that nodes in closed are stored sequentially
-//             ASSERT_EQ (nodes[idx], closed[idx]);
-//         }
-//     }
-// }
+            // check that nodes in closed are stored sequentially
+            ASSERT_EQ (nodes[idx], closed[idx]);
+        }
+    }
+}
 
-// // Check that nodes in closed consistently store pointers to themselves within
-// // the closed list
-// // ----------------------------------------------------------------------------
-// TEST_F (ClosedFixture, NPuzzlePointers) {
+// Check that nodes in closed consistently store pointers to themselves within
+// the closed list
+// ----------------------------------------------------------------------------
+TEST_F (ClosedFixture, BackNPancakePointers) {
 
-//     for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
-//         // create an empty closed list (of n-puzzles)
-//         khs::closed_t<khs::node_t<npuzzle_t>> closed;
+        // create an empty closed list (of n-pancakes)
+        khs::closed_t<khs::node_t<npancake_t>> closed;
 
-//         // create a random number of diffferent nodes of npuzzles. Since the
-//         // closed list does not store duplicates make sure that all nodes are
-//         // unique
-//         auto values = randNNodes<npuzzle_t> (1+rand () % MAX_VALUES, NB_TILES);
+        // create a random number of diffferent nodes of npancakes. Since the
+        // closed list does not store duplicates make sure that all nodes are
+        // unique
+        auto values = randNBackNodes (1+rand () % MAX_VALUES, NB_DISCS);
 
-//         // Insert them all into closed
-//         for (auto& value : values) {
+        // Insert them all into closed
+        for (auto& value : values) {
 
-//             // the following statement actually sets the pointer of a node. Note
-//             // the usage of const_cast to ensure that the pointer can be set
-//             closed.insert (const_cast<khs::node_t<npuzzle_t>&>(value));
-//         }
+            // the following statement actually sets the pointer of a node. Note
+            // the usage of const_cast to ensure that the pointer can be set
+            closed.insert (const_cast<khs::backnode_t<npancake_t>&>(value));
+        }
 
-//         // ensure that pointers of the random instances are correctly set. First
-//         // accessing the closed list by reference
-//         for (auto& value : values) {
+        // ensure that pointers of the random instances are correctly set. First
+        // accessing the closed list by reference
+        for (auto& value : values) {
 
-//             // find this item in closed, which is known to exist!
-//             auto ptr = closed.find (value);
-//             ASSERT_TRUE (ptr != string::npos);
+            // find this item in closed, which is known to exist!
+            auto ptr = closed.find (value);
+            ASSERT_TRUE (ptr != string::npos);
 
-//             // now, ensure that both the item pointed to by the pointer and the
-//             // result of looking it up are the same
-//             ASSERT_EQ (value.get_pointer (), ptr);
-//         }
+            // now, ensure that both the item pointed to by the pointer and the
+            // result of looking it up are the same
+            ASSERT_EQ (value.get_pointer (), ptr);
+        }
 
-//         // Secondly, accesing the closed list by index
-//         for (auto idx = 0 ; idx < closed.size () ; idx++) {
-//             ASSERT_EQ (idx, closed[idx].get_pointer ());
-//         }
-//     }
-// }
+        // Secondly, accesing the closed list by index
+        for (auto idx = 0 ; idx < closed.size () ; idx++) {
+            ASSERT_EQ (idx, closed[idx].get_pointer ());
+        }
+    }
+}
 
-// // Check that nodes in closed properly store a backpointer to their parents
-// // ----------------------------------------------------------------------------
-// TEST_F (ClosedFixture, NPuzzleBackPointers) {
+// Check that nodes in closed properly store a backpointer to their parents
+// ----------------------------------------------------------------------------
+TEST_F (ClosedFixture, BackNPancakeBackPointers) {
 
-//     for (auto i = 0 ; i < NB_TESTS/1000 ; i++) {
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
-//         // create an empty closed list (of n-puzzles)
-//         khs::closed_t<khs::node_t<npuzzle_t>> closed;
+        // create an empty closed list (of n-pancakes)
+        khs::closed_t<khs::backnode_t<npancake_t>> closed;
 
-//         // create a random number of diffferent nodes of npuzzles. Since the
-//         // closed list does not store duplicates make sure that all nodes are
-//         // unique
-//         auto values = randNNodes<npuzzle_t> (1+rand () % MAX_VALUES, NB_TILES);
+        // simulate a path just by randomly selecting backnodes each one with a
+        // different instance of a N-Pancake
+        auto path = randNBackNodes (MAX_PATH_LENGTH, NB_DISCS);
 
-//         // Insert them all into closed using a null backpointer
-//         for (auto& value : values) {
+        // Insert them all into closed
+        for (auto i = 0 ; i < path.size () ; i++) {
 
-//             // use a null backpointer because these nodes are the root of paths
-//             // randomly generated
-//             const_cast<khs::node_t<npuzzle_t>&>(value).set_backpointer (string::npos);
-//             closed.insert (const_cast<khs::node_t<npuzzle_t>&>(value));
-//         }
+            // The first backnode is inserted with a null backpointer, whereas
+            // the rest refer to the previous item (this is true because nodes
+            // in closed are given pointers as indices to a private list
+            // starting from zero)
+            size_t backpointer = (i == 0) ? string::npos : i-1;
 
-//         // initialize internal data for correctly and efficiently handling
-//         // n-puzzles
-//         npuzzle_t::initops ();
-//         npuzzle_t::init ();
+            // set the backpointer of the i-th node and inserted into the closed
+            // list
+            khs::backpointer_t bp{backpointer, 0};
+            path[i].set_backpointer (bp);
+            closed.insert (path[i]);
+        }
 
-//         // extend the current closed list with paths randomly generated from
-//         // each node previously inserted into the closed list. These nodes must
-//         // also have their backpointer properly set
-//         for (auto value : values) {
+        // Try now to reconstruct the path from the last node in the simulated
+        // path just by traversing the closed list. Because there is no
+        // backpointer to the last item in the path, it has to be manually
+        // added. Use a deque because it is necessary to push by the front
+        std::deque<khs::backnode_t<npancake_t>> reconstructed;
+        reconstructed.push_front (path.back ());
 
-//             // generate a path from this node
-//             generatePath<npuzzle_t>(value, closed, 1 + rand () % MAX_PATH_LENGTH);
-//         }
+        // find in closed the last node in the path
+        auto goal = closed[closed.find (path.back ())];
 
-//         // Check that nodes in closed either have a null backpointer or they
-//         // have a backpointer to a node so that they are children of that node
-//         auto nbparents = 0;
-//         for (auto idx = 0 ; idx < closed.size () ; idx++) {
+        // Note that every node in closed should have only backpointer
+        auto backpointers = goal.get_backpointers ();
+        ASSERT_EQ (backpointers.size (), 1);
+        auto bp = backpointers[0];
 
-//             // get the idx-th node
-//             auto node = closed[idx];
+        // and traverse the closed list reconstructing the original path
+        while (bp.get_pointer() != string::npos) {
+            reconstructed.push_front (closed[bp.get_pointer ()]);
 
-//             // if the backpointer of this node is null, then there is nothing to
-//             // check but count the number of such nodes
-//             if (node.get_backpointer () == string::npos) {
-//                 nbparents++;
-//             } else {
+            // and find its immediate ancestor. In passing verify this node only
+            // has one backpointer
+            backpointers = closed[bp.get_pointer ()].get_backpointers ();
+            ASSERT_EQ (backpointers.size (), 1);
+            bp = backpointers[0];
+        }
 
-//                 // first of all, ensure that the pointer to the parent is within
-//                 // bounds
-//                 ASSERT_TRUE (node.get_backpointer () < closed.size ());
-
-//                 // otherwise, ensure that this node is indeed a child of the
-//                 // node pointed to by the backpointer
-//                 auto parent = closed[node.get_backpointer ()];
-//                 auto children = descendants<npuzzle_t>(parent);
-//                 ASSERT_TRUE (find (children.begin (), children.end (), node) != children.end ());
-//             }
-//         }
-
-//         // finally, ensure that the number of parents is precisely the number of
-//         // nodes randomly generated
-//         ASSERT_EQ (values.size (), nbparents);
-//     }
-// }
+        // now, verify that both the path and the reconstructed path are
+        // strictly equal
+        ASSERT_EQ (path.size (), reconstructed.size ());
+        for (auto i = 0 ; i < path.size () ; i++) {
+            ASSERT_EQ (path[i], reconstructed[i]);
+        }
+    }
+}
 
 
 

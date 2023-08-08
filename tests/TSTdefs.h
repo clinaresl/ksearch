@@ -39,6 +39,9 @@ constexpr int MAX_NB_CHARS = 80;
 // number of discs used in the simultation of the pancake puzzle
 constexpr int NB_DISCS = 20;
 
+// maximum length of paths
+constexpr int MAX_PATH_LENGTH = 100;
+
 #endif // _TSTDEFS_H_
 
 // Local Variables:
