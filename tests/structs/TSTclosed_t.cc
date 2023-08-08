@@ -111,6 +111,54 @@ TEST_F (ClosedFixture, BackNPancakeLookup) {
     }
 }
 
+// Check that nodes in closed can be looked up and their information correctly
+// retrieved
+// ----------------------------------------------------------------------------
+TEST_F (ClosedFixture, BackNPancakeInformation) {
+
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+
+        // create an empty closed list (of n-pancakes)
+        khs::closed_t<khs::node_t<npancake_t>> closed;
+
+        // create a random number of diffferent nodes of npancakes. Since the
+        // closed list does not store duplicates make sure that all nodes are
+        // unique
+        auto values = randNBackNodes (1 + rand () % MAX_VALUES, NB_DISCS);
+
+        // generate random g- and h-values and insert them in each backnode
+        vector<int> gvalues, hvalues;
+        for (auto i = 0 ; i < values.size () ; i++) {
+            gvalues.push_back (rand () % MAX_VALUES);
+            hvalues.push_back (rand () % MAX_VALUES);
+            values[i].set_g (gvalues.back ());
+            values[i].set_h (hvalues.back ());
+        }
+
+        // Insert all nodes in the closed list
+        auto idx = 0;
+        for (auto item : values) {
+            closed.insert (item);
+
+            // and verify the size is correct
+            idx++;
+            ASSERT_EQ (closed.size (), idx);
+        }
+
+        // Now, look for every node in the closed list and verify that its g-
+        // and h-values are correct
+        for (auto idx = 0 ; idx < values.size () ; idx++) {
+
+            // lookup for this backnode in closed
+            auto ptr = closed.find (values[idx]);
+
+            // and verify their g- and h-values are correct
+            ASSERT_EQ (closed[ptr].get_g (), gvalues[idx]);
+            ASSERT_EQ (closed[ptr].get_h (), hvalues[idx]);
+        }
+    }
+}
+
 // Check that nodes in the closed list are indeed inserted sequentially
 // ----------------------------------------------------------------------------
 TEST_F (ClosedFixture, BackNPancakeSequential) {
