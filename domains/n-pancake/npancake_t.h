@@ -23,6 +23,7 @@
 #include<utility>
 #include<vector>
 
+
 // Class definition
 //
 // Defintion of a state of the N-pancake
@@ -82,6 +83,12 @@ public:
     // two instances are the same if they have the same permutation
     bool operator==(const npancake_t& right) const {
         return _perm == right.get_perm ();
+    }
+
+    // get the contents of the i-th location. In case i is out of bounds the
+    // results are undefined
+    const int operator[](int i) const {
+        return _perm[i];
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const npancake_t& right) {

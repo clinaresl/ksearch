@@ -36,6 +36,9 @@ constexpr int MAX_NB_BUCKETS = 1'000'000;
 constexpr int MIN_NB_CHARS = 40;
 constexpr int MAX_NB_CHARS = 80;
 
+// number of discs used in the simultation of the pancake puzzle
+constexpr int NB_DISCS = 20;
+
 #endif // _TSTDEFS_H_
 
 // Local Variables:
