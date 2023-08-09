@@ -25,6 +25,24 @@ namespace khs {
 
   // template functions
   
+  // return a forward iterator to the first occurrence within the given range
+  // which does NOT verify the given binary predicate
+  template<class ForwardIt, class BinaryPredicate>
+  ForwardIt adjacent_find_not (ForwardIt first, ForwardIt last, BinaryPredicate p) {
+
+    if (first == last) {
+      return last;
+    }
+    ForwardIt next = first;
+    ++next;
+    for (; next != last; ++next, ++first) {
+      if (!p(*first, *next)) {
+        return first;
+      }
+    }
+    return last;
+  }
+
   // the following service returns true if two vectors are the same and false
   // otherwise
   template<class T> 

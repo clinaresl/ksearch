@@ -9,7 +9,8 @@ add_executable(gtest
   structs/TSTbucket_t.cc
   ../domains/n-pancake/npancake_t.cc
   domains/TSTnpancake.cc
-  structs/TSTclosed_t.cc)
+  structs/TSTclosed_t.cc
+  structs/TSTsolution_t.cc)
 
 target_link_libraries(gtest LINK_PUBLIC ksearch GTest::gtest GTest::gtest_main)
 

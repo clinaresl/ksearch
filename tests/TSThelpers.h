@@ -63,7 +63,7 @@ std::vector<khs::backpointer_t> randVectorBackpointer (int n) {
 }
 
 // create a random instance of the N-Pancake with the given length
-const npancake_t randInstance (int n);
+const npancake_t randInstance (int length);
 
 #endif // _TSTHELPERS_H_
 
