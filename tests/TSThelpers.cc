@@ -114,6 +114,37 @@ const npancake_t randInstance (int length) {
     return result;
 }
 
+// Generate a correct path from the given start state with the specified number
+// of transitions. It also returns the cost of the solution found under the cost
+// model used in the initialization of the init table outside this function
+const pair<vector<npancake_t>, int> randPath (const npancake_t& start, const int length) {
+
+    int cost = 0;
+    vector<npancake_t> path;
+
+    // add the start state to the path
+    path.push_back (start);
+
+    // starting from the given start state create a descendant and add it to
+    // the path
+    while (path.size () < length) {
+
+        // compute all children of the last state in the path
+        vector<tuple<int, int, npancake_t>> successors;
+        path.back ().children (0, start, successors);
+
+        // and randomly select one
+        int idx = rand () % successors.size ();
+
+        // and add it to the path and update the cost
+        path.push_back (get<2> (successors[idx]));
+        cost += get<0> (successors[idx]);
+    }
+
+    // and finally return a pair with the path and the cost
+    return make_pair (path, cost);
+}
+
 
 // Local Variables:
 // mode:cpp

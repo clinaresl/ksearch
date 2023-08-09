@@ -1,17 +1,17 @@
 // -*- coding: utf-8 -*-
-// TSTsolutionfixture.h
+// TSTksolutionfixture.h
 // -----------------------------------------------------------------------------
 //
-// Started on <mié 09-08-2023 11:48:44.146700171 (1691574524)>
+// Started on <mié 09-08-2023 14:06:30.837278054 (1691582790)>
 // Carlos Linares López <carlos.linares@uc3m.es>
 //
 
 //
-// Fixture for testing the solution_t class
+// Fixture for testing the ksolution_t class
 //
 
-#ifndef _TSTSOLUTIONFIXTURE_H_
-#define _TSTSOLUTIONFIXTURE_H_
+#ifndef _TSTKSOLUTIONFIXTURE_H_
+#define _TSTKSOLUTIONFIXTURE_H_
 
 #include<algorithm>
 #include<cstdlib>
@@ -22,13 +22,13 @@
 
 #include "../TSTdefs.h"
 #include "../TSThelpers.h"
-#include "../../src/structs/KHSsolution_t.h"
+#include "../../src/structs/KHSksolution_t.h"
 #include "../../domains/n-pancake/npancake_t.h"
 
 // Class definition
 //
-// Defines a Google test fixture for testing the solution_t class
-class SolutionFixture : public ::testing::Test {
+// Defines a Google test fixture for testing the ksolution_t class
+class KSolutionFixture : public ::testing::Test {
 
 protected:
 
@@ -41,7 +41,7 @@ protected:
 };
 
 
-#endif // _TSTSOLUTIONFIXTURE_H_
+#endif // _TSTKSOLUTIONFIXTURE_H_
 
 // Local Variables:
 // mode:cpp

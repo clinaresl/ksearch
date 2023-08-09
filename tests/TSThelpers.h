@@ -65,6 +65,11 @@ std::vector<khs::backpointer_t> randVectorBackpointer (int n) {
 // create a random instance of the N-Pancake with the given length
 const npancake_t randInstance (int length);
 
+// Generate a correct path from the given start state with the specified number
+// of transitions. It also returns the cost of the solution found under the cost
+// model used in the initialization of the init table outside this function
+const std::pair<std::vector<npancake_t>, int> randPath (const npancake_t& start, const int length);
+
 #endif // _TSTHELPERS_H_
 
 // Local Variables:
