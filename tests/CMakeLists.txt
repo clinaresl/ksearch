@@ -11,7 +11,8 @@ add_executable(gtest
   domains/TSTnpancake.cc
   structs/TSTclosed_t.cc
   structs/TSTsolution_t.cc
-  structs/TSTksolution_t.cc)
+  structs/TSTksolution_t.cc
+  structs/TSTksolutions_t.cc)
 
 target_link_libraries(gtest LINK_PUBLIC ksearch GTest::gtest GTest::gtest_main)
 

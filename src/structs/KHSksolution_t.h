@@ -47,10 +47,6 @@ namespace khs {
             _solutions { std::vector<solution_t<T>>() }
             {}
 
-        // copy and move constructors are forbidden
-        ksolution_t (const ksolution_t&) = delete;
-        ksolution_t (ksolution_t&&) = delete;
-
         // getters
         const int get_k () const {
             return _k;
@@ -66,10 +62,6 @@ namespace khs {
         }
 
         // operator overloading
-
-        // assignment and move operators are dissallowed as well
-        ksolution_t& operator=(const ksolution_t&) = delete;
-        ksolution_t& operator=(ksolution_t&&) = delete;
 
         // solutions can be augmented by adding a single solution
         ksolution_t& operator+= (const solution_t<T>& right) {
