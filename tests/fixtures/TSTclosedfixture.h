@@ -26,6 +26,7 @@
 #include "../TSThelpers.h"
 #include "../../src/structs/KHSclosed_t.h"
 #include "../../src/structs/KHSbacknode_t.h"
+#include "../../src/algorithm/KHSmA.h"
 #include "../../domains/n-pancake/npancake_t.h"
 
 // Class definition

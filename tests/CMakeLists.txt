@@ -12,7 +12,8 @@ add_executable(gtest
   structs/TSTclosed_t.cc
   structs/TSTsolution_t.cc
   structs/TSTksolution_t.cc
-  structs/TSTksolutions_t.cc)
+  structs/TSTksolutions_t.cc
+  algorithm/TSTmA.cc)
 
 target_link_libraries(gtest LINK_PUBLIC ksearch GTest::gtest GTest::gtest_main)
 

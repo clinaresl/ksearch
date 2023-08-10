@@ -17,7 +17,7 @@
 # define KHSDEFS_H_
 
 #define EXIT_FAILURE 1
-#define NUMBER_BUCKETS 501                         // initial number of buckets
+#define NUMBER_BUCKETS 1024                        // initial number of buckets
 
 namespace khs {
 
