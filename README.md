@@ -13,6 +13,29 @@ To download the code type the following:
     $ git clone https://github.com/clinaresl/libksearch.git
 ```
 
+To compile the source code, create first the `Makefile` with:
+
+``` sh
+    $ cmake . -DCMAKE_BUILD_TYPE=Release
+    $ make
+```
+
+from the `libksearch/` directory created after the clone. It will build the
+library, a solver for every domain defined under `domains/`, and the unit tests.
+
+# Tests #
+
+This library comes with a number of unit tests that have been implemented with
+[Google Test](https://github.com/google/googletest). If Google Test is available
+in your computer, then you can compile and run the tests with:
+
+``` sh
+    $ make gtest
+    $ tests/gtest
+```
+
+from the `libksearch/` directory created after the clone.
+
 # License #
 
 MIT License
