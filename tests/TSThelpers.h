@@ -21,6 +21,7 @@
 #include "TSTdefs.h"
 #include "../src/structs/KHSnode_t.h"
 #include "../src/structs/KHSbacknode_t.h"
+#include "../src/structs/KHSlabelednode_t.h"
 #include "../domains/n-pancake/npancake_t.h"
 
 // Generate a random string with length characters in the sequence ASCII(32) -
@@ -56,6 +57,28 @@ std::vector<khs::backpointer_t> randVectorBackpointer (int n) {
     // create n backpointers
     for (auto i = 0 ; i < n ; i++) {
         auto bp = khs::backpointer_t {size_t (dis (gen)), size_t (dis (gen))};
+        backpointers.push_back (bp);
+    }
+
+    return backpointers;
+}
+
+// return a vector with n labeledbackpointers, each one randomly created with
+// two values in the range [0, MAX_VALUE)
+template <typename T>
+std::vector<khs::labeledbackpointer_t> randVectorLabeledBackpointer (int n) {
+
+    // create a vector of labeledbackpointers
+    std::vector<khs::labeledbackpointer_t> backpointers;
+
+    // create a random number generator
+    std::random_device rd;
+    std::mt19937 gen (rd ());
+    std::uniform_int_distribution<> dis (0, MAX_VALUE);
+
+    // create n backpointers
+    for (auto i = 0 ; i < n ; i++) {
+        auto bp = khs::labeledbackpointer_t {size_t (dis (gen)), size_t (dis (gen)), int (dis (gen))};
         backpointers.push_back (bp);
     }
 

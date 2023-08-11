@@ -4,6 +4,7 @@ add_library (ksearch
   KHSdefs.h
   structs/KHSnode_t.h
   structs/KHSbacknode_t.h
+  structs/KHSlabelednode_t.h
   structs/KHSbucket_t.h
   structs/KHSsolution_t.h
   structs/KHSksolution_t.h

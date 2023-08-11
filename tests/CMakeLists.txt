@@ -6,6 +6,7 @@ add_executable(gtest
   TSThelpers.cc
   structs/TSTnode_t.cc
   structs/TSTbacknode_t.cc
+  structs/TSTlabelednode_t.cc
   structs/TSTbucket_t.cc
   ../domains/n-pancake/npancake_t.cc
   domains/TSTnpancake.cc

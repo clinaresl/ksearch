@@ -98,7 +98,7 @@ namespace khs {
             return stream;
         }
 
-    }; // class backnode_t<T
+    }; // class backnode_t<T>
 
 } // namespace khs
 
@@ -118,7 +118,7 @@ namespace std {
             return std::hash<T>{}(node.get_state ());
         }
 
-    }; // struct hash<node_t<T>>
+    }; // struct hash<backnode_t<T>>
 } // namespace std
 
 
