@@ -265,7 +265,7 @@ TEST_F (ClosedFixture, BackNPancakeBackPointers) {
             // set the backpointer of the i-th node and inserted into the closed
             // list
             khs::backpointer_t bp{backpointer, 0};
-            path[i].set_backpointer (bp);
+            path[i] += bp;
             closed.insert (path[i]);
         }
 

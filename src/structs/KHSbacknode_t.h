@@ -74,10 +74,6 @@ namespace khs {
         const backpointer_t& get_backpointer (size_t index) const
             { return _backpointers[index]; }
 
-        // setters
-        void set_backpointer (const backpointer_t& backpointer)
-            { _backpointers = std::vector<backpointer_t>{backpointer}; }
-
         // operators
 
         // Adding inserts a new backpointer to the list of backpointers of this
@@ -86,6 +82,22 @@ namespace khs {
             _backpointers.push_back (backpointer);
             return *this;
         }
+
+        friend std::ostream& operator<< (std::ostream& stream, const backnode_t& node) {
+
+            stream << " <" << node.get_state ();
+            stream << ", " << node.get_g ();
+            stream << " + " << node.get_h ();
+            stream << " = " << node.get_f ();
+            stream << "> (";
+            for (auto bp: node.get_backpointers ()) {
+                stream << "{" << bp.get_pointer () << ", " << bp.get_index () << "} ";
+            }
+            stream << ")";
+
+            return stream;
+        }
+
     }; // class backnode_t<T
 
 } // namespace khs

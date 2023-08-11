@@ -62,6 +62,11 @@ public:
         _perm { perm }
         { _n = perm.size (); }
 
+    // And also with an initializer list
+    npancake_t (std::initializer_list<int> perm) :
+        _perm { perm }
+        { _n = perm.size (); }
+
     // getters
     static const int get_n () {
         return _n;

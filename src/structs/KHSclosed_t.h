@@ -70,7 +70,7 @@ namespace khs {
         // given a stable index into closed, return the item that is located at
         // that position. In case the index is incorrect, the behaviour is
         // undefined
-        const T& operator[] (const size_t index) const {
+        T& operator[] (const size_t index) {
             return _list[index];
         }
 
