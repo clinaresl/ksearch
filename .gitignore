@@ -29,6 +29,9 @@
 *.out
 *.app
 
+# Tests
+gtest
+
 # --cmake
 CMakeCache.txt
 CMakeFiles
@@ -38,3 +41,6 @@ CTestTestfile.cmake
 
 # --python
 __pycache__
+
+# projectile TAGS
+TAGS
