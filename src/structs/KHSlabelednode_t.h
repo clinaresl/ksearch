@@ -27,29 +27,24 @@ namespace khs {
     // operator has to be stored in the labeled backpointer.
     struct labeledbackpointer_t {
 
-        // INVARIANT: every laeled backpointer contains an index within a
-        // container to its parent and also a position within the vector of the
-        // object pointed to. In addition, it stores the cost of the operator
-        // that generates the child from its parent
+        // INVARIANT: every laeled backpointer contains a pointer to its parent
+        // and it also stores the cost of the operator that generates the child
+        // from its parent
         size_t _pointer;
-        size_t _index;
         int _cost;
 
         // Constructor
-        labeledbackpointer_t (size_t pointer, size_t index, int cost) :
+        labeledbackpointer_t (size_t pointer, int cost) :
             _pointer { pointer },
-            _index { index },
             _cost { cost } {}
 
         // operators
         bool operator==(const labeledbackpointer_t& other) const {
-            return _pointer == other._pointer && _index == other._index &&
-                _cost == other._cost;
+            return _pointer == other._pointer && _cost == other._cost;
         }
 
         // getters
         const size_t& get_pointer () const { return _pointer; }
-        const size_t& get_index () const { return _index; }
         const int& get_cost () const { return _cost; }
     }; // labeledbackpointer_t
 
@@ -112,7 +107,7 @@ namespace khs {
             stream << " = " << node.get_f ();
             stream << "> (";
             for (auto bp: node.get_backpointers ()) {
-                stream << "{" << bp.get_pointer () << ", " << bp.get_index () << ", " << bp.get_cost () << "} ";
+                stream << "{" << bp.get_pointer () << ", " << ", " << bp.get_cost () << "} ";
             }
             stream << ") [";
             for (auto gb: node.get_gb ()) {

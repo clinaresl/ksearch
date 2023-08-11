@@ -97,17 +97,59 @@ vector<string> randVectorString (int n, int m, bool remove_duplicates) {
     return result;
 }
 
+// return a vector with n backpointers, each one randomly created with two
+// values in the range [0, MAX_VALUE)
+vector<khs::backpointer_t> randVectorBackpointer (int n) {
+
+    // create a vector of backpointers
+    vector<khs::backpointer_t> backpointers;
+
+    // create a random number generator
+    random_device rd;
+    mt19937 gen (rd ());
+    uniform_int_distribution<> dis (0, MAX_VALUE);
+
+    // create n backpointers
+    for (auto i = 0 ; i < n ; i++) {
+        auto bp = khs::backpointer_t {size_t (dis (gen)), size_t (dis (gen))};
+        backpointers.push_back (bp);
+    }
+
+    return backpointers;
+}
+
+// return a vector with n labeledbackpointers, each one randomly created with
+// two values in the range [0, MAX_VALUE)
+vector<khs::labeledbackpointer_t> randVectorLabeledBackpointer (int n) {
+
+    // create a vector of labeledbackpointers
+    vector<khs::labeledbackpointer_t> backpointers;
+
+    // create a random number generator
+    random_device rd;
+    mt19937 gen (rd ());
+    uniform_int_distribution<> dis (0, MAX_VALUE);
+
+    // create n backpointers
+    for (auto i = 0 ; i < n ; i++) {
+        auto bp = khs::labeledbackpointer_t {size_t (dis (gen)), int (dis (gen))};
+        backpointers.push_back (bp);
+    }
+
+    return backpointers;
+}
+
 // create a random instance of the N-Pancake with the given length
 const npancake_t randInstance (int length) {
 
     // first, create the identity permutation of the given length
-    std::vector<int> goal;
+    vector<int> goal;
     for (auto i = 0 ; i < length ; goal.push_back (i++));
 
     // and just shuffle the goal
-    std::random_device rd;
-    std::mt19937 generator (rd());
-    std::shuffle (goal.begin (), goal.end (), generator);
+    random_device rd;
+    mt19937 generator (rd());
+    shuffle (goal.begin (), goal.end (), generator);
 
     // and return the random instance
     npancake_t result {goal};

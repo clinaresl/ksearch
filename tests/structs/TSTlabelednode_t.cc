@@ -303,7 +303,7 @@ TEST_F (LabeledNodeFixture, SetBackPointersInt) {
 
         // randomly determine the number of backpointers to set ---to be at
         // least one
-        auto bps = randVectorLabeledBackpointer<vector<int>>(rand () % MAX_VALUES + 1);
+        auto bps = randVectorLabeledBackpointer(rand () % MAX_VALUES + 1);
 
         // set the backpointers one by one
         for (auto bp : bps) {
@@ -333,7 +333,7 @@ TEST_F (LabeledNodeFixture, SetBackPointersString) {
 
         // randomly determine the number of backpointers to set ---to be at
         // least one
-        auto bps = randVectorLabeledBackpointer<string>(rand () % MAX_VALUES + 1);
+        auto bps = randVectorLabeledBackpointer(rand () % MAX_VALUES + 1);
 
         // set the backpointers one by one
         for (auto bp : bps) {
