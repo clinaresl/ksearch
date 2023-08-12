@@ -26,6 +26,9 @@
 #include "../src/structs/KHSbucket_t.h"
 #include "../domains/n-pancake/npancake_t.h"
 
+// Return the binomial coefficient of n choose k
+size_t binomial_coefficient (int n, int k);
+
 // Generate a random string with length characters in the sequence ASCII(32) -
 // ASCII(126) which do not appear in the string exclude
 std::string randString (int length, std::string exclude="");
@@ -59,9 +62,77 @@ const npancake_t randInstance (int length);
 // model used in the initialization of the init table outside this function
 const std::pair<std::vector<npancake_t>, int> randPath (const npancake_t& start, const int length);
 
-// Populate a closed list with the expansions of the full state space of a
-// simple grid of the given length
-void populateClosed (khs::closed_t<khs::labelednode_t<simplegrid_t>>& closed, int length);
+// Populate a closed list with the expansions of the full state space of the
+// domain given in T with the given length (which is a property of the domain, N)
+template <typename T>
+void populateClosed (khs::closed_t<khs::labelednode_t<T>>& closed, int length) {
+
+
+    // expand nodes in best-first order. For this, use an open list to store all
+    // nodes generated
+    khs::bucket_t<khs::labelednode_t<T>> open;
+
+    // and populate it with the start state with f=g=0 and a null back pointer
+    khs::labelednode_t<T> start {T {length, 0, 0}};
+    start += khs::labeledbackpointer_t {std::string::npos, 0};
+    open.insert (start, 0);
+
+    // expand all nodes until the open list becomes empty
+    while (open.size ()) {
+
+        // get the next node to expand
+        auto node = open.pop_front ();
+        auto state = node.get_state ();
+
+        // in case this node is the goal, just continue because this node has no
+        // children
+        if (state.is_goal ()) {
+            continue;
+        }
+
+        // Check whether this node has been expanded before or not
+        auto ptr = closed.find (node);
+
+        // In case it has never been expanded
+        if (ptr == std::string::npos) {
+
+            // Then add it to CLOSED for the first time. Note that the new node
+            // in CLOSED contains only one labeled backpointer, the one stored
+            // in OPEN
+            ptr = closed.insert (node);
+        } else {
+
+            // Otherwise, if the node already exists in CLOSED, then simply add
+            // its labeled backpointer, with information about its parent and
+            // the cost of the operator that generated
+            closed[ptr] += node.get_backpointer (0);
+
+            // and skip the expansion of this node!
+            continue;
+        }
+
+        // expand the current node ---disregarding both the h-value of this node
+        // and the goal
+        std::vector<std::tuple<int, int, T>> successors;
+        state.children (0, node.get_state (), successors);
+
+        // and insert them into the open list
+        for (auto& successor : successors) {
+
+            // create a backnode with this successor. Note that the h value is
+            // dismissed
+            khs::labelednode_t<T> onode{std::get<2>(successor), 0, node.get_g () + std::get<0>(successor)};
+
+            // set the backpointer to the location of its parent in CLOSED
+            // at the last index
+            auto bps = closed[ptr].get_backpointers ();
+            onode += khs::labeledbackpointer_t{ptr, std::get<0>(successor)};
+
+            // and add it to OPEN using f=g
+            open.insert (onode, onode.get_g ());
+        }
+    }
+}
 
 #endif // _TSTHELPERS_H_
 

@@ -43,15 +43,15 @@ TEST_F (BELAFixture, ExplicitConstructorPancake) {
     }
 }
 
-// Check that the closed list to be used in the following tests is correctly
-// created
+// Check that the closed list of simple grids, to be used in the following tests
+// is correctly created
 // ----------------------------------------------------------------------------
 TEST_F (BELAFixture, ClosedListSimpleGrid) {
 
     // First, populate a closed list with the expansions of all nodes in the
     // state space of simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // Now, verify the g*-value of each node in closed
     for (auto i = 0 ; i < closed.size () ; i++) {
@@ -74,7 +74,7 @@ TEST_F (BELAFixture, ClosedListSimpleGrid) {
             simplegrid_t parent = (state.get_x () > 1)
                 ? simplegrid_t {SIMPLE_GRID_LENGTH, state.get_x () - 1, 1}
                 : simplegrid_t {SIMPLE_GRID_LENGTH, 0, 0};
-            ASSERT_TRUE (verify_descendant (state, parent, 1));
+            ASSERT_TRUE (verify_descendant<simplegrid_t> (state, parent, 1));
             ASSERT_TRUE (parent == closed[closed[i].get_backpointer (0).get_pointer()].get_state ());
 
         } else {
@@ -88,13 +88,13 @@ TEST_F (BELAFixture, ClosedListSimpleGrid) {
                 // the same line, and thus they are written in closed first
                 simplegrid_t parent = simplegrid_t {SIMPLE_GRID_LENGTH,
                                                     state.get_x () - 1, 0};
-                ASSERT_TRUE (verify_descendant (state, parent, 1));
+                ASSERT_TRUE (verify_descendant<simplegrid_t> (state, parent, 1));
                 ASSERT_TRUE (parent == closed[closed[i].get_backpointer (0).get_pointer()].get_state ());
 
                 // and the second edge gets to them from the node in the upper
                 // line
                 parent = simplegrid_t {SIMPLE_GRID_LENGTH, state.get_x () - 1, 1};
-                ASSERT_TRUE (verify_descendant (state, parent, 2));
+                ASSERT_TRUE (verify_descendant<simplegrid_t> (state, parent, 2));
                 ASSERT_TRUE (parent == closed[closed[i].get_backpointer (1).get_pointer()].get_state ());
             } else {
 
@@ -121,15 +121,407 @@ TEST_F (BELAFixture, ClosedListSimpleGrid) {
     }
 }
 
-// Check that centroids with null prefixes return no path
+// Check that the closed list of grids, to be used in the following tests is
+// correctly created
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, ClosedListGrid) {
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a grid
+    khs::closed_t<khs::labelednode_t<grid_t>> closed;
+    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // Now, verify the g*-value of each node in closed
+    for (auto i = 0 ; i < closed.size () ; i++) {
+
+        // get the state stored in the i-th index of the closed list
+        grid_t state = closed[i].get_state ();
+
+        // check that the g*-value of the state is equal to the sum of its coordinates
+        ASSERT_EQ (closed[i].get_g (), state.get_x () + state.get_y ());
+
+        // and verify that all information enclosed in the labeled back pointers
+        // is correct
+
+        // every node in the interior of the grid should have four backpointers
+        if (state.get_x () > 0 && state.get_x () < SIMPLE_GRID_LENGTH-1 &&
+            state.get_y () > 0 && state.get_y () < SIMPLE_GRID_LENGTH-1 ) {
+            ASSERT_TRUE (closed[i].get_backpointers ().size () == 4);
+
+            // verify all backpointers, i.e., that they are indeed parents of
+            // this node and also that the cost registered in closed is correct
+            for (auto& bp: closed[i].get_backpointers ()) {
+                grid_t parent = closed[bp.get_pointer ()].get_state ();
+                ASSERT_TRUE (verify_descendant<grid_t> (state, parent, 1));
+            }
+        }
+
+        // every node along the lower line, but the corners, should have three
+        // backpointers
+        if (state.get_y () == 0 && state.get_x () > 0 && state.get_x () < SIMPLE_GRID_LENGTH -1) {
+            ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+
+            // verify all backpointers, i.e., that they are indeed parents of
+            // this node and also that the cost registered in closed is correct
+            for (auto& bp: closed[i].get_backpointers ()) {
+                grid_t parent = closed[bp.get_pointer ()].get_state ();
+                ASSERT_TRUE (verify_descendant<grid_t> (state, parent, 1));
+            }
+        }
+
+        // every node along the upper line, but the corners, should have three
+        // backpointers
+        if (state.get_y () == SIMPLE_GRID_LENGTH-1 && state.get_x () > 0 && state.get_x () < SIMPLE_GRID_LENGTH -1) {
+            ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+
+            // verify all backpointers, i.e., that they are indeed parents of
+            // this node and also that the cost registered in closed is correct
+            for (auto& bp: closed[i].get_backpointers ()) {
+                grid_t parent = closed[bp.get_pointer ()].get_state ();
+                ASSERT_TRUE (verify_descendant<grid_t> (state, parent, 1));
+            }
+        }
+
+        // every node along the left vertical line, but the corners, should have
+        // three backpointers
+        if (state.get_x () == 0 && state.get_y () > 0 && state.get_y () < SIMPLE_GRID_LENGTH -1) {
+            ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+
+            // verify all backpointers, i.e., that they are indeed parents of
+            // this node and also that the cost registered in closed is correct
+            for (auto& bp: closed[i].get_backpointers ()) {
+                grid_t parent = closed[bp.get_pointer ()].get_state ();
+                ASSERT_TRUE (verify_descendant<grid_t> (state, parent, 1));
+            }
+        }
+
+        // every node along the right vertical line, but the corners, should have
+        // three backpointers
+        if (state.get_x () == SIMPLE_GRID_LENGTH-1 && state.get_y () > 0 && state.get_y () < SIMPLE_GRID_LENGTH -1) {
+            ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+
+            // verify all backpointers, i.e., that they are indeed parents of
+            // this node and also that the cost registered in closed is correct
+            for (auto& bp: closed[i].get_backpointers ()) {
+                grid_t parent = closed[bp.get_pointer ()].get_state ();
+                ASSERT_TRUE (verify_descendant<grid_t> (state, parent, 1));
+            }
+        }
+
+        // every corner should have two and only two backpointers
+        if ( (state.get_x () == 0 && (state.get_y () == 0 || state.get_y () == SIMPLE_GRID_LENGTH-1)) ||
+             (state.get_x () == SIMPLE_GRID_LENGTH-1 && (state.get_y () == 0 || state.get_y () == SIMPLE_GRID_LENGTH-1))) {
+
+            // well, but the start state (0,0) which also contains a null labeled backpointer
+            if (state.get_x () == 0 && state.get_y () == 0)
+                ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+            else
+                ASSERT_TRUE (closed[i].get_backpointers ().size () == 2);
+
+            // verify all backpointers, i.e., that they are indeed parents of
+            // this node and also that the cost registered in closed is correct
+            for (auto& bp: closed[i].get_backpointers ()) {
+
+                // skip the null labeled backpointer which, at this point, is
+                // known to be stored only in the start state
+                if (bp.get_pointer () == string::npos) {
+                    continue;
+                }
+
+                grid_t parent = closed[bp.get_pointer ()].get_state ();
+                ASSERT_TRUE (verify_descendant<grid_t> (state, parent, 1));
+            }
+        }
+    }
+}
+
+// Check that centroids with null prefixes return only one path in the simple
+// grid domain, the start state itself
 // ----------------------------------------------------------------------------
 TEST_F (BELAFixture, NullPrefixSimpleGrid) {
 
     // First, populate a closed list with the expansions of all nodes in the
     // state space of simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // even if it is not strictly speaking a centroid, take the edges (0, 0) ->
+    // (1, 0) and (0, 0) -> (1, 1) and compute all its optimal prefixes. Note
+    // that both edges have the same cost, 1
+    khs::centroid_t z0 = khs::centroid_t (closed.find (start),
+                                          closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, 1, 0)),
+                                          1);
+    vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z0);
+
+    // verify there is only one prefix, which consists of the start state itself
+    ASSERT_TRUE (prefixes.size () == 1);
+    ASSERT_TRUE (prefixes[0].size () == 1);
+    ASSERT_TRUE (prefixes[0][0] == start);
+
+    khs::centroid_t z1 = khs::centroid_t (closed.find (start),
+                                          closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, 1, 1)),
+                                          1);
+    prefixes = manager.get_prefixes (closed, z1);
+
+    // verify there is only one prefi, which consists of the start state itselfx
+    ASSERT_TRUE (prefixes.size () == 1);
+    ASSERT_TRUE (prefixes[0].size () == 1);
+    ASSERT_TRUE (prefixes[0][0] == start);
 }
+
+// Check that centroids with null prefixes return only one path in the grid
+// domain, the start state itself
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NullPrefixGrid) {
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a grid
+    khs::closed_t<khs::labelednode_t<grid_t>> closed;
+    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // even if it is not strictly speaking a centroid, take the edges (0, 0) ->
+    // (1, 0) and (0, 0) -> (0, 1) and compute all its optimal prefixes. Note
+    // that both edges have the same cost, 1
+    khs::centroid_t z0 = khs::centroid_t (closed.find (start),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, 1, 0)),
+                                          1);
+    vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z0);
+
+    // verify there is only one prefix, which consists of the start state itself
+    ASSERT_TRUE (prefixes.size () == 1);
+    ASSERT_TRUE (prefixes[0].size () == 1);
+    ASSERT_TRUE (prefixes[0][0] == start);
+
+    khs::centroid_t z1 = khs::centroid_t (closed.find (start),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, 1)),
+                                          1);
+    prefixes = manager.get_prefixes (closed, z1);
+
+    // verify there is only one prefi, which consists of the start state itselfx
+    ASSERT_TRUE (prefixes.size () == 1);
+    ASSERT_TRUE (prefixes[0].size () == 1);
+    ASSERT_TRUE (prefixes[0][0] == start);
+}
+
+// Verify that the number of non-null prefixes is correct in the simple grid domain
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
+
+    // First, populate a closed list with the expansions of all node sin the
+    // state space of a simple grid
+    khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // traverse all edges with non-null prefixes in the graph and verify all
+    // solutions found
+
+    // First, nodes along the lower line have only one prefix. This is true even
+    // for the last edge getting to the goal
+    for (auto i = 2 ; i < SIMPLE_GRID_LENGTH ; i++) {
+
+        // note the edge (i, 0) -> (i+1, 0) is not a true centroid as it belongs
+        // to the optimal path to get to (i+1,0). Nevertheless, get_prefixes
+        // should work much the same
+        khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
+                                             closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                                             1);
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify there is only one prefix
+        ASSERT_TRUE (prefixes.size () == 1);
+
+        // verify the prefix is correct, i.e., it has the right number of nodes
+        // and everyone is a descendant of the previous one
+        ASSERT_TRUE (prefixes[0].size () == i+1);
+        for (auto j = 0 ; j <= i ; j++) {
+            ASSERT_TRUE (prefixes[0][j].get_x () == j);
+            ASSERT_TRUE (prefixes[0][j].get_y () == 0);
+        }
+    }
+
+    // Next, nodes along the upper line have only one prefix
+    for (auto i = 2 ; i < SIMPLE_GRID_LENGTH ; i++) {
+
+        // note the edge (i, 1) -> (i+1, 1) is not a true centroid as it belongs
+        // to the optimal path to get to (i+1,1). Nevertheless, get_prefixes
+        // should work much the same. Also, note that the last vertex (9, 1)
+        // goes to the goal in the lower line
+        int y = (i == SIMPLE_GRID_LENGTH-1) ? 0 : 1;
+        khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
+                                             closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, y)),
+                                             1);
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify there is only one prefix
+        ASSERT_TRUE (prefixes.size () == 1);
+
+        // verify the prefix is correct, i.e., it has the right number of nodes
+        // and everyone is a descendant of the previous one
+        ASSERT_TRUE (prefixes[0].size () == i+1);
+        for (auto j = 0 ; j <= i ; j++) {
+            ASSERT_TRUE (prefixes[0][j].get_x () == j);
+
+            // note that every path starts in (0,0) even if it then goes through
+            // the upper line
+            if (j==0) {
+                ASSERT_TRUE (prefixes[0][j].get_y () == 0);
+            } else {
+                ASSERT_TRUE (prefixes[0][j].get_y () == 1);
+            }
+        }
+    }
+
+    // Next, consider the edges going from the upper line to the lower one.
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
+
+        // the edge (i, 1) -> (i+1, 0) is a true centroid indeed because its
+        // cost is equal to 2, so that paths to (i+1, 0) through this edge are
+        // known to be suboptimal.
+        khs::centroid_t z {closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
+                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                           2};
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes(closed, z);
+
+        // verify there is only one prefix
+        ASSERT_TRUE (prefixes.size () == 1);
+
+        // verify the prefix is correct, i.e., it has the right number of nodes
+        // and everyone is a descendant of the previous one
+        ASSERT_TRUE (prefixes[0].size () == i+1);
+        for (auto j = 0 ; j <= i ; j++) {
+            ASSERT_TRUE (prefixes[0][j].get_x () == j);
+
+            // note that every path starts in (0,0) even if it then goes through
+            // the upper line
+            if (j==0) {
+                ASSERT_TRUE (prefixes[0][j].get_y () == 0);
+            } else {
+                ASSERT_TRUE (prefixes[0][j].get_y () == 1);
+            }
+        }
+    }
+}
+
+// Verify that the number of non-null prefixes is correct in the grid domain
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NonNullPrefixGrid) {
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a grid
+    khs::closed_t<khs::labelednode_t<grid_t>> closed;
+    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // Every node along the left line have only one optimal prefix to get to the
+    // start state
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
+        khs::centroid_t z {closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
+                           closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)), 1};
+        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify there is only one path
+        ASSERT_TRUE (prefixes.size () == 1);
+
+        // verify the prefix is correct, i.e., it has the right number of nodes
+        // and everyone is a descendant of the previous one
+        ASSERT_TRUE (prefixes[0].size () == i+1);
+        for (auto j = 0 ; j <= i ; j++) {
+            ASSERT_TRUE (prefixes[0][j].get_x () == 0);
+            ASSERT_TRUE (prefixes[0][j].get_y () == j);
+        }
+    }
+
+    // Every node along the lower line have only one optimal prefix to get to the
+    // start state
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
+        khs::centroid_t z {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, 0)),
+                           closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, 0)), 1};
+        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify there is only one path
+        ASSERT_TRUE (prefixes.size () == 1);
+
+        // verify the prefix is correct, i.e., it has the right number of nodes
+        // and everyone is a descendant of the previous one
+        ASSERT_TRUE (prefixes[0].size () == i+1);
+        for (auto j = 0 ; j <= i ; j++) {
+            ASSERT_TRUE (prefixes[0][j].get_x () == j);
+            ASSERT_TRUE (prefixes[0][j].get_y () == 0);
+        }
+    }
+
+    // now, all nodes, but the ones considered previously have a significant
+    // number of optimal paths
+    vector<vector<grid_t>> prefixes;
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
+        for (auto j = 1 ; j < SIMPLE_GRID_LENGTH ; j++) {
+
+            // (i, j) -> (i+1, j)
+            if (i < SIMPLE_GRID_LENGTH-1) {
+                khs::centroid_t east {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                    closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)), 1};
+                prefixes = manager.get_prefixes (closed, east);
+
+                // verify the number of optimal paths is equal to the binomial
+                // coefficient of (i+j) choose j
+                ASSERT_EQ (prefixes.size (), binomial_coefficient (i+j, j));
+            }
+
+            // (i, j) -> (i, j+1)
+            if (j < SIMPLE_GRID_LENGTH-1) {
+                khs::centroid_t north {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                    closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)), 1};
+                prefixes = manager.get_prefixes (closed, north);
+
+                // verify the number of optimal paths is equal to the binomial
+                // coefficient of (i+j) choose i
+                ASSERT_EQ (prefixes.size (), binomial_coefficient (i+j, i));
+            }
+
+            // (i, j) -> (i-1, j)
+            khs::centroid_t west {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)), 1};
+            prefixes = manager.get_prefixes (closed, west);
+
+            // verify the number of optimal paths is equal to the binomial
+            // coefficient of (i+j) choose j
+            ASSERT_EQ (prefixes.size (), binomial_coefficient (i+j, j));
+
+            // (i, j) -> (i, j-1)
+            khs::centroid_t south {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                   closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j-1)), 1};
+            prefixes = manager.get_prefixes (closed, south);
+
+            // verify the number of optimal paths is equal to the binomial
+            // coefficient of (i+j) choose i
+            ASSERT_EQ (prefixes.size (), binomial_coefficient (i+j, i));
+        }
+    }
+}
+
 
 // Local Variables:
 // mode:cpp

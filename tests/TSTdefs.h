@@ -45,7 +45,9 @@ constexpr int MAX_PATH_LENGTH = 100;
 // length of the simple grid used in the tests
 constexpr int SIMPLE_GRID_LENGTH = 10;
 
-// Definition of a simple domain for testing search algorithms
+// Definition of a simple domain for testing search algorithms which is
+// characterized because: it is a directed graph; second, it has edges with
+// different costs
 class simplegrid_t {
 
 private:
@@ -87,6 +89,13 @@ public:
         // of the grid
         stream << "(" << right.get_x () << ", " << right.get_y () << ") [" << right.get_n () << "]";
         return stream;
+    }
+
+    // return whether this instance is a goal
+    bool is_goal () const {
+
+        // the goal is located in the lower right corner
+        return _x == _n && _y == 0;
     }
 
     // return the children of this state which is known to have the given
@@ -136,7 +145,97 @@ public:
     }
 
 
-}; // class simplegrid_t
+}; // class grid_t
+
+// Definition of a domain for testing search algorithms which is characterized
+// because: first, it is an undirected graph; second, the number of paths grows
+// exponenitally
+class grid_t {
+
+private:
+
+    // INVARIANT: a grid consists of a grid with two N vertical and horizontal
+    // lines. All edges have the same cost, 1
+    int _n;                                               // length of the grid
+    int _x;                                 // x coordinate of the current node
+    int _y;                                 // y coordinate of the current node
+
+public:
+
+    // Default constructors are forbidden by default
+    grid_t () = delete;
+
+    // Explicit constructor
+    grid_t (int n, int x, int y) : _n(n), _x(x), _y(y) {}
+
+    // getters
+    int get_n () const { return _n; }
+    int get_x () const { return _x; }
+    int get_y () const { return _y; }
+
+    // operators
+    bool operator<(const grid_t& other) const {
+        return std::tie (_n, _x, _y) < std::tie (other._n, other._x, other._y);
+    }
+    bool operator==(const grid_t& other) const {
+        return std::tie (_n, _x, _y) == std::tie (other._n, other._x, other._y);
+    }
+
+    friend std::ostream& operator<<(std::ostream& stream, const grid_t& right) {
+
+        // Show the location of the node given in right along with the dimension
+        // of the grid
+        stream << "(" << right.get_x () << ", " << right.get_y () << ") [" << right.get_n () << "]";
+        return stream;
+    }
+
+    // return whether this instance is a goal
+    bool is_goal () const {
+
+        // the goal is located in the upper right corner of the grid
+        return _x == _n-1 && _y == _n;
+    }
+
+    // return the children of this state which is known to have the given
+    // heuristic value as a vector of tuples, each containing: first, the cost
+    // of the operator; secondly, its heuristic value; thirdly, the successor
+    // state.
+    void children (int h, const grid_t& goal,
+                   std::vector<std::tuple<int, int, grid_t>>& successors) {
+
+        // Heuristic values are ignored!
+
+        // east
+        if (_x < _n-1) {
+            successors.push_back (std::make_tuple (1, 0, grid_t (_n, _x+1, _y)));
+        }
+
+        // north
+        if (_y < _n-1) {
+            successors.push_back (std::make_tuple (1, 0, grid_t (_n, _x, _y+1)));
+        }
+
+        // west
+        if (_x > 0) {
+            successors.push_back (std::make_tuple (1, 0, grid_t (_n, _x-1, _y)));
+        }
+
+        // south
+        if (_y > 0) {
+            successors.push_back (std::make_tuple (1, 0, grid_t (_n, _x, _y-1)));
+        }
+    }
+
+    // return the heuristic distance to get from this permutation to the
+    // location (N, 0), i.e., the given goal is ignored
+    int h (const grid_t& goal) const {
+
+        // currently no heuristics are implemented
+        return 0;
+    }
+
+
+}; // class grid_t
 
 namespace std {
 
@@ -153,6 +252,23 @@ namespace std {
             return right.get_x () + right.get_y () * right.get_n ();
         }
     }; // struct hash<simplegrid_t>
+}
+
+namespace std {
+
+    // Definition of a hash function for instances of grid. The definition is
+    // included in the std namespace so that it can be used directly by the
+    // functions implemented in that namespace
+    template<>
+    struct hash<::grid_t> {
+
+        // hash function
+        size_t operator() (const grid_t& right) const {
+
+            // return a unique index to the location given in right
+            return right.get_x () + right.get_y () * right.get_n ();
+        }
+    }; // struct hash<grid_t>
 }
 
 

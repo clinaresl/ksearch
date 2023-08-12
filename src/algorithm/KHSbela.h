@@ -80,6 +80,66 @@ namespace khs {
         // high-precision measuring time
         std::chrono::time_point<std::chrono::system_clock> _tstart, _tend;
 
+    private:
+
+        // return all optimal paths to the designated node (which is identified
+        // by its pointer to the closed list) from the start state. For doing
+        // this, use the information stored in the given closed list. In the
+        // process of looking for optimal paths, also update the information
+        // about centroids, if any is found
+        std::vector<std::vector<T>> _get_prefixes (const size_t ptr,
+                                                   closed_t<labelednode_t<T>>& closed,
+                                                   std::vector<T> path) {
+
+            // The enumeration of optimal paths is performed in depth-first
+            // order, i.e., recursively
+
+            // base case - node is the start state. The start state is
+            // recognized in closed because it has a null labeled backpointer
+            // stored in the first location
+            auto bps = closed[ptr].get_backpointers ();
+            if (bps.size () > 0 && bps[0].get_pointer () == std::string::npos) {
+
+                // add this node to the path and reverse it so that it correctly
+                // starts from the start state
+                path.push_back (closed[ptr].get_state ());
+                std::reverse (path.begin (), path.end ());
+
+                // and return this solution
+                return std::vector<std::vector<T>> { path };
+            }
+
+            // general case - this node is not the start state, then follow only
+            // the backpointers that lead to optimal paths
+            std::vector<std::vector<T>> prefixes;
+
+            // add this node to the path
+            path.push_back (closed[ptr].get_state ());
+
+            // and consider all labeled backpointers
+            for (auto& ibp: bps) {
+
+                // if this backpointer leads to a parent on the optimal path
+                labelednode_t<T> parent = closed[ibp.get_pointer ()];
+                if (parent.get_g () + ibp.get_cost () == closed[ptr].get_g ()) {
+
+                    // and recursively look for the optimal paths to the parent
+                    // node
+                    auto subprefixes = _get_prefixes (ibp.get_pointer (),
+                                                      closed, path);
+
+                    // add the optimal paths to the prefixes
+                    prefixes.insert (prefixes.end (),
+                                     subprefixes.begin (),
+                                     subprefixes.end ());
+                }
+            }
+
+            // and return all prefixes found
+            return prefixes;
+        }
+
+        
     public:
 
         // Default constructors are forbidden
@@ -146,23 +206,24 @@ namespace khs {
 
     }; // class bela<T>
 
-// The following service computes all the prefixes of a given centroid. Because
-// all the necessary information is in CLOSED, it has to be passed as an
-// argument also. Note that the CLOSED list might be updated during the process
-// and thus it is not passed as a const reference.
-//
-// The result is given as a vector of paths which, in turn, are defined as a
-// vector of nodes
-template <typename T>
-std::vector<std::vector<T>> bela<T>::get_prefixes (closed_t<labelednode_t<T>>& closed,
-                                                   const centroid_t& centroid) {
+    // The following service computes all the prefixes of a given centroid.
+    // Because all the necessary information is in CLOSED, it has to be passed
+    // as an argument also. Note that the CLOSED list might be updated during
+    // the process and thus it is not passed as a const reference.
+    //
+    // The result is given as a vector of paths which, in turn, are defined as a
+    // vector of nodes
+    template <typename T>
+    std::vector<std::vector<T>> bela<T>::get_prefixes (closed_t<labelednode_t<T>>& closed,
+                                                       const centroid_t& centroid) {
 
-    std::vector<std::vector<T>> prefixes;
+        // Prefixes are defined as all *optimal* paths getting to the start vertex
+        // of the centroid
+        auto prefixes = _get_prefixes (centroid.get_start(),
+                                       closed, {});
 
-    return prefixes;
-}
-
-
+        return prefixes;
+    }
 
 } // namespace khs
 

@@ -39,14 +39,15 @@ protected:
         srand (time (nullptr));
     }
 
-    // verify the given instance of simplegrid is a descendant of the second
-    // instance. Also, verify the cost given third is correct also
-    bool verify_descendant (simplegrid_t& descendant,
-                            simplegrid_t& ancestor,
+    // verify the instance given first is a descendant of the second one. Also,
+    // verify the cost given third is correct
+    template<typename T>
+    bool verify_descendant (T& descendant,
+                            T& ancestor,
                             int cost) {
 
         // expand the ancestor and get all its children
-        std::vector<std::tuple<int, int, simplegrid_t>> successors;
+        std::vector<std::tuple<int, int, T>> successors;
         ancestor.children (0, ancestor, successors);
 
         // and now look among all descendants to see if the given one appears
@@ -64,6 +65,28 @@ protected:
 
         // at this point, the successor has not been found, ...
         return false;
+    }
+
+    // show a solution path on the console
+    template<typename T>
+    void show_solution (std::vector<T>& path) {
+
+        // show the solution path
+        for (auto& node: path) {
+            std::cout << node << " ";
+        }
+    }
+
+    // show a bunch of solutions
+    template<typename T>
+    void show_solutions (std::vector<std::vector<T>> paths) {
+
+        // show the solution paths after telling the user the number of paths found
+        std::cout << " # paths: " << paths.size () << std::endl;
+        for (auto& path: paths) {
+            show_solution (path);
+            std::cout << std::endl;
+        }
     }
 };
 
