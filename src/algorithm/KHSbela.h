@@ -33,13 +33,13 @@ namespace khs {
 
     // Centroids play a central role in the implementation of BELA*. A centroid
     // is defined as the association between an edge (that exists in CLOSED) and
-    // the cost of set of paths. Because the edge has to exist in CLOSED, the
-    // pointers to it are stored in the centroid.
+    // the overall cost of set of paths it represents. Because the edge has to
+    // exist in CLOSED, pointers to it are stored in the centroid.
     struct centroid_t {
 
-        // INVARIANT: a centroid is defined by an edge and an overall cost. The
-        // edge is represented with a couple of pointers of its vertices into
-        // CLOSED
+        // INVARIANT: a centroid is defined by an edge (qualifed by its start
+        // and end vertices) and an overall cost. The edge is represented with a
+        // couple of pointers to its vertices onto CLOSED
         size_t _start;
         size_t _end;
         int _cost;
@@ -86,10 +86,12 @@ namespace khs {
         // by its pointer to the closed list) from the start state. For doing
         // this, use the information stored in the given closed list. In the
         // process of looking for optimal paths, also update the information
-        // about centroids, if any is found
+        // about centroids, if any is found, and store the new backward
+        // g-values. The cost given last is used for this purpose indeed.
         std::vector<std::vector<T>> _get_prefixes (const size_t ptr,
                                                    closed_t<labelednode_t<T>>& closed,
-                                                   std::vector<T> path) {
+                                                   std::vector<T> path,
+                                                   int cost) {
 
             // The enumeration of optimal paths is performed in depth-first
             // order, i.e., recursively
@@ -99,6 +101,11 @@ namespace khs {
             // stored in the first location
             auto bps = closed[ptr].get_backpointers ();
             if (bps.size () > 0 && bps[0].get_pointer () == std::string::npos) {
+
+                // in case the start has not this backward g-value, then add it
+                if (!closed[ptr].find_gb (cost)) {
+                    closed[ptr] += cost;
+                }
 
                 // add this node to the path and reverse it so that it correctly
                 // starts from the start state
@@ -113,6 +120,14 @@ namespace khs {
             // the backpointers that lead to optimal paths
             std::vector<std::vector<T>> prefixes;
 
+            // in case this node has not this backward g-value, then add it.
+            // Note we are sure that the closed list has to be updated because
+            // there should be at least one optimal path to this node so that a
+            // backward g-value has to be added
+            if (!closed[ptr].find_gb (cost)) {
+                closed[ptr] += cost;
+            }
+
             // add this node to the path
             path.push_back (closed[ptr].get_state ());
 
@@ -124,9 +139,10 @@ namespace khs {
                 if (parent.get_g () + ibp.get_cost () == closed[ptr].get_g ()) {
 
                     // and recursively look for the optimal paths to the parent
-                    // node
+                    // node incrementing the backward g-value accordingly
                     auto subprefixes = _get_prefixes (ibp.get_pointer (),
-                                                      closed, path);
+                                                      closed, path,
+                                                      cost + ibp.get_cost ());
 
                     // add the optimal paths to the prefixes
                     prefixes.insert (prefixes.end (),
@@ -139,7 +155,6 @@ namespace khs {
             return prefixes;
         }
 
-        
     public:
 
         // Default constructors are forbidden
@@ -217,10 +232,15 @@ namespace khs {
     std::vector<std::vector<T>> bela<T>::get_prefixes (closed_t<labelednode_t<T>>& closed,
                                                        const centroid_t& centroid) {
 
-        // Prefixes are defined as all *optimal* paths getting to the start vertex
-        // of the centroid
+        // Prefixes are defined as all *optimal* paths getting to the start
+        // vertex of the centroid. The backward g-values of all nodes in the
+        // prefix, including the start vertex of the centroid are updated
+        // starting with a cost derived from the cost of the edge of the
+        // centroid and the overall cost the centroid refers to
+        int gstart = closed[centroid.get_start ()].get_g ();
         auto prefixes = _get_prefixes (centroid.get_start(),
-                                       closed, {});
+                                       closed, {},
+                                       centroid.get_cost () - gstart);
 
         return prefixes;
     }

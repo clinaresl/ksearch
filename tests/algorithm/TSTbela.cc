@@ -319,7 +319,7 @@ TEST_F (BELAFixture, NullPrefixGrid) {
 // ----------------------------------------------------------------------------
 TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
 
-    // First, populate a closed list with the expansions of all node sin the
+    // First, populate a closed list with the expansions of all nodes in the
     // state space of a simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
     populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
@@ -439,7 +439,8 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
     // start state
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
         khs::centroid_t z {closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
-                           closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)), 1};
+                           closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
+                           1};
         vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
 
         // verify there is only one path
@@ -458,7 +459,8 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
     // start state
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
         khs::centroid_t z {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, 0)),
-                           closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, 0)), 1};
+                           closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                           1};
         vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
 
         // verify there is only one path
@@ -482,7 +484,8 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
             // (i, j) -> (i+1, j)
             if (i < SIMPLE_GRID_LENGTH-1) {
                 khs::centroid_t east {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
-                    closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)), 1};
+                    closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)),
+                    1};
                 prefixes = manager.get_prefixes (closed, east);
 
                 // verify the number of optimal paths is equal to the binomial
@@ -503,7 +506,7 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
 
             // (i, j) -> (i-1, j)
             khs::centroid_t west {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
-                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)), 1};
+                closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)), 1};
             prefixes = manager.get_prefixes (closed, west);
 
             // verify the number of optimal paths is equal to the binomial
@@ -512,7 +515,7 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
 
             // (i, j) -> (i, j-1)
             khs::centroid_t south {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
-                                   closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j-1)), 1};
+                closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j-1)), 1};
             prefixes = manager.get_prefixes (closed, south);
 
             // verify the number of optimal paths is equal to the binomial
@@ -521,6 +524,309 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
         }
     }
 }
+
+// Check that backward g-values are updated correctly in simple grids using one centroid
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, UpdateBarckwardgOneCentroidSimpleGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // Now, consider different edges (to be used as centroids) and verify that
+    // the closed list is updated correctly
+
+    // First, nodes along the lower line have only one prefix.
+    for (auto i = 2 ; i < SIMPLE_GRID_LENGTH ; i++) {
+
+        // First, populate a closed list with the expansions of all nodes in the
+        // state space of a simple grid
+        khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+        // note the edge (i, 0) -> (i+1, 0) is not a true centroid as it belongs
+        // to the optimal path to get to (i+1,0). Nevertheless, get_prefixes
+        // should work much the same
+        khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
+                                             closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                                             SIMPLE_GRID_LENGTH);
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify the backward g-values are correct
+        for (auto j = 0 ; j <= i ; j++) {
+
+            // look for the node (j, 0) in the closed list
+            auto ptr = closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, j, 0));
+
+            // the node (j, 0) should have only backward g-value, equal to
+            // SIMPLE_GRID_LENGTH - j
+            ASSERT_TRUE (closed[ptr].get_gb().size () == 1);
+            ASSERT_TRUE (closed[ptr].get_gb ()[0] == SIMPLE_GRID_LENGTH-j);
+        }
+    }
+
+    // Second, nodes along the upper line have only one prefix.
+    for (auto i = 2 ; i < SIMPLE_GRID_LENGTH - 1; i++) {
+
+        // First, populate a closed list with the expansions of all nodes in the
+        // state space of a simple grid
+        khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+        // note the edge (i, 1) -> (i+1, 1) is not a true centroid as it belongs
+        // to the optimal path to get to (i+1,1). Nevertheless, get_prefixes
+        // should work much the same.
+        khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
+                                             closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1)),
+                                             1+SIMPLE_GRID_LENGTH);
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify the backward g-values are correct
+        for (auto j = 1 ; j <= i ; j++) {
+
+            // look for the node (j, 1) in the closed list
+            auto ptr = closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, j, 1));
+
+            // the node (j, 1) should have only backward g-value, equal to 1 +
+            // SIMPLE_GRID_LENGTH - j
+            ASSERT_TRUE (closed[ptr].get_gb().size () == 1);
+            ASSERT_TRUE (closed[ptr].get_gb ()[0] == 1 + SIMPLE_GRID_LENGTH - j);
+        }
+    }
+
+    // Thirdly, the starting vertex of diagonal edges have only one prefix.
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH; i++) {
+
+        // First, populate a closed list with the expansions of all nodes in the
+        // state space of a simple grid
+        khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+        // note the edge (i, 1) -> (i+1, 0) is a true centroid
+        khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
+                                             closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                                             1+SIMPLE_GRID_LENGTH);
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify the backward g-values are correct
+        for (auto j = 1 ; j <= i ; j++) {
+
+            // look for the node (j, 1) in the closed list
+            auto ptr = closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, j, 1));
+
+            // the node (j, 1) should have only backward g-value, equal to 1 +
+            // SIMPLE_GRID_LENGTH - j
+            ASSERT_TRUE (closed[ptr].get_gb().size () == 1);
+            ASSERT_TRUE (closed[ptr].get_gb ()[0] == 1 + SIMPLE_GRID_LENGTH - j);
+        }
+    }
+}
+
+// Check that backward g-values are updated correctly in simple grids using one centroid
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, UpdateBarckwardgOneCentroidGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // Now, consider different edges (to be used as centroids) and verify that
+    // the closed list is updated correctly
+
+    // First, nodes along the left line have only one prefix.
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
+
+        // First, populate a closed list with the expansions of all nodes in the
+        // state space of a simple grid
+        khs::closed_t<khs::labelednode_t<grid_t>> closed;
+        populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+        // note the edge (0, i) -> (0, i+1) is not a true centroid as it belongs
+        // to the optimal path to get to (0,i+1). Nevertheless, get_prefixes
+        // should work much the same
+        khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
+                                             closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
+                                             2*SIMPLE_GRID_LENGTH);
+        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify the backward g-values are correct
+        for (auto j = 0 ; j <= i ; j++) {
+
+            // look for the node (0, j) in the closed list
+            auto ptr = closed.find (grid_t{SIMPLE_GRID_LENGTH, 0, j});
+
+            // the node (0, j) should have only one backward g-value equal to
+            // 2*SIMPLE_GRID_LENGTH - j
+            ASSERT_TRUE (closed[ptr].get_gb ().size () == 1);
+            ASSERT_TRUE (closed[ptr].get_gb ()[0] == 2*SIMPLE_GRID_LENGTH-j);
+        }
+    }
+
+    // Also, nodes along the lower line have only one prefix.
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
+
+        // First, populate a closed list with the expansions of all nodes in the
+        // state space of a simple grid
+        khs::closed_t<khs::labelednode_t<grid_t>> closed;
+        populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+        // note the edge (i, 0) -> (i+1, 0) is not a true centroid as it belongs
+        // to the optimal path to get to (i+1, 0). Nevertheless, get_prefixes
+        // should work much the same
+        khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, 0)),
+                                             closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                                             2*(SIMPLE_GRID_LENGTH-1));
+        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
+
+        // verify the backward g-values are correct
+        for (auto j = 0 ; j <= i ; j++) {
+
+            // look for the node (0, j) in the closed list
+            auto ptr = closed.find (grid_t{SIMPLE_GRID_LENGTH, j, 0});
+
+            // the node (0, j) should have only one backward g-value equal to
+            // 2*SIMPLE_GRID_LENGTH - j - 2
+            ASSERT_TRUE (closed[ptr].get_gb ().size () == 1);
+            ASSERT_TRUE (closed[ptr].get_gb ()[0] == 2*SIMPLE_GRID_LENGTH-j - 2);
+        }
+    }
+
+    // There are lots of optimal paths in the interior of the grid. However, all
+    // nodes should be given only one backward g-value when using only centroid
+
+    // (i, j) -> (i+1, j)
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH - 1 ; i++ ) {
+       for (auto j = 1 ; j < SIMPLE_GRID_LENGTH ; j++ ) {
+
+           // First, populate a closed list with the expansions of all nodes in the
+           // state space of a simple grid
+           khs::closed_t<khs::labelednode_t<grid_t>> closed;
+           populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+           // note the edge (i, j) -> (i+1, j) is not a true centroid as it belongs
+           // to the optimal path to get to (i+1, j). Nevertheless, get_prefixes
+           // should work much the same
+           khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)),
+                                                2*(SIMPLE_GRID_LENGTH - 1));
+           vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
+
+           // verify the backward g-values are correct
+           for (auto k = 0 ; k <= i ; k++) {
+               for (auto l = 0 ; l <= j ; l++) {
+
+                   // look for the node (0, j) in the closed list
+                   auto ptr = closed.find (grid_t{SIMPLE_GRID_LENGTH, k, l});
+
+                   // the node (0, j) should have only one backward g-value equal to
+                   // 2*SIMPLE_GRID_LENGTH - k - l - 2
+                   ASSERT_TRUE (closed[ptr].get_gb ().size () == 1);
+                   ASSERT_TRUE (closed[ptr].get_gb ()[0] == 2*SIMPLE_GRID_LENGTH-k-l-2);
+               }
+           }
+       }
+    }
+
+    // (i, j) -> (i, j+1)
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++ ) {
+       for (auto j = 1 ; j < SIMPLE_GRID_LENGTH - 1 ; j++ ) {
+
+           // First, populate a closed list with the expansions of all nodes in the
+           // state space of a simple grid
+           khs::closed_t<khs::labelednode_t<grid_t>> closed;
+           populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+           // note the edge (i, j) -> (i, j+1) is not a true centroid as it
+           // belongs to the optimal path to get to (i, j+1). Nevertheless,
+           // get_prefixes should work much the same
+           khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
+                                                2*(SIMPLE_GRID_LENGTH - 1));
+           vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
+
+           // verify the backward g-values are correct
+           for (auto k = 0 ; k <= i ; k++) {
+               for (auto l = 0 ; l <= j ; l++) {
+
+                   // look for the node (0, j) in the closed list
+                   auto ptr = closed.find (grid_t{SIMPLE_GRID_LENGTH, k, l});
+
+                   // the node (0, j) should have only one backward g-value equal to
+                   // 2*SIMPLE_GRID_LENGTH - k - l - 2
+                   ASSERT_TRUE (closed[ptr].get_gb ().size () == 1);
+                   ASSERT_TRUE (closed[ptr].get_gb ()[0] == 2*SIMPLE_GRID_LENGTH-k-l-2);
+               }
+           }
+       }
+    }
+
+    // (i, j) -> (i-1, j)
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++ ) {
+       for (auto j = 1 ; j < SIMPLE_GRID_LENGTH ; j++ ) {
+
+           // First, populate a closed list with the expansions of all nodes in the
+           // state space of a simple grid
+           khs::closed_t<khs::labelednode_t<grid_t>> closed;
+           populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+           // note the edge (i, j) -> (i-1, j) is a true centroid
+           khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
+                                                2*SIMPLE_GRID_LENGTH);
+           vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
+
+           // verify the backward g-values are correct
+           for (auto k = 0 ; k <= i ; k++) {
+               for (auto l = 0 ; l <= j-1 ; l++) {
+
+                   // look for this node in the closed list
+                   auto ptr = closed.find (grid_t{SIMPLE_GRID_LENGTH, k, l});
+
+                   // it should have only one backward g-value equal to
+                   // 2*SIMPLE_GRID_LENGTH - k - l
+                   ASSERT_TRUE (closed[ptr].get_gb ().size () == 1);
+                   ASSERT_TRUE (closed[ptr].get_gb ()[0] == 2*SIMPLE_GRID_LENGTH-k-l);
+               }
+           }
+       }
+    }
+
+    // (i, j) -> (i, j-1)
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++ ) {
+       for (auto j = 1 ; j < SIMPLE_GRID_LENGTH ; j++ ) {
+
+           // First, populate a closed list with the expansions of all nodes in the
+           // state space of a simple grid
+           khs::closed_t<khs::labelednode_t<grid_t>> closed;
+           populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+           // note the edge (i, j) -> (i, j-1) is a true centroid
+           khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j-1)),
+                                                2*SIMPLE_GRID_LENGTH);
+           vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z);
+
+           // verify the backward g-values are correct
+           for (auto k = 0 ; k <= i-1 ; k++) {
+               for (auto l = 0 ; l <= j ; l++) {
+
+                   // look for thi node in the closed list
+                   auto ptr = closed.find (grid_t{SIMPLE_GRID_LENGTH, k, l});
+
+                   // it should have only one backward g-value equal to
+                   // 2*SIMPLE_GRID_LENGTH - k - l
+                   ASSERT_TRUE (closed[ptr].get_gb ().size () == 1);
+                   ASSERT_TRUE (closed[ptr].get_gb ()[0] == 2*SIMPLE_GRID_LENGTH-k-l);
+               }
+           }
+       }
+    }
+}
+
 
 
 // Local Variables:

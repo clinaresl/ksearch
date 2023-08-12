@@ -105,11 +105,11 @@ namespace khs {
             stream << ", " << node.get_g ();
             stream << " + " << node.get_h ();
             stream << " = " << node.get_f ();
-            stream << "> (";
+            stream << "> (bp: ";
             for (auto bp: node.get_backpointers ()) {
                 stream << "{" << bp.get_pointer () << ", " << bp.get_cost () << "} ";
             }
-            stream << ") [";
+            stream << ") [gb: ";
             for (auto gb: node.get_gb ()) {
                 stream << gb << " " ;
             }
@@ -117,6 +117,14 @@ namespace khs {
 
             return stream;
         }
+
+        // methods
+
+        // return whether this node has the given backward g-value
+        bool find_gb (int gb) const {
+            return std::find(_gb.begin(), _gb.end(), gb) != _gb.end();
+        }
+
     }; // labelednode_t<T>
 } // namespace khs
 
