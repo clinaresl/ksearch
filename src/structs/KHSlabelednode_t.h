@@ -107,7 +107,7 @@ namespace khs {
             stream << " = " << node.get_f ();
             stream << "> (";
             for (auto bp: node.get_backpointers ()) {
-                stream << "{" << bp.get_pointer () << ", " << ", " << bp.get_cost () << "} ";
+                stream << "{" << bp.get_pointer () << ", " << bp.get_cost () << "} ";
             }
             stream << ") [";
             for (auto gb: node.get_gb ()) {

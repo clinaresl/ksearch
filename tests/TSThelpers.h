@@ -22,6 +22,8 @@
 #include "../src/structs/KHSnode_t.h"
 #include "../src/structs/KHSbacknode_t.h"
 #include "../src/structs/KHSlabelednode_t.h"
+#include "../src/structs/KHSclosed_t.h"
+#include "../src/structs/KHSbucket_t.h"
 #include "../domains/n-pancake/npancake_t.h"
 
 // Generate a random string with length characters in the sequence ASCII(32) -
@@ -56,6 +58,10 @@ const npancake_t randInstance (int length);
 // of transitions. It also returns the cost of the solution found under the cost
 // model used in the initialization of the init table outside this function
 const std::pair<std::vector<npancake_t>, int> randPath (const npancake_t& start, const int length);
+
+// Populate a closed list with the expansions of the full state space of a
+// simple grid of the given length
+void populateClosed (khs::closed_t<khs::labelednode_t<simplegrid_t>>& closed, int length);
 
 #endif // _TSTHELPERS_H_
 

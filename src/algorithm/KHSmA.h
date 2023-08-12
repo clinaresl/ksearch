@@ -218,7 +218,7 @@ namespace khs {
             if (ptr == string::npos) {
 
                 // Then add it to CLOSED for the first time. Note that the new
-                // node in CLOSED contains now only backpointer, the one stored
+                // node in CLOSED contains only one backpointer, the one stored
                 // in OPEN
                 ptr = closed.insert (node);
             } else {

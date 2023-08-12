@@ -187,6 +187,77 @@ const pair<vector<npancake_t>, int> randPath (const npancake_t& start, const int
     return make_pair (path, cost);
 }
 
+// Populate a closed list with the expansions of the full state space of a
+// simple grid of the given length
+void populateClosed (khs::closed_t<khs::labelednode_t<simplegrid_t>>& closed, int length)
+{
+
+    // expand nodes in best-first order. For this, use an open list to store all
+    // nodes generated
+    khs::bucket_t<khs::labelednode_t<simplegrid_t>> open;
+
+    // and populate it with the start state with f=g=0 and a null back pointer
+    khs::labelednode_t<simplegrid_t> start {simplegrid_t {length, 0, 0}};
+    start += khs::labeledbackpointer_t {string::npos, 0};
+    open.insert (start, 0);
+
+    // expand all nodes until the open list becomes empty
+    while (open.size ()) {
+
+        // get the next node to expand
+        auto node = open.pop_front ();
+        simplegrid_t state = node.get_state ();
+
+        // in case this node is the goal, just continue because this node has no
+        // children
+        if (state.get_x () == state.get_n () && state.get_y () == 0) {
+            continue;
+        }
+
+        // Check whether this node has been expanded before or not
+        auto ptr = closed.find (node);
+
+        // In case it has never been expanded
+        if (ptr == string::npos) {
+
+            // Then add it to CLOSED for the first time. Note that the new node
+            // in CLOSED contains only one labeled backpointer, the one stored
+            // in OPEN
+            ptr = closed.insert (node);
+        } else {
+
+            // Otherwise, if the node already exists in CLOSED, then simply add
+            // its labeled backpointer, with information about its parent and
+            // the cost of the operator that generated
+            closed[ptr] += node.get_backpointer (0);
+
+            // and skip the expansion of this node!
+            continue;
+        }
+
+        // expand the current node ---disregarding both the h-value of this node
+        // and the goal
+        vector<tuple<int, int, simplegrid_t>> successors;
+        state.children (0, node.get_state (), successors);
+
+        // and insert them into the open list
+        for (auto& successor : successors) {
+
+            // create a backnode with this successor. Note that the h value is
+            // dismissed
+            khs::labelednode_t<simplegrid_t> onode{get<2>(successor), 0, node.get_g () + get<0>(successor)};
+
+            // set the backpointer to the location of its parent in CLOSED
+            // at the last index
+            auto bps = closed[ptr].get_backpointers ();
+            onode += khs::labeledbackpointer_t{ptr, get<0>(successor)};
+
+            // and add it to OPEN using f=g
+            open.insert (onode, onode.get_g ());
+        }
+    }
+}
+
 
 // Local Variables:
 // mode:cpp

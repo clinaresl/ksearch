@@ -20,7 +20,7 @@ using namespace std;
 // Checks that the mA search solver can be created. If the search algorithm is
 // not invoked, it returns the default values
 // ----------------------------------------------------------------------------
-TEST_F (MAFixture, ExplicitConstructorGridSolution) {
+TEST_F (MAFixture, ExplicitConstructorPancake) {
 
     for (auto i = 0 ; i < NB_TESTS ; i++ ) {
 

@@ -218,7 +218,7 @@ namespace std {
             return seed;
         }
 
-    }; // struct hash<npuzzle_t>
+    }; // struct hash<npancake_t>
 }
 
 #endif // _NPANCAKE_T_H_
