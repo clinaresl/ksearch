@@ -90,8 +90,9 @@ namespace khs {
         // g-values. The cost given last is used for this purpose indeed.
         std::vector<std::vector<T>> _get_prefixes (const size_t ptr,
                                                    closed_t<labelednode_t<T>>& closed,
-                                                   std::vector<T> path,
-                                                   int cost) {
+                                                   int cost,
+                                                   bucket_t<centroid_t>& centroids,
+                                                   std::vector<T> path) {
 
             // The enumeration of optimal paths is performed in depth-first
             // order, i.e., recursively
@@ -120,12 +121,15 @@ namespace khs {
             // the backpointers that lead to optimal paths
             std::vector<std::vector<T>> prefixes;
 
-            // in case this node has not this backward g-value, then add it.
-            // Note we are sure that the closed list has to be updated because
-            // there should be at least one optimal path to this node so that a
-            // backward g-value has to be added
+            // in case this node has not this backward g-value, then add it, and
+            // remember you did because there is an opportunity then to discover
+            // new centroids. Note we are sure that the closed list has to be
+            // updated because there should be at least one optimal path to this
+            // node so that a backward g-value has to be added
+            bool new_gb = false;
             if (!closed[ptr].find_gb (cost)) {
                 closed[ptr] += cost;
+                new_gb = true;
             }
 
             // add this node to the path
@@ -141,13 +145,29 @@ namespace khs {
                     // and recursively look for the optimal paths to the parent
                     // node incrementing the backward g-value accordingly
                     auto subprefixes = _get_prefixes (ibp.get_pointer (),
-                                                      closed, path,
-                                                      cost + ibp.get_cost ());
+                                                      closed, cost + ibp.get_cost (),
+                                                      centroids, path);
 
                     // add the optimal paths to the prefixes
                     prefixes.insert (prefixes.end (),
                                      subprefixes.begin (),
                                      subprefixes.end ());
+                }
+                else if (new_gb) {
+
+                    // in case this backpointer does not lead to a parent on the
+                    // optimal path, then a bridge has been discovered.
+                    // Moreover, this bridge becomes a centroid if and only if a
+                    // new backward g-value was added, which represents all
+                    // paths with a cost equal to the g*-value of the parent,
+                    // plus the cost of this operator and the backward g-value
+                    // we just set in this node
+                    centroid_t z { ibp.get_pointer (), ptr,
+                                   parent.get_g () + ibp.get_cost () + cost};
+
+                    // and add it to the collection of centroids to process in
+                    // case it is necessary to discover new paths
+                    centroids.insert (z, parent.get_g () + ibp.get_cost () + cost);
                 }
             }
 
@@ -208,16 +228,18 @@ namespace khs {
             return "mA";
         }
 
-        // The following service computes all the prefixes of a given centroid.
+        // The following service computes all prefixes of a given centroid.
         // Because all the necessary information is in CLOSED, it has to be
         // passed as an argument also. Note that the CLOSED list might be
         // updated during the process and thus it is not passed as a const
-        // reference.
+        // reference. In the process, new centroids might be discovered and
+        // added to the centroids bucket.
         //
-        // The result is given as a vector of paths
-        // which, in turn, are defined as a vector of nodes
+        // The result is given as a vector of paths which, in turn, are defined
+        // as a vector of nodes
         std::vector<std::vector<T>> get_prefixes (closed_t<labelednode_t<T>>& closed,
-                                                  const centroid_t& centroid);
+                                                  const centroid_t& centroid,
+                                                  bucket_t<centroid_t>& centroids);
 
     }; // class bela<T>
 
@@ -230,7 +252,8 @@ namespace khs {
     // vector of nodes
     template <typename T>
     std::vector<std::vector<T>> bela<T>::get_prefixes (closed_t<labelednode_t<T>>& closed,
-                                                       const centroid_t& centroid) {
+                                                       const centroid_t& centroid,
+                                                       bucket_t<centroid_t>& centroids) {
 
         // Prefixes are defined as all *optimal* paths getting to the start
         // vertex of the centroid. The backward g-values of all nodes in the
@@ -239,8 +262,9 @@ namespace khs {
         // centroid and the overall cost the centroid refers to
         int gstart = closed[centroid.get_start ()].get_g ();
         auto prefixes = _get_prefixes (centroid.get_start(),
-                                       closed, {},
-                                       centroid.get_cost () - gstart);
+                                       closed,
+                                       centroid.get_cost () - gstart,
+                                       centroids, {});
 
         return prefixes;
     }
