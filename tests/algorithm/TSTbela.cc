@@ -546,7 +546,7 @@ TEST_F (BELAFixture, UpdateBarckwardgOneCentroidSimpleGrid) {
     khs::bela<simplegrid_t> manager {k, start, goal};
 
     // Now, consider different edges (to be used as centroids) and verify that
-    // the closed list is updated correctly
+    // the bucket of centroids is updated correctly
 
     // First, nodes along the lower line have only one prefix.
     for (auto i = 2 ; i < SIMPLE_GRID_LENGTH ; i++) {
@@ -647,7 +647,7 @@ TEST_F (BELAFixture, UpdateBarckwardgOneCentroidGrid) {
     khs::bela<grid_t> manager {k, start, goal};
 
     // Now, consider different edges (to be used as centroids) and verify that
-    // the closed list is updated correctly
+    // the bucket of centroids is updated correctly
 
     // First, nodes along the left line have only one prefix.
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
@@ -855,7 +855,7 @@ TEST_F (BELAFixture, UpdateBarckwardgTwoCentroidsSimpleGrid) {
     khs::bela<simplegrid_t> manager {k, start, goal};
 
     // Now, consider different combinations of edges (to be used as centroids)
-    // and verify that the closed list is updated correctly. It is impossible to
+    // and verify that the bucket of centroids is updated correctly. It is impossible to
     // verify all cases and just a selection is made next
 
     // This test considers the two incident edges of every node in the lower
@@ -972,8 +972,8 @@ TEST_F (BELAFixture, UpdateBarckwardgTwoCentroidsGrid) {
     khs::bela<grid_t> manager {k, start, goal};
 
     // Now, consider different combinations of edges (to be used as centroids)
-    // and verify that the closed list is updated correctly. It is impossible to
-    // verify all cases and just a selection is made next
+    // and verify that the bucket of centroids is updated correctly. It is
+    // impossible to verify all cases and just a selection is made next
 
     // First, consider the two incident edges (i-1, j)->(i,j) and (i,j-1)->(i,j)
     // in the interior of the grid. As a result, all nodes with coordinates
@@ -1089,6 +1089,221 @@ TEST_F (BELAFixture, UpdateBarckwardgTwoCentroidsGrid) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+// Check that no new centroids are created in a simple grid when a prefix
+// contains no bridge
+// ------------------------------------------------------------------------
+TEST_F (BELAFixture, NullCentroidSimpleGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // Nodes on the upper line have no bridges, and thus, any prefix whose start
+    // state lies there should generate no new additional centroid
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
+
+        // First, populate a closed list with the expansions of all nodes in the
+        // state space of a simple grid
+        khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+        // Start with an empty collection of centroids
+        khs::bucket_t<khs::centroid_t> centroids;
+
+        // first, create a centroid with the edge (i, 1) -> (i+1, 0) and
+        // propagate the backward g-values
+        khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
+                                             closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                                             SIMPLE_GRID_LENGTH+1);
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+
+        // verify that no new centroids were created
+        ASSERT_EQ (centroids.size (), 0);
+    }
+}
+
+// Check that new centroids are created in the simple grid
+// ------------------------------------------------------------------------
+TEST_F (BELAFixture, NonNullCenntroidSimpleGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // Every node on the lower line has one bridge. Thus, when using the
+    // centroid (i,0)-->(i+1,0), the enumeration of prefixes should discover up
+    // to (i-1) new centroids
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
+
+        // First, populate a closed list with the expansions of all nodes in the
+        // state space of a simple grid
+        khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+        // Start with an empty collection of centroids
+        khs::bucket_t<khs::centroid_t> centroids;
+
+        // first, create a centroid with the edge (i, 0) -> (i+1, 0) and
+        // propagate the backward g-values
+        khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
+                                             closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                                             SIMPLE_GRID_LENGTH);
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+
+        // verify the correct number of centroids was created
+        ASSERT_EQ (centroids.size (), i-1);
+
+        // verify also that the centroids are correct
+        while (centroids.size ()) {
+
+            khs::centroid_t new_z = centroids.pop_front();
+
+            // Certainly, I'm not checking that there are no duplicate centroids
+            // because I already verified the number is correct. All is done
+            // next is just simply to check that every centroid is correct
+
+            // First, verify the cost is correct!
+            ASSERT_TRUE (new_z.get_cost () == SIMPLE_GRID_LENGTH+1);
+
+            // secondly, check the start and end vertices of the centroid are
+            // also correct, i.e., that they are of the form (i, 1) -> (i+1, 0)
+            khs::labelednode_t<simplegrid_t> start = closed[new_z.get_start ()];
+            khs::labelednode_t<simplegrid_t> end = closed[new_z.get_end ()];
+            ASSERT_TRUE (start.get_state ().get_y () == 1);
+            ASSERT_TRUE (end.get_state ().get_y () == 0);
+            ASSERT_EQ (end.get_state ().get_x () - start.get_state ().get_x (), 1);
+        }
+    }
+}
+
+// Check that new centroids are created in the grid domain
+// ------------------------------------------------------------------------
+TEST_F (BELAFixture, NonNullCentroidGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // Now, consider different combinations of edges (to be used as centroids)
+    // and verify that the bucket of centroids is updated correctly. It is
+    // impossible to verify all cases and just a selection is made next
+
+    // First, consider the edges in the left line (0, i)->(0, i+1). In this
+    // case, 2*(i+1) new centroids should be created: (1, i)->(0, i) and (0,
+    // i+1)->(0,i) for each i, 0 included
+
+    for (auto i = 0 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
+
+        // First, populate a closed list with the expansions of all nodes in the
+        // state space of a grid
+        khs::closed_t<khs::labelednode_t<grid_t>> closed;
+        populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+        // start with an empty collection of centroids
+        khs::bucket_t<khs::centroid_t> centroids;
+
+        // create the centroid and compute its prefixes
+        khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
+                                              closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
+                                              2*(SIMPLE_GRID_LENGTH-1));
+        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+
+        // verify the correct number of centroids was created
+        ASSERT_EQ (centroids.size (), 2*(i+1));
+
+        // and verify also that they are all correct
+        while (centroids.size ()) {
+
+            khs::centroid_t new_z = centroids.pop_front ();
+
+            // In this case, a centroid is correct if and only if it vertically
+            // gets to any node in the lower line, or it is a horizontal edge
+            // coming from x=1
+            khs::labelednode_t<grid_t> start = closed[new_z.get_start ()];
+            khs::labelednode_t<grid_t> end = closed[new_z.get_end ()];
+            ASSERT_TRUE ( ((start.get_state ().get_x () == 0 && end.get_state ().get_x () == 0) &&
+                           (start.get_state ().get_y () - end.get_state ().get_y () == 1)) ||
+                          ((start.get_state ().get_y () == end.get_state ().get_y ()) &&
+                           (start.get_state ().get_x () - end.get_state ().get_x () == 1)) );
+        }
+    }
+
+    // Secondly, consider the case of edges which are *not* centroids, e.g., an
+    // edge (i,j)->(i,j+1). This sort of edges when treated as centroids must
+    // create 2*(i+1)(j+1) new centroids, two for each node in the interior of
+    // the subgraph delimited by (0,0) and (i,j)
+    for (auto i = 0 ; i < SIMPLE_GRID_LENGTH ; i++) {
+        for (auto j = 0  ; j < SIMPLE_GRID_LENGTH-1 ; j++) {
+
+            // First, populate a closed list with the expansions of all nodes in the
+            // state space of a grid
+            khs::closed_t<khs::labelednode_t<grid_t>> closed;
+            populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+            // start with an empty collection of centroids
+            khs::bucket_t<khs::centroid_t> centroids;
+
+            // create the centroid and compute its prefixes
+            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
+                                                 2*(SIMPLE_GRID_LENGTH-1));
+            vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+
+            // verify the correct number of centroids was created. Account for
+            // the boundary effects. If i=SIMPLE_GRID_LENGTH-1, then there is no
+            // incoming edge (i+1,j)->(i,j) and therefore it is necessary to
+            // substract (j+1) values
+            if (i == SIMPLE_GRID_LENGTH-1) {
+                ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1)-j-1);
+            } else {
+                ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1));
+            }
+        }
+    }
+
+    // The last case considers the usage of a true centroid (i,j)->(i-1,j). In
+    // this case 2*i*(j+1) new centroids must be created
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
+        for (auto j = 0 ; j < SIMPLE_GRID_LENGTH ; j++) {
+
+            // First, populate a closed list with the expansions of all nodes in the
+            // state space of a grid
+            khs::closed_t<khs::labelednode_t<grid_t>> closed;
+            populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+            // start with an empty collection of centroids
+            khs::bucket_t<khs::centroid_t> centroids;
+
+            // create the centroid and compute its prefixes
+            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
+                                                 2*(SIMPLE_GRID_LENGTH-1));
+            vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+
+            // while (centroids.size ()) {
+            //     auto new_z = centroids.pop_front ();
+            //     manager.show_centroid (cout, new_z, closed);
+            // }
+
+            // verify the correct number of centroids was created. Account for
+            // the boundary effects. If j=SIMPLE_GRID_LENGTH-1, then there is no
+            // incoming edge (i,j+1)->(i,j) and therefore it is necessary to
+            // substract (i+1) values
+            if (j == SIMPLE_GRID_LENGTH-1) {
+                ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1)-i-1);
+            } else {
+                ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1));
             }
         }
     }

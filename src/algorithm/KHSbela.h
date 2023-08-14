@@ -50,16 +50,16 @@ namespace khs {
             _end { end },
             _cost { cost } {}
 
+        // getters
+        const size_t& get_start () const { return _start; }
+        const size_t& get_end () const { return _end; }
+        const int& get_cost () const { return _cost; }
+
         // operators
         bool operator==(const centroid_t& other) const {
             return _start == other._start && _end == other._end &&
                 _cost == other._cost;
         }
-
-        // getters
-        const size_t& get_start () const { return _start; }
-        const size_t& get_end () const { return _end; }
-        const int& get_cost () const { return _cost; }
     }; // centroid_t
 
     template <typename T>
@@ -106,6 +106,19 @@ namespace khs {
                 // in case the start has not this backward g-value, then add it
                 if (!closed[ptr].find_gb (cost)) {
                     closed[ptr] += cost;
+
+                    // In case it is necessary, add new centroids. Note that any
+                    // edge getting to the start state is a centroid because the
+                    // optimal cost of the start state is 0. All true edges
+                    // start at location 1 because location 0 contains a null
+                    // labeled backpointer
+                    for (auto i = 1 ; i < bps.size () ; i++) {
+                        centroid_t z { bps[i].get_pointer (),
+                            ptr,
+                            closed[bps[i].get_pointer ()].get_g () + bps[i].get_cost () + cost };
+                        centroids.insert (z,
+                                          closed[bps[i].get_pointer ()].get_g () + bps[i].get_cost () + cost );
+                    }
                 }
 
                 // add this node to the path and reverse it so that it correctly
@@ -205,6 +218,23 @@ namespace khs {
             return 1e-9*chrono::duration_cast<chrono::nanoseconds>(_tend - _tstart).count(); }
 
         // methods
+
+        // show information of the given centroid on the given output stream.
+        // This task can be performed only here because centroids consist of
+        // ptrs to locations in closed, and only the solver has access to it
+        std::ostream& show_centroid (std::ostream& stream,
+                                     centroid_t& z,
+                                     closed_t<labelednode_t<T>>& closed) const {
+
+            // show first the information of the centroid itself
+            stream << "(" << z.get_start () << " -> " << z.get_end() << " / " << z.get_cost () << ")" << std::endl;
+
+            // next, show the information of the start and end nodes
+            stream << "\t[" << z.get_start () << "]: " << closed[z.get_start ()] << std::endl;
+            stream << "\t[" << z.get_end () << "]: " << closed[z.get_end ()] << std::endl;
+
+            return stream;
+        }
 
         // The following method provides a convenient wrapping to generate
         // solutions more comfortably
