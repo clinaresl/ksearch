@@ -87,6 +87,23 @@ void populateClosed (khs::closed_t<khs::labelednode_t<T>>& closed, int length) {
         // in case this node is the goal, just continue because this node has no
         // children
         if (state.is_goal ()) {
+
+            // but insert it into closed first, in case it is not stored yet.
+            // The reason is that when computing suffixes, the goal has to be
+            // found in closed.
+            auto ptr = closed.find (node);
+            if (ptr == std::string::npos) {
+                ptr = closed.insert (node);
+            } else {
+
+                // if the node did not exist in CLOSED, it is copied into it.
+                // This means, the goal node is copied with its backpointer. In
+                // case it already exists, all that is required is just to
+                // update its backpointers
+                closed[ptr] += node.get_backpointer (0);
+            }
+
+            // and proceed with the next node in OPEN
             continue;
         }
 

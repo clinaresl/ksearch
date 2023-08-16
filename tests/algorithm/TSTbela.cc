@@ -1074,9 +1074,6 @@ TEST_F (BELAFixture, UpdateBarckwardgTwoCentroidsGrid) {
                             // Nodes located at the straight line j (up to x=i)
                             // should have only one g-value, the one
                             // corresponding to the centroid (i,j)->(i-1,j)
-                            if (closed[ptr].get_gb ().size () != 1) {
-                                cout << closed[ptr] << endl;
-                            }
                             ASSERT_TRUE (closed[ptr].get_gb ().size () == 1);
                             ASSERT_TRUE (closed[ptr].get_gb ()[0] == 2*SIMPLE_GRID_LENGTH-k-l);
                         } else {
@@ -1192,7 +1189,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
     grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
-    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH - 1, SIMPLE_GRID_LENGTH-1);
     khs::bela<grid_t> manager {k, start, goal};
 
     // Now, consider different combinations of edges (to be used as centroids)
@@ -1291,11 +1288,6 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
                                                  2*(SIMPLE_GRID_LENGTH-1));
             vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
-            // while (centroids.size ()) {
-            //     auto new_z = centroids.pop_front ();
-            //     manager.show_centroid (cout, new_z, closed);
-            // }
-
             // verify the correct number of centroids was created. Account for
             // the boundary effects. If j=SIMPLE_GRID_LENGTH-1, then there is no
             // incoming edge (i,j+1)->(i,j) and therefore it is necessary to
@@ -1308,6 +1300,233 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
         }
     }
 }
+
+// Check that centroids that contain no suffix correctly return only the goal
+// state in the simple grid
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, NullSuffixSimpleGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a simple grid
+    khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH) as a
+    // centroid of all optimal paths getting to the goal through that edge
+    khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
+                                         closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
+                                         SIMPLE_GRID_LENGTH);
+    khs::bucket_t<khs::centroid_t> centroids;
+    vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+
+    // next, compute the suffixes of the last edge (SIMPLE_GRID_LENGTH-1,
+    // 0)->(SIMPLE_GRID_LENGTH)
+    vector<vector<simplegrid_t>> suffixes = manager.get_suffixes (closed, z);
+
+    // As a result, the backward g-value of the goal should be updated to 0, and
+    // it should contain only one
+    auto ptr = closed.find (goal);
+    ASSERT_EQ (closed[ptr].get_gb ().size (), 1);
+    ASSERT_EQ (closed[ptr].get_gb ()[0], 0);
+
+    // verify also that the suffix is null, i.e., it consists of only one path
+    // that contains the goal state
+    ASSERT_EQ (suffixes.size (), 1);
+    ASSERT_EQ (suffixes[0].size (), 1);
+    ASSERT_EQ (suffixes[0][0], goal);
+}
+
+// Check that centroids that contain no suffix correctly return only the goal
+// state in the grid domain
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, NullSuffixGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a grid
+    khs::closed_t<khs::labelednode_t<grid_t>> closed;
+    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // use the last horizontal edge leading to the goal as a centroid of all
+    // optimal paths getting to the goal through that edge
+    khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
+                                         closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
+                                         2*(SIMPLE_GRID_LENGTH-1));
+    khs::bucket_t<khs::centroid_t> centroids;
+    vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+
+    // next, compute the suffixes of the last horizontal edge getting to the
+    // goal
+    vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z);
+
+    // As a result, the backward g-value of the goal should be updated to 0, and
+    // it should contain only one
+    auto ptr = closed.find (goal);
+    ASSERT_EQ (closed[ptr].get_gb ().size (), 1);
+    ASSERT_EQ (closed[ptr].get_gb ()[0], 0);
+
+    // verify also that the suffix is null, i.e., it consists of only one path
+    // that contains the goal state
+    ASSERT_EQ (suffixes.size (), 1);
+    ASSERT_EQ (suffixes[0].size (), 1);
+    ASSERT_EQ (suffixes[0][0], goal);
+}
+
+// Check that centroids that contain a single non-null suffix correctly compute
+// it correctly in a simple grid
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, NonNullSuffixSimpleGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a simple grid
+    khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH) as a
+    // centroid of all optimal paths getting to the goal through that edge
+    khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
+                                          closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
+                                          SIMPLE_GRID_LENGTH);
+    khs::bucket_t<khs::centroid_t> centroids;
+    vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+
+    // next, compute the suffixes of the last horizontal edge to get to the
+    // goal. This step is necessary to update the backward g-value of the goal.
+    vector<vector<simplegrid_t>> suffixes = manager.get_suffixes (closed, z0);
+
+    // next, consider all horizontal edges in the lower line as centroids (even
+    // if they are not centroids indeed) and verify that all suffixes are
+    // correctly computed
+    for (auto i=0 ; i < SIMPLE_GRID_LENGTH ; i++) {
+
+        // consider the edge (i, 0)->(i+1, 0) and compute its suffixes
+        khs::centroid_t z1 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
+                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                                              SIMPLE_GRID_LENGTH);
+
+        // and compute the suffixes from it
+        suffixes = manager.get_suffixes (closed, z1);
+
+        // first, verify that the number of backward g-values of the goal is
+        // still 1 and it is equal to 0
+        auto ptr = closed.find (goal);
+        ASSERT_EQ (closed[ptr].get_gb ().size (), 1);
+        ASSERT_EQ (closed[ptr].get_gb ()[0], 0);
+
+        // secondly, verify there is only one suffix which consits of all nodes
+        // with x-values in the range [i+1, SIMPLE_GRID_LENGTH] and y=0
+        ASSERT_EQ (suffixes.size (), 1);
+        for (auto j = 0 ; j < suffixes[0].size () ;j++) {
+            ASSERT_EQ (suffixes[0][j].get_x (), j+i+1);
+            ASSERT_EQ (suffixes[0][j].get_y (), 0);
+        }
+    }
+
+    // Also, all the diagonal edges (i, 1)->(i+1, 0) should create a single
+    // suffix
+    for (auto i=1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
+
+        // consider the edge (i, 0)->(i+1, 0) and compute its suffixes
+        khs::centroid_t z1 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
+                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
+                                              SIMPLE_GRID_LENGTH+1);
+
+        // and compute the suffixes from it
+        suffixes = manager.get_suffixes (closed, z1);
+
+        // first, verify that the number of backward g-values of the goal is
+        // still 1 and it is equal to 0
+        auto ptr = closed.find (goal);
+        ASSERT_EQ (closed[ptr].get_gb ().size (), 1);
+        ASSERT_EQ (closed[ptr].get_gb ()[0], 0);
+
+        // secondly, verify there is only one suffix which consits of all nodes
+        // with x-values in the range [i+1, SIMPLE_GRID_LENGTH] and y=0
+        ASSERT_EQ (suffixes.size (), 1);
+        for (auto j = 0 ; j < suffixes[0].size () ;j++) {
+            ASSERT_EQ (suffixes[0][j].get_x (), j+i+1);
+            ASSERT_EQ (suffixes[0][j].get_y (), 0);
+        }
+    }
+}
+
+// Check that centroids that contain a single non-null suffix correctly compute
+// it correctly in the grid domain
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, NonNullSuffixGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a simple grid
+    khs::closed_t<khs::labelednode_t<grid_t>> closed;
+    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // use the last horizontal edge getting to the goal as a centroid of all
+    // optimal paths getting to the goal through that edge
+    khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
+                                          2*(SIMPLE_GRID_LENGTH-1));
+    khs::bucket_t<khs::centroid_t> centroids;
+    vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+
+    // next, compute the suffixes of the last horizontal edge to get to the
+    // goal. This step is necessary to update the backward g-value of the goal.
+    vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z0);
+
+    // next, consider all horizontal edges in the upper line as centroids (even
+    // if they are not centroids indeed) and verify that all suffixes are
+    // correctly computed
+    for (auto i=0 ; i < SIMPLE_GRID_LENGTH-2 ; i++) {
+
+        // consider the edge (i, SIMPLE_GRID_LENGTH-1)->(i+1,
+        // SIMPLE_GRID_LENGTH-1) and compute its suffixes
+        khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, SIMPLE_GRID_LENGTH-1)),
+                                              closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, SIMPLE_GRID_LENGTH-1)),
+                                              2*(SIMPLE_GRID_LENGTH-1));
+
+        // and compute the suffixes from it
+        suffixes = manager.get_suffixes (closed, z1);
+
+        // first, verify that the number of backward g-values of the goal is
+        // still 1 and it is equal to 0
+        auto ptr = closed.find (goal);
+        ASSERT_EQ (closed[ptr].get_gb ().size (), 1);
+        ASSERT_EQ (closed[ptr].get_gb ()[0], 0);
+
+        // secondly, verify there is only one suffix which consits of all nodes
+        // with x-values in the range [i+1, SIMPLE_GRID_LENGTH-1] and
+        // y=SIMPLE_GRID_LENGTH-1
+        ASSERT_EQ (suffixes.size (), 1);
+        for (auto j = 0 ; j < suffixes[0].size () ;j++) {
+            ASSERT_EQ (suffixes[0][j].get_x (), j+i+1);
+            ASSERT_EQ (suffixes[0][j].get_y (), SIMPLE_GRID_LENGTH-1);
+        }
+    }
+}
+
+
 
 // Local Variables:
 // mode:cpp

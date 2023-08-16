@@ -188,6 +188,66 @@ namespace khs {
             return prefixes;
         }
 
+        // return all paths from the designated vertex to the goal. For doing
+        // this, use the information stored in the given closed list.
+        std::vector<std::vector<T>> _get_suffixes (const size_t ptr,
+                                                   closed_t<labelednode_t<T>>& closed,
+                                                   int cost,
+                                                   std::vector<T> path) {
+
+            // The enumeration of all paths from the given vertex to the goal is
+            // performed in depth-first order, i.e., recursively
+
+            // base case - node is the goal state. The goal state is recognized
+            // in closed because it has one backward g-value, and only one,
+            // which is equal to zero.
+            auto gbs = closed[ptr].get_gb ();
+            if (gbs.size ()==1 && gbs[0] == 0) {
+
+                // add this node to the path
+                path.push_back (closed[ptr].get_state ());
+
+                // and return this solution
+                return std::vector<std::vector<T>> { path };
+            }
+
+            std::vector<std::vector<T>> suffixes;
+
+            // general case - this node is not the goal state, then expand this
+            // node and select only those children with backward g-values that
+            // decrease accordingly. When expanding this node, both the
+            // heuristic value and the true goal are dismished. We are
+            // interested only in the true descendants.
+            T state = closed[ptr].get_state ();
+            vector<tuple<int, int, T>> successors;
+            state.children (0, state, successors);
+
+            // and consider all successors from this node
+            path.push_back (closed[ptr].get_state ());
+            for (auto& successor: successors) {
+
+                // look for this node in CLOSED
+                auto it = closed.find (std::get<2>(successor));
+                if (it != std::string::npos) {
+
+                    // then verify whether this node has a backward g-value
+                    // which decreases accordingly, i.e, that it has a
+                    // g-backward value equal to cost minus the cost of the
+                    // operator that gets to it
+                    if (closed[it].find_gb (cost - std::get<0>(successor))) {
+
+                        // then continue recursively
+                        auto subpaths = _get_suffixes (it, closed, cost - std::get<0>(successor), path);
+
+                        // and add them to the suffixes to return
+                        suffixes.insert (suffixes.end (), subpaths.begin (), subpaths.end ());
+                    }
+                }
+            }
+
+            return suffixes;
+        }
+
     public:
 
         // Default constructors are forbidden
@@ -271,6 +331,12 @@ namespace khs {
                                                   const centroid_t& centroid,
                                                   bucket_t<centroid_t>& centroids);
 
+        // The following service computes all suffixes of the given centroid.
+        // Because all the necessary information is in CLOSED, it has to be
+        // passed as an argument also
+        std::vector<std::vector<T>> get_suffixes (closed_t<labelednode_t<T>>& closed,
+                                                  const centroid_t& centroid);
+
     }; // class bela<T>
 
     // The following service computes all the prefixes of a given centroid.
@@ -297,6 +363,63 @@ namespace khs {
                                        centroids, {});
 
         return prefixes;
+    }
+
+    // The following service computes all suffixes of the given centroid.
+    // Because all the necessary information is in CLOSED, it has to be
+    // passed as an argument also
+    template <typename T>
+    std::vector<std::vector<T>> bela<T>::get_suffixes (closed_t<labelednode_t<T>>& closed,
+                                                       const centroid_t& centroid) {
+
+        // Suffixes are defined as any path (non necessarily optimal) getting to
+        // the goal from the end vertex of the centroid. To generate them, the
+        // algorithm follows the backward g-values decrementing them by the cost
+        // of every operator at each step until the goal is found.
+
+        // first, get the cost of the operator used in the centroid. To do this,
+        // a lookup in the closed list is necessary. Note that the end vertex of
+        // the centroid necessarily exists in CLOSED and thus no checking is
+        // performed!
+        auto ptr = centroid.get_end ();
+
+        // check all the labeled backpointers of the end vertex of the centroid
+        // to get the one leading to the start vertex of the centroid. It is
+        // assumed that multi-graphs are not in use and thus, there is only one
+        // such backpointer
+        int cost = 0;
+        for (auto& bp : closed[ptr].get_backpointers ()) {
+
+            // both, the backpointers and the centroid use pointers to the
+            // closed list. Thus, two nodes are equal if they have the same
+            // location
+            if (bp.get_pointer () == centroid.get_start ()) {
+                cost = bp.get_cost ();
+                break;
+            }
+        }
+
+        // compute the cost of any optimal path getting to the start vertex of
+        // the centroid
+        int gstart = closed[centroid.get_start ()].get_g ();
+
+        // Before proceeding, set the backward g-value of the end vertex of this
+        // centroid. The initial cost of all suffixes is equal to the overall
+        // cost of the centroid minus the optimal cost of the start vertex of
+        // the centroid minus the cost of the operator.
+        //
+        // Centroids are discovered only once and they are used indeed only
+        // once. However, the same vertex might be the end vertex of several
+        // centroids with the same overall cost! Thus, it is necessary to check
+        // that this backward g-value has not been set previously
+        int bg = centroid.get_cost () - gstart - cost;
+        if (!closed[ptr].find_gb (bg)) {
+            closed[ptr] += bg;
+        }
+
+        // return all suffixes.
+        return _get_suffixes (centroid.get_end (),
+                              closed, bg, {});
     }
 
 } // namespace khs
