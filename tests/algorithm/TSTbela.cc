@@ -1526,7 +1526,149 @@ TEST_F (BELAFixture, NonNullSuffixGrid) {
     }
 }
 
+// Check that centroids that contain various non-null suffixes are correctly
+// computed in a simple grid
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
 
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a simple grid
+    khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // First, paths of length SIMPLE_GRID_LENGTH must be discovered, and this
+    // means that backward g-values should be propagated to all nodes in those
+    // paths. Thus,use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH) as a
+    // centroid of all optimal paths getting to the goal through that edge.
+    khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
+                                          closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
+                                          SIMPLE_GRID_LENGTH);
+    khs::bucket_t<khs::centroid_t> centroids;
+    vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    vector<vector<simplegrid_t>> suffixes = manager.get_suffixes (closed, z0);
+
+    // Secondly, to propagate the backward g-values to nodes in the upper line
+    // it is necessary know to process a true centroid
+    // (SIMPLE_GRID_LENGTH-1,1)-(SIMPLE_GRID_LENGTH,0)
+    khs::centroid_t z1 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 1)),
+                                          closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
+                                          SIMPLE_GRID_LENGTH+1);
+    prefixes = manager.get_prefixes (closed, z1, centroids);
+    suffixes = manager.get_suffixes (closed, z1);
+
+    // At this point, any of the edges (i,1)->(i+1,1) for i in (0,
+    // SIMPLE_GRID_LENGTH-1) should lead to several suffixes
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
+
+        khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
+                                             closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1)),
+                                             1+SIMPLE_GRID_LENGTH);
+        khs::bucket_t<khs::centroid_t> centroids;
+        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<simplegrid_t>> suffixes = manager.get_suffixes (closed, z);
+
+        // Next, verify the number of suffixes is correct
+        ASSERT_EQ (suffixes.size (), SIMPLE_GRID_LENGTH-i-1);
+
+        // and also that every suffix contains the right nodes
+        for (auto j = 0 ; j < suffixes.size () ; j++) {
+            for (auto k = 0 ; k < suffixes[j].size () ; k++) {
+                ASSERT_EQ (suffixes[j][k].get_x (), k+i+1);
+
+                // the verification on the y-coordinate is much trickier because
+                // it depends on the order the suffixes are generated. I
+                // intentionally disregard that and thus I'm only verifying the
+                // rather trivial condition that y is either 0 or 1
+                ASSERT_TRUE (suffixes[j][k].get_y () == 0 || suffixes[j][k].get_y () == 1 );
+            }
+        }
+    }
+}
+
+// Check that centroids that contain various non-null suffixes are correctly
+// computed in the grid domain
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a grid
+    khs::closed_t<khs::labelednode_t<grid_t>> closed;
+    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // First, paths of length 2*(SIMPLE_GRID_LENGTH-1) must be discovered, and
+    // this means that backward g-values should be propagated to all nodes in
+    // those paths. Thus, use the last horizontal and vertical edge to get to
+    // the goal as centroids of all optimal paths getting to the goal through
+    // those edges
+    khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
+                                          2*(SIMPLE_GRID_LENGTH-1));
+    khs::bucket_t<khs::centroid_t> centroids;
+    vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+
+    // Compute the suffixes of this centroid to ensure that the backward g-value
+    // of the goal state gets updated int CLOSED
+    vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z0);
+
+    khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-2)),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
+                                          2*(SIMPLE_GRID_LENGTH-1));
+    prefixes = manager.get_prefixes (closed, z1, centroids);
+
+    // Compute the suffixes of this centroid to ensure that the backward g-value
+    // of the goal state gets updated int CLOSED ---though this is redundand
+    // because it was already done above for the other centroid
+    suffixes = manager.get_suffixes (closed, z1);
+
+    // Next, verify the number of suffixes of any edge (i, j)->(i+1, j), i in
+    // [1, SIMPLE_GRID_LENGTH-3], j in [1, SIMPLE_GRID_LENGTH-3] is correct
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-2 ; i++) {
+        for (auto j = 1 ; j < SIMPLE_GRID_LENGTH-1 ; j++) {
+
+            // create the centroid and compute all its suffixes
+            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)),
+                                                 2*(SIMPLE_GRID_LENGTH-1));
+            vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z);
+
+            // Next, verify the number of suffixes is correct, i.e., it is equal
+            // to the binomial coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 3))
+            // choose (SIMPLE_GRID_LENGTH - i - 2)
+            ASSERT_EQ (suffixes.size (), binomial_coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 3),
+                                                               SIMPLE_GRID_LENGTH - i - 2));
+        }
+    }
+
+    // Well, repeat again but this time considering centroids (i, j)->(i, j+1)
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
+        for (auto j = 1 ; j < SIMPLE_GRID_LENGTH-2 ; j++) {
+
+            // create the centroid and compute all its suffixes
+            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
+                                                 2*(SIMPLE_GRID_LENGTH-1));
+            vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z);
+
+            // Next, verify the number of suffixes is correct, i.e., it is equal
+            // to the binomial coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 3))
+            // choose (SIMPLE_GRID_LENGTH - i - 2)
+            ASSERT_EQ (suffixes.size (), binomial_coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 3),
+                                                               SIMPLE_GRID_LENGTH - j - 2));
+        }
+    }
+}
 
 // Local Variables:
 // mode:cpp

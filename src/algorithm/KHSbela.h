@@ -357,12 +357,10 @@ namespace khs {
         // starting with a cost derived from the cost of the edge of the
         // centroid and the overall cost the centroid refers to
         int gstart = closed[centroid.get_start ()].get_g ();
-        auto prefixes = _get_prefixes (centroid.get_start(),
-                                       closed,
-                                       centroid.get_cost () - gstart,
-                                       centroids, {});
-
-        return prefixes;
+        return _get_prefixes (centroid.get_start(),
+                              closed,
+                              centroid.get_cost () - gstart,
+                              centroids, {});
     }
 
     // The following service computes all suffixes of the given centroid.
@@ -418,8 +416,7 @@ namespace khs {
         }
 
         // return all suffixes.
-        return _get_suffixes (centroid.get_end (),
-                              closed, bg, {});
+        return _get_suffixes (ptr, closed, bg, {});
     }
 
 } // namespace khs
