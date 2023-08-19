@@ -1668,6 +1668,26 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
                                                                SIMPLE_GRID_LENGTH - j - 2));
         }
     }
+
+    // The last case involves the consideration of true centroids that lead to
+    // suboptimal paths. In this case, consider the edges (i, j)->(i-1, j) for i
+    // in [1, SIMPLE_GRID_LENGTH-2] and j in [1, SIMPLE_GRID_LENGTH-2]
+    for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
+        for (auto j = 1 ; j < SIMPLE_GRID_LENGTH-2 ; j++) {
+
+            // create the centroid and compute all its suffixes
+            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
+                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
+                                                 2*SIMPLE_GRID_LENGTH);
+            vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z);
+
+            // Next, verify the number of suffixes is correct, i.e., it is equal
+            // to the binomial coefficient 2*SIMPLE_GRID_LENGTH - i - j - 3
+            // choose SIMPLE_GRID_LENGTH - 2 -i
+            ASSERT_EQ (suffixes.size (), binomial_coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 1),
+                                                               SIMPLE_GRID_LENGTH - i));
+        }
+    }
 }
 
 // Local Variables:
