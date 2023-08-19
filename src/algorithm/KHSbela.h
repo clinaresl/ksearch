@@ -337,6 +337,17 @@ namespace khs {
         std::vector<std::vector<T>> get_suffixes (closed_t<labelednode_t<T>>& closed,
                                                   const centroid_t& centroid);
 
+        // Given a centroid, return all paths it represeents as a solution of
+        // the k-shortest path problem. In case a bound is given, no more than
+        // bound paths are returned
+        //
+        // The process: first, needs to access the closed list; second, new
+        // centroids might be discovered. This is why the closed list and the sorted
+        // bucket of centroids must be specified as well
+        ksolution_t<T> get_paths (const centroid_t& centroid,
+                                  closed_t<labelednode_t<T>>& closed,
+                                  bucket_t<centroid_t>& centroids,
+                                  size_t bound = std::numeric_limits<size_t>::max ());
     }; // class bela<T>
 
     // The following service computes all the prefixes of a given centroid.
@@ -417,6 +428,51 @@ namespace khs {
 
         // return all suffixes.
         return _get_suffixes (ptr, closed, bg, {});
+    }
+
+    // Given a centroid, return all paths it represeents as a solution of the
+    // k-shortest path problem. In case a bound is given, no more than bound
+    // paths are returned
+    //
+    // The process: first, needs to access the closed list; second, new
+    // centroids might be discovered. This is why the closed list and the sorted
+    // bucket of centroids must be specified as well
+    template <typename T>
+    ksolution_t<T> bela<T>::get_paths (const centroid_t& centroid,
+                                       closed_t<labelednode_t<T>>& closed,
+                                       bucket_t<centroid_t>& centroids,
+                                       size_t bound) {
+
+        // Every centroid is the representative of a class of paths that get
+        // from s to t through it. Their computation is just the cross product
+        // of all its prefixes with all its suffixes
+        ksolution_t<T> solutions { _k, _start.get_state (), _goal.get_state () };
+        for (auto& prefix : get_prefixes (closed, centroid, centroids)) {
+            for (auto& suffix: get_suffixes (closed, centroid)) {
+
+                // compute the concatenation of this prefix and suffix. Note
+                // that the starting vertex of the centroid is included in the
+                // prefix, and that all suffixes start with its ending vertex,
+                // and so there is no need to add it explicitly here
+                std::vector<T> path;
+                path.insert (path.end (), prefix.begin (), prefix.end ());
+                path.insert (path.end (), suffix.begin (), suffix.end ());
+
+                // create a single solution with this path and add it to the
+                // collection of solutions to reeturn. Note the cost of every
+                // path is equal to the overall cost of the centroid indeed!
+                solutions += generate_solution (path, centroid.get_cost (), signature ());
+
+                // in case the bound has been reached, return the current
+                // solutions
+                if (solutions.size () >= bound) {
+                    return solutions;
+                }
+            }
+        }
+
+        // return the collection of solutions computed so far
+        return solutions;
     }
 
 } // namespace khs

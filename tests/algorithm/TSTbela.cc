@@ -1544,8 +1544,9 @@ TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
 
     // First, paths of length SIMPLE_GRID_LENGTH must be discovered, and this
     // means that backward g-values should be propagated to all nodes in those
-    // paths. Thus,use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH) as a
-    // centroid of all optimal paths getting to the goal through that edge.
+    // paths. Thus,use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH,
+    // 0) as a centroid of all optimal paths getting to the goal through that
+    // edge.
     khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                           SIMPLE_GRID_LENGTH);
@@ -1689,6 +1690,126 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
         }
     }
 }
+
+// Check that centroids can be effectively used for returning optimal and
+// suboptimal paths in the simple grid
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, GetPathsSimpleGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    simplegrid_t start = simplegrid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    khs::bela<simplegrid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a simple grid
+    khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
+    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // First, paths of length SIMPLE_GRID_LENGTH must be discovered, and this
+    // means that backward g-values should be propagated to all nodes in those
+    // paths. Thus,use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH,
+    // 0) as a centroid of all optimal paths getting to the goal through that
+    // edge.
+    khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
+                                          closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
+                                          SIMPLE_GRID_LENGTH);
+
+    // compute all paths reprresented by this centroid
+    khs::bucket_t<khs::centroid_t> centroids;
+    khs::ksolution_t solutions = manager.get_paths (z0, closed, centroids);
+
+    // and verify there is only one
+    ASSERT_EQ (solutions.size (), 1);
+
+    // verify also that every solution is correct
+    for (auto i = 0 ; i < solutions.size () ; i++) {
+        auto solution = solutions[i];
+        ASSERT_TRUE (solution.doctor ());
+    }
+
+    // Next, consider all true centroids that must have been discovered in the
+    // process of computing the optimal path
+    ASSERT_EQ (centroids.size (), SIMPLE_GRID_LENGTH-2);
+    while (centroids.size () > 0) {
+
+        // pop the next centroid
+        auto z = centroids.pop_front ();
+
+        // and verify it represents only one single sub-optimal path
+        khs::ksolution_t solutions = manager.get_paths (z, closed, centroids);
+        ASSERT_EQ (solutions.size (), 1);
+        ASSERT_EQ (z.get_cost (), SIMPLE_GRID_LENGTH+1);
+
+        // verify also that every solution is correct
+        for (auto i = 0 ; i < solutions.size () ; i++) {
+            auto solution = solutions[i];
+            ASSERT_TRUE (solution.doctor ());
+        }
+    }
+}
+
+// Check that centroids can be effectively used for returning optimal paths in
+// the simple grid
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, GetOptimalPathsGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a simple grid
+    khs::closed_t<khs::labelednode_t<grid_t>> closed;
+    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // First, paths of length 2*(SIMPLE_GRID_LENGTH-1) must be discovered, and
+    // this means that backward g-values should be propagated to all nodes in
+    // those paths. Thus,use the last horizontal and vertical edges to get to
+    // the goal as centroids of all optimal paths getting to the goal through
+    // them
+    khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
+                                          2*(SIMPLE_GRID_LENGTH-1));
+
+    // compute all paths reprresented by this centroid
+    khs::bucket_t<khs::centroid_t> centroids;
+    khs::ksolution_t solutions = manager.get_paths (z0, closed, centroids);
+
+    // and verify there are up to the binomial coefficient of
+    // 2*SIMPLE_GRID_LENGTH-3 choose SIMPLE_GRID_LENGTH - 2
+    ASSERT_EQ (solutions.size (), binomial_coefficient (2*SIMPLE_GRID_LENGTH-3, SIMPLE_GRID_LENGTH-2));
+
+    // verify also that every solution is correct
+    for (auto i = 0 ; i < solutions.size () ; i++) {
+        auto solution = solutions[i];
+        ASSERT_TRUE (solution.doctor ());
+    }
+
+    // Repeat the experiment but this time using the last vertical edge to get
+    // to the goal
+    khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-2)),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
+                                          2*(SIMPLE_GRID_LENGTH-1));
+
+    // compute all paths reprresented by this centroid
+    solutions = manager.get_paths (z1, closed, centroids);
+
+    // and verify there are up to the binomial coefficient of
+    // 2*SIMPLE_GRID_LENGTH-3 choose SIMPLE_GRID_LENGTH - 2
+    ASSERT_EQ (solutions.size (), binomial_coefficient (2*SIMPLE_GRID_LENGTH-3, SIMPLE_GRID_LENGTH-2));
+
+    // verify also that every solution is correct
+    for (auto i = 0 ; i < solutions.size () ; i++) {
+        auto solution = solutions[i];
+        ASSERT_TRUE (solution.doctor ());
+    }
+}
+
+
 
 // Local Variables:
 // mode:cpp
