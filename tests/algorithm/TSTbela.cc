@@ -535,7 +535,7 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
 
 // Check that backward g-values are updated correctly in simple grids using one centroid
 // ----------------------------------------------------------------------------
-TEST_F (BELAFixture, UpdateBarckwardgOneCentroidSimpleGrid) {
+TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
 
     khs::bucket_t<khs::centroid_t> centroids;
 
@@ -636,7 +636,7 @@ TEST_F (BELAFixture, UpdateBarckwardgOneCentroidSimpleGrid) {
 
 // Check that backward g-values are updated correctly in simple grids using one centroid
 // ----------------------------------------------------------------------------
-TEST_F (BELAFixture, UpdateBarckwardgOneCentroidGrid) {
+TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
 
     khs::bucket_t<khs::centroid_t> centroids;
 
@@ -844,7 +844,7 @@ TEST_F (BELAFixture, UpdateBarckwardgOneCentroidGrid) {
 // Check that backward g-values are updated correctly in simple grids using two
 // centroids
 // ----------------------------------------------------------------------------
-TEST_F (BELAFixture, UpdateBarckwardgTwoCentroidsSimpleGrid) {
+TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsSimpleGrid) {
 
     khs::bucket_t<khs::centroid_t> centroids;
 
@@ -961,7 +961,7 @@ TEST_F (BELAFixture, UpdateBarckwardgTwoCentroidsSimpleGrid) {
 // Check that backward g-values are updated correctly in grids using two
 // centroids
 // ----------------------------------------------------------------------------
-TEST_F (BELAFixture, UpdateBarckwardgTwoCentroidsGrid) {
+TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsGrid) {
 
     khs::bucket_t<khs::centroid_t> centroids;
 
@@ -1751,7 +1751,7 @@ TEST_F (BELAFixture, GetPathsSimpleGrid) {
 }
 
 // Check that centroids can be effectively used for returning optimal paths in
-// the simple grid
+// the grid domain
 // -----------------------------------------------------------------------------
 TEST_F (BELAFixture, GetOptimalPathsGrid) {
 
@@ -1762,7 +1762,7 @@ TEST_F (BELAFixture, GetOptimalPathsGrid) {
     khs::bela<grid_t> manager {k, start, goal};
 
     // First, populate a closed list with the expansions of all nodes in the
-    // state space of a simple grid
+    // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
     populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
 
@@ -1806,6 +1806,75 @@ TEST_F (BELAFixture, GetOptimalPathsGrid) {
     for (auto i = 0 ; i < solutions.size () ; i++) {
         auto solution = solutions[i];
         ASSERT_TRUE (solution.doctor ());
+    }
+}
+
+// Check that centroids can be effectively used for returning suboptimal paths
+// in the grid domain
+// -----------------------------------------------------------------------------
+TEST_F (BELAFixture, GetSuboptimalPathsGrid) {
+
+    // create a manager to execute BELA*
+    int k = rand () % MAX_VALUES;
+    grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1);
+    khs::bela<grid_t> manager {k, start, goal};
+
+    // First, populate a closed list with the expansions of all nodes in the
+    // state space of a grid
+    khs::closed_t<khs::labelednode_t<grid_t>> closed;
+    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+
+    // First, paths of length 2*(SIMPLE_GRID_LENGTH-1) must be discovered, and
+    // this means that backward g-values should be propagated to all nodes in
+    // those paths. Thus,use the last horizontal and vertical edges to get to
+    // the goal as centroids of all optimal paths getting to the goal through
+    // them
+    khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
+                                          2*(SIMPLE_GRID_LENGTH-1));
+
+    // compute all paths reprresented by this centroid
+    khs::bucket_t<khs::centroid_t> centroids;
+    khs::ksolution_t solutions = manager.get_paths (z0, closed, centroids);
+
+    // Repeat the experiment but this time using the last vertical edge to get
+    // to the goal
+    khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-2)),
+                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
+                                          2*(SIMPLE_GRID_LENGTH-1));
+
+    // compute all paths reprresented by this centroid
+    solutions = manager.get_paths (z1, closed, centroids);
+
+    // While this is not at the core of this unit test, verify that the number
+    // of generated centroids is correct, i.e., it is equal to 2*(S-1)^2 +
+    // 2*(S-1) = =2*(S-1)*S, with S bieng the SIMPLE_GRID_LENGTH. Actually, this
+    // verification ensures that centroids are discovered indeed only once: The
+    // second "get_paths" actually revisits many nodes where a centroid was
+    // found but, because the backward g-value is strictly the same, the
+    // centroid is not re-discovered again
+    ASSERT_EQ (centroids.size (), 2*(SIMPLE_GRID_LENGTH-1)*SIMPLE_GRID_LENGTH);
+
+    // every centroid should represent a number of suboptimal paths, process
+    // them all
+    while (centroids.size () > 0 ) {
+
+        // get the next centroid but this time using a different bucket for the
+        // new centroids as we do not want to overwrite the previous ones
+        khs::centroid_t z = centroids.pop_front ();
+        khs::bucket_t<khs::centroid_t> zs;
+        solutions = manager.get_paths (z, closed, zs);
+
+        // compute the number of prefixes and suffixes so that the expected
+        // number of paths is their product
+        int x0 = closed[z.get_start ()].get_state ().get_x ();
+        int y0 = closed[z.get_start ()].get_state ().get_y ();
+        int x1 = closed[z.get_end ()].get_state ().get_x ();
+        int y1 = closed[z.get_end ()].get_state ().get_y ();
+        auto nbprefixes = binomial_coefficient (x0+y0, x0);
+        auto nbsuffixes = binomial_coefficient (SIMPLE_GRID_LENGTH-1-x1+SIMPLE_GRID_LENGTH-1-y1, SIMPLE_GRID_LENGTH-1-x1);
+        ASSERT_EQ (solutions.size (), nbprefixes*nbsuffixes);
     }
 }
 

@@ -141,12 +141,19 @@ namespace khs {
             // node so that a backward g-value has to be added
             bool new_gb = false;
             if (!closed[ptr].find_gb (cost)) {
-                closed[ptr] += cost;
-                new_gb = true;
-            }
 
-            // add this node to the path
-            path.push_back (closed[ptr].get_state ());
+                // unless this is the goal state. The goal state can NEVER be
+                // part of the prefix of any centroid. However, when considering
+                // the edges getting to the goal through the *optimal* edges
+                // there is a possibility to consider the goal as the start
+                // vertex of a new centroid. This has to be avoided by all means
+                // as long as we are not interested in traversing the goal state
+                // more than once
+                if (!(closed[ptr].get_state () == _goal.get_state ())) {
+                    closed[ptr] += cost;
+                    new_gb = true;
+                }
+            }
 
             // and consider all labeled backpointers
             for (auto& ibp: bps) {
@@ -157,9 +164,11 @@ namespace khs {
 
                     // and recursively look for the optimal paths to the parent
                     // node incrementing the backward g-value accordingly
+                    path.push_back (closed[ptr].get_state ());
                     auto subprefixes = _get_prefixes (ibp.get_pointer (),
                                                       closed, cost + ibp.get_cost (),
                                                       centroids, path);
+                    path.pop_back ();
 
                     // add the optimal paths to the prefixes
                     prefixes.insert (prefixes.end (),
