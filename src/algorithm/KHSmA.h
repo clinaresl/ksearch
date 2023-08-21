@@ -185,7 +185,7 @@ namespace khs {
         // iterate until the k-shortest path problem has been fully solved
         while (true) {
 
-            // take the first node in open
+            // take the first node from OPEN
             auto node = open.pop_front ();
 
             // in case this is the goal state

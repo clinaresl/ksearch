@@ -1913,6 +1913,31 @@ TEST_F (BELAFixture, GetSuboptimalPathsGrid) {
     }
 }
 
+// Checks that solvable instances where start=goal can be correctly solved
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, SolvableSameNPancakeSolution) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to run the BELA* search algorithm to solve a random
+        // instance a random number of times. h=0 is given for the original node
+        // because no search is performed
+        int k = 1 + rand () % MAX_VALUES;
+        npancake_t start = randInstance (NB_DISCS);
+        khs::bela<npancake_t> manager {k, start, start};
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // now, make sure the result makes sense, i.e., there is only one
+        // solution (in spite of the value of k), which has a null length,
+        // signaled with a value equal to -1 (and thus, null cost also in spite
+        // of the cost model used)
+        ASSERT_EQ (ksolution.size (), 1);
+        ASSERT_EQ (ksolution[0].get_length (), -1);
+        ASSERT_EQ (ksolution[0].get_cost (), 0);
+    }
+}
 
 
 // Local Variables:

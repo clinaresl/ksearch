@@ -71,6 +71,16 @@ namespace khs {
             return *this;
         }
 
+        // or adding another container directly
+        ksolution_t& operator+= (const ksolution_t<T>& right) {
+
+            // add every solution in the given container
+            for (auto i = 0 ; i < right.size () ; i++) {
+                _solutions.push_back (right[i]);
+            }
+            return *this;
+        }
+
         // random access operator
         const solution_t<T> operator[] (const size_t idx) const {
             if (idx >= _solutions.size ()) {

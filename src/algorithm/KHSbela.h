@@ -352,6 +352,11 @@ namespace khs {
                                   closed_t<labelednode_t<T>>& closed,
                                   bucket_t<centroid_t>& centroids,
                                   size_t bound = std::numeric_limits<size_t>::max ());
+
+        // the main service of this class computes a solution of the k-shortest
+        // path problem from the start to the goal
+        const ksolution_t<T> solve ();
+
     }; // class bela<T>
 
     // The following service computes all the prefixes of a given centroid.
@@ -477,6 +482,175 @@ namespace khs {
 
         // return the collection of solutions computed so far
         return solutions;
+    }
+
+    // the main service of this class computes a solution of the k-shortest
+    // path problem from the start to the goal
+    template <typename T>
+    const ksolution_t<T> bela<T>::solve () {
+
+        // First things first, create a container to store all solutions found
+        ksolution_t<T> ksolution{_k, _start.get_state (), _goal.get_state ()};
+
+        // In case the start and the goal nodes are the same, return immediately
+        // with a single empty solution, and only one in spite of the number of
+        // solutions requested. Even if the main loop of BELA* can recognize
+        // this case, it would try to find (k-1) additional solution paths, but
+        // this is impossible as no solution path should contain the goal state
+        // more than once!
+        if (_start == _goal) {
+
+            // create then a single solution with no path (and no expansions!)
+            std::vector<T> path;
+            ksolution += generate_solution (path, 0, signature ());
+
+            // and return
+            return ksolution;
+        }
+
+        // if the start and goal nodes are different, then create an open list
+        // and add the start state to it with a f-value equal to its g-value, 0
+        // and no labeled backpointer
+        _start += labeledbackpointer_t{string::npos, 0};
+        bucket_t<labelednode_t<T>> open;
+        open.insert (_start, 0);
+
+        // also, create a closed list for storing expanded nodes
+        closed_t<labelednode_t<T>> closed;
+
+        // finally, create a bucket of centroids for storing those that are
+        // discovered during the search process
+        bucket_t<centroid_t> centroids;
+
+        // iterate utnil the k-shortest path problem has been fully solved
+        while (true) {
+
+            // take the first node from OPEN
+            auto node = open.pop_front ();
+
+            // before expanding any node from OPEN, check whether there are any
+            // centroids with a cost less or equal than the f-value value of the
+            // current layer
+            auto minz = centroids.get_mini ();
+            while (minz <= node.get_g () && centroids.size (minz) > 0 ) {
+
+                // add all paths represented by this centroid and add them to
+                // the solution of the k shortest-path problem
+                auto z = centroids.pop_front ();
+
+                // get all paths represented by this centroid. Use here an upper
+                // bound equal to the number of requested paths minus the number
+                // of solution paths already found, so that if that number is
+                // achieved now it is possible to abort execution and exit with
+                // k shortest-paths
+                ksolution_t<T> solutions = get_paths (z, closed, centroids, _k - ksolution.size ());
+
+                // and add them to the solutions already found. In case the
+                // requested number of solutions has been already found, then
+                // exit immediately. Job done!
+                ksolution += solutions;
+                if (ksolution.size () >= _k) {
+                    return ksolution;
+                }
+
+                // and get the overall cost of the next available centroid
+                minz = centroids.get_mini ();
+            }
+
+            // in case this is the goal state
+            if (node.get_state () == _goal.get_state ()) {
+
+                // first, ensure that the goal state gets also stored in CLOSED
+                auto ptr = closed.find (node);
+
+                // in case has never been generated
+                if (ptr == string::npos) {
+
+                    // then add it to the CLOSED list
+                    ptr = closed.insert (node);
+                } else {
+
+                    // otherwise, update its labeled backpointers
+                    closed[ptr] += node.get_backpointer (0);
+                }
+
+                // next, add the edge from the parent to the goal as a centroid
+                // ---in representation of direct paths from the start state to
+                // the goal. Note that the backwards g-value of the goal state
+                // must be zero and thus, it is not used in the computation of
+                // the overall cost of the new centroid
+                auto parent = closed[node.get_backpointer (0).get_pointer ()];
+                centroid_t z { node.get_backpointer (0).get_pointer (),
+                    ptr,
+                    parent.get_g () + node.get_backpointer (0).get_cost () };
+
+                // finally, skip the expansion of the goal state. This is very
+                // important! on one hand, we are never interested in solutions
+                // that contain the goal state more than once, on the other
+                // hand, skipping the expansion of the goal state ensures that
+                // no centroid starting from it will ever be created
+                continue;
+            }
+
+            // check whether this node has been expanded before or not
+            auto ptr = closed.find (node);
+
+            // in case it has never been expanded
+            if (ptr == string::npos) {
+
+                // then add it to CLOSED for the first time. Note that the new
+                // node in CLOSED contains only one labeled backpointer, the one
+                // stored in OPEN
+                ptr = closed.insert (node);
+            } else {
+
+                // Otherwise, if the node already exists in CLOSED then add a
+                // new labeled back pointer
+                closed[ptr] += node.get_backpointer (0);
+
+                // and check whether a centroid has been discovered, i.e.,
+                // whether getting to this node through the edge that created it
+                // in OPEN is suboptimal
+                auto parent = closed[node.get_backpointer (0).get_pointer ()];
+                if (parent.get_g () + node.get_backpointer (0).get_cost () > closed[ptr].get_g ()) {
+
+                    // if, and only if, this node has been used in the
+                    // construction of prefixes before, i.e., if and only if it
+                    // has at least one backward g-value. Then, create a new
+                    // centroid for each backward g-value found
+                    for (auto ibg : closed[ptr].get_gb ()) {
+
+                        // in case a centroid has been discovered, then add it
+                        // to the collection of centroids to process
+                        auto overall_cost = parent.get_g () + node.get_backpointer (0).get_cost () + ibg;
+                        centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
+                        centroids.insert (z, overall_cost);
+                    }
+                }
+
+                // and continue, skipping the expansion of this node. Here you
+                // are the beauty of BELA*
+                continue;
+            }
+
+            // expand this node. Note that the heuristic value is dismissed
+            vector<tuple<int, int, T>> successors;
+            const_cast<T&>(node.get_state ()).children (0, _goal.get_state (), successors);
+
+            // and insert them all in OPEN adding the right labeled backpointers
+            for (auto& successor : successors) {
+
+                // create a new labeled node with this successor. Note that the
+                // h value is dismissed
+                labelednode_t<T> onode{get<2>(successor), 0, node.get_g ()+get<0>(successor)};
+
+                // set the labeled backpointer to the location of its parent
+                onode += labeledbackpointer_t{ptr, get<0>(successor)};
+
+                // and add it to OPEN using f=g
+                open.insert (onode, onode.get_g ());
+            }
+        }
     }
 
 } // namespace khs

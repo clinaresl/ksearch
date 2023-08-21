@@ -24,6 +24,7 @@
 #include "../../src/structs/KHSclosed_t.h"
 #include "../../domains/n-pancake/npancake_t.h"
 #include "../../src/algorithm/KHSbela.h"
+#include "../../domains/n-pancake/npancake_t.h"
 
 // Class definition
 //
