@@ -73,8 +73,8 @@ TEST_F (MAFixture, SolvableSameNPancakeSolution) {
     }
 }
 
-// Check that mA* can correctly finds one single solution between two instances
-// of the 5-Pancake
+// Check that mA* correctly finds one single solution between two instances of
+// the 5-Pancake
 TEST_F (MAFixture, SolvableNPancakeOne) {
 
         for (auto i = 0 ; i < NB_TESTS ; i++) {
@@ -93,7 +93,7 @@ TEST_F (MAFixture, SolvableNPancakeOne) {
             auto ksolution = manager.solve ();
 
             // verify the solution found contains one single solution
-            ASSERT_EQ (ksolution.size (), 1);
+            ASSERT_EQ (ksolution.size (), k);
 
             // and verify it is correct
             khs::solution_t solution = ksolution[0];
@@ -101,8 +101,8 @@ TEST_F (MAFixture, SolvableNPancakeOne) {
         }
 }
 
-// Check that mA* can correctly finds two single solutions between two instances
-// of the 5-Pancake
+// Check that mA* correctly finds two single solutions between two instances of
+// the 5-Pancake
 TEST_F (MAFixture, SolvableNPancakeTwo) {
 
         for (auto i = 0 ; i < NB_TESTS ; i++) {
@@ -124,7 +124,7 @@ TEST_F (MAFixture, SolvableNPancakeTwo) {
             auto ksolution = manager.solve ();
 
             // verify the solution found contains two solutions
-            ASSERT_EQ (ksolution.size (), 2);
+            ASSERT_EQ (ksolution.size (), k);
 
             // and verify they are correct
             khs::solution_t<npancake_t> solution = ksolution[0];

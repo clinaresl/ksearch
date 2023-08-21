@@ -1939,6 +1939,71 @@ TEST_F (BELAFixture, SolvableSameNPancakeSolution) {
     }
 }
 
+// Check that BELA* correctly finds one single solution between two instances of
+// the 5-Pancake
+TEST_F (BELAFixture, SolvableNPancakeOne) {
+
+        for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+            // create a manager to find a single solution between a couple of
+            // random instances of the 5-Pancake
+            int k = 1;
+            npancake_t start = randInstance (5);
+            npancake_t goal = randInstance (5);
+            khs::bela<npancake_t> manager {k, start, goal};
+
+            // initialize the static information of the n-pancake
+            npancake_t::init ("unit");
+
+            // and invoke the solver
+            auto ksolution = manager.solve ();
+
+            // verify the solution found contains one single solution
+            ASSERT_EQ (ksolution.size (), k);
+
+            // and verify it is correct
+            khs::solution_t solution = ksolution[0];
+            ASSERT_TRUE (solution.doctor ());
+        }
+}
+
+// Check that BELA* correctly finds two single solutions between two instances
+// of the 5-Pancake
+TEST_F (BELAFixture, SolvableNPancakeTwo) {
+
+        for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+            // create a manager to find two solutions between a couple of random
+            // instances of the 5-Pancake which are guaranteed to be different
+            int k = 2;
+            npancake_t start = randInstance (5);
+            npancake_t goal = randInstance (5);
+            while (start == goal) {
+                goal = randInstance (5);
+            }
+            khs::bela<npancake_t> manager {k, start, goal};
+
+            // initialize the static information of the n-pancake
+            npancake_t::init ("unit");
+
+            // and invoke the solver
+            auto ksolution = manager.solve ();
+
+            // verify the solution found contains two solutions
+            ASSERT_EQ (ksolution.size (), k);
+
+            // and verify they are correct
+            khs::solution_t<npancake_t> solution = ksolution[0];
+            ASSERT_TRUE (solution.doctor ());
+
+            solution = ksolution[1];
+            ASSERT_TRUE (solution.doctor ());
+
+            // to conclude, verify that the second solution is strictly larger
+            // or equal than the first one
+            ASSERT_GE (ksolution[1].get_length (), ksolution[0].get_length ());
+        }
+}
 
 // Local Variables:
 // mode:cpp

@@ -522,7 +522,8 @@ namespace khs {
         // discovered during the search process
         bucket_t<centroid_t> centroids;
 
-        // iterate utnil the k-shortest path problem has been fully solved
+        // iterate utnil the k-shortest path problem has been fully solved. Note
+        // it is not verified whether the open list becomes empty!
         while (true) {
 
             // take the first node from OPEN
@@ -532,7 +533,7 @@ namespace khs {
             // centroids with a cost less or equal than the f-value value of the
             // current layer
             auto minz = centroids.get_mini ();
-            while (minz <= node.get_g () && centroids.size (minz) > 0 ) {
+            while (centroids.size () > 0 && minz <= node.get_g () && centroids.size (minz) > 0 ) {
 
                 // add all paths represented by this centroid and add them to
                 // the solution of the k shortest-path problem
@@ -583,6 +584,7 @@ namespace khs {
                 centroid_t z { node.get_backpointer (0).get_pointer (),
                     ptr,
                     parent.get_g () + node.get_backpointer (0).get_cost () };
+                centroids.insert (z, parent.get_g () + node.get_backpointer (0).get_cost ());
 
                 // finally, skip the expansion of the goal state. This is very
                 // important! on one hand, we are never interested in solutions
