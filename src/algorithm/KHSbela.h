@@ -522,9 +522,9 @@ namespace khs {
         // discovered during the search process
         bucket_t<centroid_t> centroids;
 
-        // iterate utnil the k-shortest path problem has been fully solved. Note
-        // it is not verified whether the open list becomes empty!
-        while (true) {
+        // iterate utnil the k-shortest path problem has been fully solved, or
+        // OPEN is exhausted
+        while (open.size ()) {
 
             // take the first node from OPEN
             auto node = open.pop_front ();
@@ -653,6 +653,34 @@ namespace khs {
                 open.insert (onode, onode.get_g ());
             }
         }
+
+        // At this point, the OPEN list has been exhausted so that the only way
+        // to find new shortest-paths consists of using the centroids
+        while (centroids.size () > 0) {
+
+            // get the next centroid and compute all its paths. Note that, in
+            // the process, other centroids are expected to be found (and this
+            // is true when solving the k shortest-path problem for non-simple
+            // paths)
+            auto z = centroids.pop_front ();
+            ksolution_t<T> solutions = get_paths (z, closed, centroids, _k - ksolution.size ());
+
+            // and add them to the solutions already found. In case the
+            // requested number of solutions has been already found, then
+            // exit immediately. Job done!
+            ksolution += solutions;
+            if (ksolution.size () >= _k) {
+                return ksolution;
+            }
+        }
+
+        // As noted above, when solving the k-shortest non-simple path problem,
+        // the number of solutions is infinite. In fact, even if OPEN becomes
+        // empty, one can compute all paths of every centroid and, in the
+        // process, new centroids must be created. Thus, it is impossible not to
+        // compute a complete set of solutions (unless start=goal). Therefore,
+        // at this point, an exception shall be raised
+        throw std::domain_error ("[bela::solve] Incomplete solution set!");
     }
 
 } // namespace khs

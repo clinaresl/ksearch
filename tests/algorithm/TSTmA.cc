@@ -139,6 +139,45 @@ TEST_F (MAFixture, SolvableNPancakeTwo) {
         }
 }
 
+// Check that mA* correctly finds an arbitrary number of solutions (10 <= k <=
+// 20) between two instances of the 5-Pancake
+TEST_F (MAFixture, SolvableNPancakeArbitrary) {
+
+        for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+            // create a manager to find an arbitrary number of solutions between
+            // a couple of random instances of the 5-Pancake which are
+            // guaranteed to be different
+            int k = 10 + (rand () % 11);
+            npancake_t start = randInstance (5);
+            npancake_t goal = randInstance (5);
+            while (start == goal) {
+                goal = randInstance (5);
+            }
+            khs::mA<npancake_t> manager {k, start, goal};
+
+            // initialize the static information of the n-pancake
+            npancake_t::init ("unit");
+
+            // and invoke the solver
+            auto ksolution = manager.solve ();
+
+            // verify the solution found contains two solutions
+            ASSERT_EQ (ksolution.size (), k);
+
+            // and verify they are correct
+            khs::solution_t<npancake_t> solution = ksolution[0];
+            ASSERT_TRUE (solution.doctor ());
+
+            solution = ksolution[1];
+            ASSERT_TRUE (solution.doctor ());
+
+            // to conclude, verify that the second solution is strictly larger
+            // or equal than the first one
+            ASSERT_GE (ksolution[1].get_length (), ksolution[0].get_length ());
+        }
+}
+
 
 // Local Variables:
 // mode:cpp
