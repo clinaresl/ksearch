@@ -169,13 +169,21 @@ TEST_F (BELAFixture, ClosedListGrid) {
             }
         }
 
-        // every node along the upper line, but the corners, should have three
-        // backpointers
-        if (state.get_y () == SIMPLE_GRID_LENGTH-1 && state.get_x () > 0 && state.get_x () < SIMPLE_GRID_LENGTH -1) {
-            ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+        // every node along the upper line, but the corners and the node
+        // immediately adjacent to the goal, should have three backpointers
+        if (state.get_y () == SIMPLE_GRID_LENGTH-1) {
 
-            // verify all backpointers, i.e., that they are indeed parents of
-            // this node and also that the cost registered in closed is correct
+            // first, if this node is *not* immediately adjacent to the goal,
+            // then it should have three backpointers
+            if (state.get_x () > 0 && state.get_x () < SIMPLE_GRID_LENGTH -2) {
+                ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+            } else {
+                ASSERT_TRUE (closed[i].get_backpointers ().size () == 2);
+            }
+
+            // In any case, verify all backpointers, i.e., that they are indeed
+            // parents of this node and also that the cost registered in closed
+            // is correct
             for (auto& bp: closed[i].get_backpointers ()) {
                 grid_t parent = closed[bp.get_pointer ()].get_state ();
                 ASSERT_TRUE (verify_descendant<grid_t> (state, parent, 1));
@@ -195,13 +203,21 @@ TEST_F (BELAFixture, ClosedListGrid) {
             }
         }
 
-        // every node along the right vertical line, but the corners, should have
-        // three backpointers
-        if (state.get_x () == SIMPLE_GRID_LENGTH-1 && state.get_y () > 0 && state.get_y () < SIMPLE_GRID_LENGTH -1) {
-            ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+        // every node along the right vertical line, but the corners and the
+        // node immediately adjacent to the goal, should have three backpointers
+        if (state.get_x () == SIMPLE_GRID_LENGTH-1) {
 
-            // verify all backpointers, i.e., that they are indeed parents of
-            // this node and also that the cost registered in closed is correct
+            // if this node is *not* immediately adjacent to the goal, then it
+            // should have three backpointers
+            if (state.get_y () > 0 && state.get_y () < SIMPLE_GRID_LENGTH -2) {
+                ASSERT_TRUE (closed[i].get_backpointers ().size () == 3);
+            } else {
+                ASSERT_TRUE (closed[i].get_backpointers ().size () == 2);
+            }
+
+            // In any case, verify all backpointers, i.e., that they are indeed
+            // parents of this node and also that the cost registered in closed
+            // is correct
             for (auto& bp: closed[i].get_backpointers ()) {
                 grid_t parent = closed[bp.get_pointer ()].get_state ();
                 ASSERT_TRUE (verify_descendant<grid_t> (state, parent, 1));
@@ -1260,9 +1276,17 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
             // verify the correct number of centroids was created. Account for
             // the boundary effects. If i=SIMPLE_GRID_LENGTH-1, then there is no
             // incoming edge (i+1,j)->(i,j) and therefore it is necessary to
-            // substract (j+1) values
+            // substract (j+1) values. Moreover, if i=SIMPLE_GRID_LENGTH-1 and
+            // j=SIMPLE_GRID_LENGTH-2, so that we are sitting at the node
+            // immediately adjacent to the goal, then it is necessary to
+            // substract also another unit as the goal must create no new
+            // centroid
             if (i == SIMPLE_GRID_LENGTH-1) {
-                ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1)-j-1);
+                if (j == SIMPLE_GRID_LENGTH-2) {
+                    ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1)-j-2);
+                } else {
+                    ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1)-j-1);
+                }
             } else {
                 ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1));
             }
@@ -1291,9 +1315,16 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
             // verify the correct number of centroids was created. Account for
             // the boundary effects. If j=SIMPLE_GRID_LENGTH-1, then there is no
             // incoming edge (i,j+1)->(i,j) and therefore it is necessary to
-            // substract (i+1) values
+            // substract (i+1) values. Moreover, if j=SIMPLE_GRID_LENGTH-1 and
+            // i=SIMPLE_GRID_LENGTH-2, so that we are sitting at the node
+            // immediately adjacent to goal, then it is necessary to substract
+            // also another unit as the goal must create no new centroid
             if (j == SIMPLE_GRID_LENGTH-1) {
-                ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1)-i-1);
+                if (i == SIMPLE_GRID_LENGTH-2) {
+                    ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1)-i-2);
+                } else {
+                    ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1)-i-1);
+                }
             } else {
                 ASSERT_EQ (centroids.size (), 2*(i+1)*(j+1));
             }
@@ -1849,12 +1880,16 @@ TEST_F (BELAFixture, GetSuboptimalPathsGrid) {
 
     // While this is not at the core of this unit test, verify that the number
     // of generated centroids is correct, i.e., it is equal to 2*(S-1)^2 +
-    // 2*(S-1) = =2*(S-1)*S, with S bieng the SIMPLE_GRID_LENGTH. Actually, this
-    // verification ensures that centroids are discovered indeed only once: The
-    // second "get_paths" actually revisits many nodes where a centroid was
-    // found but, because the backward g-value is strictly the same, the
-    // centroid is not re-discovered again
-    ASSERT_EQ (centroids.size (), 2*(SIMPLE_GRID_LENGTH-1)*SIMPLE_GRID_LENGTH);
+    // 2*(S-1) -2 = 2*(S-1)*S-2, with S bieng the SIMPLE_GRID_LENGTH. The term
+    // "-2" comes from the fact that the goal state is not expanded and thus it
+    // can not be the origin of any new centroid (either the one moving
+    // horizontally or vertically)
+    //
+    // Actually, this verification ensures that centroids are discovered indeed
+    // only once: The second "get_paths" actually revisits many nodes where a
+    // centroid was found but, because the backward g-value is strictly the
+    // same, the centroid is not re-discovered again
+    ASSERT_EQ (centroids.size (), 2*(SIMPLE_GRID_LENGTH-1)*SIMPLE_GRID_LENGTH-2);
 
     // every centroid should represent a number of suboptimal paths, process
     // them all

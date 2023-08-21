@@ -193,7 +193,7 @@ public:
     bool is_goal () const {
 
         // the goal is located in the upper right corner of the grid
-        return _x == _n-1 && _y == _n;
+        return _x == _n-1 && _y == _n-1;
     }
 
     // return the children of this state which is known to have the given

@@ -67,7 +67,6 @@ const std::pair<std::vector<npancake_t>, int> randPath (const npancake_t& start,
 template <typename T>
 void populateClosed (khs::closed_t<khs::labelednode_t<T>>& closed, int length) {
 
-
     // expand nodes in best-first order. For this, use an open list to store all
     // nodes generated
     khs::bucket_t<khs::labelednode_t<T>> open;

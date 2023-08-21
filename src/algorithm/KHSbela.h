@@ -142,17 +142,12 @@ namespace khs {
             bool new_gb = false;
             if (!closed[ptr].find_gb (cost)) {
 
-                // unless this is the goal state. The goal state can NEVER be
-                // part of the prefix of any centroid. However, when considering
-                // the edges getting to the goal through the *optimal* edges
-                // there is a possibility to consider the goal as the start
-                // vertex of a new centroid. This has to be avoided by all means
-                // as long as we are not interested in traversing the goal state
-                // more than once
-                if (!(closed[ptr].get_state () == _goal.get_state ())) {
-                    closed[ptr] += cost;
-                    new_gb = true;
-                }
+                // A very important property is that ptr is never the goal
+                // state. Otherwise, a centroid arising from the goal state
+                // might be created at this point. This *can not* happen anyway,
+                // because the goal state should never be expanded
+                closed[ptr] += cost;
+                new_gb = true;
             }
 
             // and consider all labeled backpointers
