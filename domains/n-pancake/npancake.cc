@@ -27,7 +27,6 @@
 
 #include "npancake_t.h"
 
-#define VERSION "1.0"
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
 
@@ -66,7 +65,7 @@ int main (int argc, char** argv) {
     string solver;                                 // user selection of solvers
     string filename;                            // file with all cases to solve
     string variant;                                    // variant of the domain
-    string k_params;                    // user selection of the beam search
+    string k_params;                       // user selection of the values of k
     string csvname;                          // name of the output csv filename
     bool want_verbose;                  // whether verbose output was requested
     chrono::time_point<chrono::system_clock> tstart, tend;          // CPU time
@@ -82,8 +81,8 @@ int main (int argc, char** argv) {
     // solvers to execute
     vector<string> solvers = split_solver (solver);
 
-    // and also process the user selection of the beam parameters
-    auto [k0, k1, incr] = split_k (k_params);
+    // and also process the user selection of the K values
+    auto kspec = split_ks (k_params);
 
     // parameter checking
 
@@ -132,9 +131,13 @@ int main (int argc, char** argv) {
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << variant << endl;
     cout << " size         : " << npancake_t::get_n () << endl;
-    cout << " beam width   : [" << k0 << ", " << k1 << "]; " << incr << endl;
+    cout << " K            : ";
+    for (auto& ispec: kspec) {
+        cout << "[" << get<0>(ispec) << ", " << get<1>(ispec) << ", " << get<2> (ispec) << "] ";
+    }
+    cout << endl;
 
-    // /* !----------------------------- SEARCH ------------------------------! */
+    /* !----------------------------- SEARCH ------------------------------! */
 
     // // initialize a container for storing all solutions and register relevant
     // // information for all solvers
@@ -142,19 +145,49 @@ int main (int argc, char** argv) {
     // results.set_domain (get_domain ());
     // results.set_variant (variant);
 
-    // // start the clock
-    // tstart = chrono::system_clock::now ();
+    // start the clock
+    tstart = chrono::system_clock::now ();
 
-    // // solve all the instances with each solver selected by the user and in the
-    // // same order provided by the user. Solutions provided by different solvers
-    // // go to different containers of solutions
-    // for (auto isolver : solvers) {
+    // solve all the instances with each solver selected by the user and in the
+    // same order provided by the user. Solutions provided by different solvers
+    // go to different containers of solutions
+    for (auto isolver : solvers) {
 
     //     // initialize a container for storing all solutions and register
     //     // relevant information about it for this specific solver
     //     hbs::solutions_t<npancake_t> bag;
     //     bag.set_domain (get_domain ());
     //     bag.set_variant (variant);
+
+        // for all values of k selected by the user
+        for (auto ispec: kspec) {
+
+            // consider this single specification of k values
+            for (auto k = get<0>(ispec) ; k <= get<1>(ispec) ; k+= get<2>(ispec)) {
+
+                // for all instances
+                cout << endl;
+                cout << " ⏺ " << isolver << " ( k=" << k <<  " ): " << endl;
+
+                for (auto i = 0 ; i < instances.size () ; i++) {
+
+                    // create a manager to solve this specific instance
+                    khs::bsolver<npancake_t>* m = get_solver (isolver, instances[i], goal, k);
+
+                    cout << " ⏵ "; cout.flush ();
+                    auto ksolution = m->solve ();
+
+                    // and now free the manager
+                    delete m;
+
+                    // and show the result on the standard output. Prior to
+                    // that, give it a name so that it can be easily recognized
+                    ksolution.set_name (names[i]);
+                    ksolution.doctor ();
+                    cout << ksolution << endl;
+                }
+            }
+        }
 
     //     // for all beam widths selected by the user
     //     for (auto bw = k0 ; bw <= k1 ; bw += incr) {
@@ -193,7 +226,7 @@ int main (int argc, char** argv) {
     //     if (isolver == "monobs") {
     //         check_monotonicity<npancake_t>(bag, want_verbose);
     //     }
-    // }
+    }
 
     // // and stop the clock
     // tend = chrono::system_clock::now ();
@@ -268,7 +301,7 @@ decode_switches (int argc, char **argv,
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (n-pancake) " << VERSION << endl;
+            cout << " khs (n-pancake) " << CMAKE_VERSION << endl;
             cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl;
             exit (EXIT_OK);
         case 'h':
@@ -289,16 +322,19 @@ usage (int status)
     cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
     cout << "\
  Mandatory arguments:\n\
-      -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mA', 'belA'. It is possible to provide\n\
-                                 as many as desired in a blank separated list between double quotes, e.g. \"mA belA\"\n\
+      -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0'. It is possible to provide\n\
+                                 as many as desired in a blank separated list between double quotes, e.g. \"mDijkstra belA0\"\n\
       -f, --file [STRING]        filename with a line for each instance to solve wrt to the identity permutation.\n\
                                  Each line consists of a list of numbers separated by spaces in the range [0, N)\n\
       -r, --variant [STRING]     Variant of the n-Pancake to consider. Choices are {unit, heavy-cost}. By default, unit\n\
                                  is used\n\
-      -k, --k [NUMBER]+          Definition of the different values of K to test as a blank separated list with up to three\n\
-                                 integers indicating the first value of K, the last and the increment between successive values.\n\
-                                 If only one value is given, only one value of K is used; if only two are given, all values of K\n\
-                                 between them are used with an increment equal to 1\n\
+      -k, --k [NUMBER]+          Definition of the different values of K to test.\n\
+                                 The entire specification consists of a semicolon separated list of single specifications\n\
+                                 e.g., '1 5; 10 90 10; 100'\n\
+                                 Every single specification consists of a blank separated list with up to three integers indicating\n\
+                                 the first value of K, the last one and the increment between successive values of K.\n\
+                                 If only one value is given (e.g., '100'), only one value of K is used; if only two are given\n\
+                                 (e.g., '1 5'), all values of K between them are used with an increment equal to 1\n\
 \n\
  Optional arguments:\n\
       -C, --csv [STRING]         name of the csv output files for storing results. If none is given, no file is generated\n\

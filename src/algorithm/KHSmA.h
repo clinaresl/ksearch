@@ -13,26 +13,13 @@
 #ifndef _KHSMA_H_
 #define _KHSMA_H_
 
-#include<chrono>
-#include<iostream>
-#include<limits>
-#include<memory>
-#include<set>
-#include<tuple>
-#include<utility>
-#include<vector>
-
-#include "../KHSdefs.h"
-#include "../structs/KHSbucket_t.h"
-#include "../structs/KHSclosed_t.h"
+#include "KHSbsolver.h"
 #include "../structs/KHSbacknode_t.h"
-#include "../structs/KHSsolution_t.h"
-#include "../structs/KHSksolution_t.h"
 
 namespace khs {
 
     template<typename T>
-    class mA {
+    class mA : public bsolver<T> {
 
     private:
 
@@ -40,14 +27,8 @@ namespace khs {
         // from a start to a goal. As a result, a number of stats such as the
         // heuristic estimate of the start state, the number of expanded nodes
         // and the CPU running time are reported for every single solution found
-        int _k;                                     // number of paths to find
         backnode_t<T> _start;                                     // start node
         backnode_t<T> _goal;                                       // goal node
-        int _h0;                       // heuristic distance of the start state
-        std::size_t _expansions;                        // number of expansions
-
-        // high-precision measuring time
-        std::chrono::time_point<std::chrono::system_clock> _tstart, _tend;
 
     private:
 
@@ -91,32 +72,26 @@ namespace khs {
 
         // Explicit constructor.
         mA (const int k, const T& start, const T& goal) :
-            _k          { k},
-            _start      {backnode_t<T> {start}},
-            _goal       {backnode_t<T> {goal }},
-            _expansions {    0}
+            bsolver<T>(k),
+            _start    {backnode_t<T> {start}},
+            _goal     {backnode_t<T> {goal }}
             {
 
                 // compute the heuristic distance of the start state to the goal
-                _h0 = start.h (goal);
+                bsolver<T>::_h0 = start.h (goal);
 
                 // This implements mA* with no heuristics and thus, the start
                 // node is not updated with its h value
             }
 
+        // Destructor
+        virtual ~mA () = default;
+
         // getters
-        const int get_k () const
-            { return _k; }
         const T& get_start () const
             { return _start.get_state (); }
         const T& get_goal () const
             { return _goal.get_state (); }
-        const int get_h0 () const
-            { return _h0; }
-        const size_t get_expansions () const
-            { return _expansions; }
-        const double get_cpu_time () const
-            { return 1e-9*chrono::duration_cast<chrono::nanoseconds>(_tend - _tstart).count(); }
 
         // methods
 
@@ -130,31 +105,33 @@ namespace khs {
             return solution_t<T> (path,
                                   _start.get_state (),
                                   _goal.get_state (),
-                                  _h0,
+                                  bsolver<T>::_h0,
                                   g,
-                                  _expansions,
-                                  get_cpu_time (),
+                                  bsolver<T>::_expansions,
+                                  bsolver<T>::get_cpu_time (),
                                   signature);
         }
 
         // every solver must be uniquely identified by a signature
         const string signature () const {
-            return "mA";
+            return "mA*";
         }
 
         // the main service of this class computes a solution of the k-shortest
-        // path problem from the start to the goal
+        // path problem from the start to the goal. Importantly, the solutions
+        // shall be returned in the same order they are generated!
         const ksolution_t<T> solve ();
 
     }; // class mA<T>
 
     // the main service of this class computes a solution of the k-shortest path
-    // problem from the start to the goal
+    // problem from the start to the goal. Importantly, the solutions shall be
+    // returned in the same order they are generated!
     template<typename T>
     const ksolution_t<T> mA<T>::solve () {
 
         // First things first, create a container to store all solutions found
-        ksolution_t<T> ksolution{_k, _start.get_state (), _goal.get_state ()};
+        ksolution_t<T> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
 
         // In case the start and the goal nodes are the same, return immediately
         // with a single empty solution, and only one in spite of the number of
@@ -203,7 +180,7 @@ namespace khs {
                                                 signature ());
 
                 // in case we already found k solutions then return
-                if (ksolution.size () == _k) {
+                if (ksolution.size () == bsolver<T>::_k) {
                     return ksolution;
                 }
 
@@ -226,7 +203,7 @@ namespace khs {
                 // Otherwise, if the node already exists in CLOSED, verify first
                 // it has not been expanded more than k times
                 backnode_t<T> cnode = closed[ptr];
-                if (cnode.get_backpointers ().size () >= _k) {
+                if (cnode.get_backpointers ().size () >= bsolver<T>::_k) {
 
                     // then skip the expansion of this node
                     continue;

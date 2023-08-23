@@ -26,13 +26,25 @@ namespace khs {
     template<typename T>
     class ksolution_t {
 
-        // INVARIANT: the solution of a k-shortest path problem consists of k
-        // solution paths (that might be less, in the case of loopless paths)
-        // with the same start and goal
+        // INVARIANT: the solution of a k-shortest path problem (identified with
+        // a name) consists of k solution paths (that might be less, in the case
+        // of loopless paths) with the same start and goal
+        string _name;                                          // instance name
         int _k;                                                   // value of k
         T _start;                               // start state of all solutions
         T _goal;                                 // goal state of all solutions
         std::vector<solution_t<T>> _solutions;        // container of solutions
+
+        // In addition, a number of statistics are reported. Note that these are
+        // equal to the same statistics of the last single solution reported in
+        // this container
+        int _h0;                       // heuristic distance of the start state
+        size_t _expansions;                       // total number of expansions
+        double _cpu_time;                                   // elapsed CPU time
+
+        // Finally, a solution to the k-shortest path problem must be verifiable
+        // and, as a result, an error code should be given
+        solution_error _error_code;
 
     public:
 
@@ -41,13 +53,24 @@ namespace khs {
 
         // Explicit constructor
         ksolution_t (int k, const T& start, const T& goal) :
+            _name { "" },
             _k { k },
             _start { start },
             _goal { goal },
-            _solutions { std::vector<solution_t<T>>() }
-            {}
+            _solutions { std::vector<solution_t<T>>() },
+            _h0 { 0 },
+            _expansions { 0 },
+            _cpu_time { 0.0 }
+            {
+                // Initially solutions are not checked unless the doctor service
+                // is invoked
+                _error_code = solution_error::UNCHECKED;
+            }
 
         // getters
+        const string& get_name () const {
+            return _name;
+        }
         const int get_k () const {
             return _k;
         }
@@ -60,6 +83,23 @@ namespace khs {
         const std::vector<solution_t<T>>& get_solutions () const {
             return _solutions;
         }
+        const int get_h0 () const {
+            return _h0;
+        }
+        const size_t get_expansions () const {
+            return _expansions;
+        }
+        const double get_cpu_time () const {
+            return _cpu_time;
+        }
+        const solution_error get_error_code () const {
+            return _error_code;
+        }
+
+        // setters
+        void set_name (const string& name) {
+            _name = name;
+        }
 
         // operator overloading
 
@@ -68,6 +108,12 @@ namespace khs {
 
             // add this solution to the container
             _solutions.push_back (right);
+
+            // and update the statistics of the container of solutions
+            _h0 = right.get_h0 ();
+            _expansions = right.get_expansions ();
+            _cpu_time = right.get_cpu_time ();
+
             return *this;
         }
 
@@ -78,6 +124,13 @@ namespace khs {
             for (auto i = 0 ; i < right.size () ; i++) {
                 _solutions.push_back (right[i]);
             }
+
+            // and update the statistics of the container of solutions copying
+            // those from the last single solution given in right
+            _h0 = right[right.size ()-1].get_h0 ();
+            _expansions = right[right.size ()-1].get_expansions ();
+            _cpu_time = right[right.size ()-1].get_cpu_time ();
+
             return *this;
         }
 
@@ -89,6 +142,50 @@ namespace khs {
             return _solutions[idx];
         }
 
+        // doctor verifies that this solution to a k shortest path problem is
+        // correct: on one one hand, it verifies every solution separately; it
+        // also verifies that the cost of every solution is greater or equal
+        // than the cost of the previous one
+        bool doctor () {
+
+            // By default, no error is detected
+            _error_code = solution_error::NO_ERROR;
+
+            // verify every solution separately
+            for (auto& solution : _solutions) {
+                if (!solution.doctor ()) {
+                    _error_code = solution.get_error_code ();
+                    return false;
+                }
+            }
+
+            // in case every solution is correct, verify now that the costs are
+            // monotonically increasing
+            int prev = 0;
+            for (auto& solution : _solutions) {
+                if (solution.get_cost () < prev) {
+                    _error_code = solution_error::ERR_INCR_COST;
+                    return false;
+                }
+                prev = solution.get_cost ();
+            }
+
+            // finally, verify the number of solutions is correct
+            if (_solutions.size () != _k) {
+
+                // if the number of solutions computed so far is different then
+                // an error has been found unless start=goal
+                if (!(_start == _goal)) {
+                    _error_code = solution_error::ERR_NUM_SOLUTIONS;
+                    return false;
+                }
+            }
+
+            // at this point, this solution to the k-shortest path problem is
+            // proven to be correct
+            return true;
+        }
+
         // stream out
         friend ostream& operator<< (std::ostream& stream, const ksolution_t& solutions) {
 
@@ -98,10 +195,17 @@ namespace khs {
             // first to a string stream and then copy its output to the given
             // stream
             std::stringstream ss;
-            ss << "id;start;goal;h0;cost;expansions;runtime;expansions/sec;solver" << endl;
-            for (const auto& s : solutions.get_solutions ()) {
-                ss << s << std::endl;
-            }
+            // for (const auto& s : solutions.get_solutions ()) {
+            //     ss << s << std::endl;
+            // }
+
+            ss << solutions.get_name () << ";";
+            ss << solutions.get_start () << ";";
+            ss << solutions.get_goal () << ";";
+            ss << solutions.get_h0 () << ";";
+            ss << solutions.get_expansions() << ";";
+            ss << solutions.get_cpu_time() << ";";
+            ss << solution_t<T>::get_error_msg (solutions.get_error_code ());
 
             // and now redirect the contents of the string stream to the given
             // stream

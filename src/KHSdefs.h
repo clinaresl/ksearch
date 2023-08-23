@@ -63,7 +63,7 @@ namespace khs {
     // if this point was reached, then both paths are the same
     return true;
   }
-  
+
 } // namespace khs
 
 #endif /* !KHSDEFS_H_ */

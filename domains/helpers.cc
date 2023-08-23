@@ -14,10 +14,10 @@
 
 using namespace std;
 
-// process the user selection of k and issue an error in case they are
-// incorrect. Otherwise, return a vector of integers with the the first k, the
-// second and the increment between successive values of k. If necessary, these
-// slots are filled in with default values
+// process a single user selection for the values of k and issue an error in
+// case they are incorrect. Otherwise, return a tuple of integers with the the
+// first k, the second and the increment between successive values of k. If
+// necessary, these slots are filled in with default values
 const tuple<int, int , int> split_k (string& params) {
 
     int k0=0, k1=0, incr=0;
@@ -57,6 +57,30 @@ const tuple<int, int , int> split_k (string& params) {
 
     // and return the user selection of solvers
     return tuple<int, int, int> {k0, k1, incr};
+}
+
+// process the entire user selection for the values of k and issue an error in
+// case they are incorrect. Otherwise, return a vector of tuples of integers
+// containing: first, the the initial value of k; next, the last value of k;
+// finally, the increment between successive values of k. If necessary, these
+// slots are filled in with default values
+const vector<tuple<int, int , int>> split_ks (std::string& params){
+
+    std::vector<std::tuple<int, int , int>> result;
+
+    // split the given string into single specifications which are then
+    // processed separately
+    regex regex (";");
+    sregex_token_iterator it(params.begin(), params.end(), regex, -1);
+    sregex_token_iterator end;
+
+    // and now process each single specification separately
+    for (auto idx=0 ; it != end; ++it, idx++) {
+        string spec = *it;
+        result.push_back (split_k (ltrim (rtrim (spec))));
+    }
+
+    return result;
 }
 
 // process the user selection of solvers and issue an error if any is not

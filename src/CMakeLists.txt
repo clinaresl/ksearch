@@ -8,6 +8,7 @@ add_library (ksearch
   structs/KHSbucket_t.h
   structs/KHSsolution_t.h
   structs/KHSksolution_t.h
+  algorithm/KHSbsolver.h
   algorithm/KHSmA.h
   algorithm/KHSbela.h)
 

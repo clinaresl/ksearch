@@ -27,13 +27,36 @@
 #include "../src/ksearch.h"
 
 // signatures of acknowledged solvers
-static std::vector<std::string> ack_solvers {"mA", "belA"};
+static std::vector<std::string> ack_solvers {"mDijkstra", "belA0"};
 
-// process the user selection of k and issue an error in case they are
-// incorrect. Otherwise, return a vector of integers with the the first k, the
-// second and the increment between successive values of k. If necessary, these
-// slots are filled in with default values
+// Left trimming a string
+static inline std::string& ltrim (std::string& s) {
+    s.erase (s.begin(), std::find_if (s.begin(), s.end(), [](int ch) {
+                return !std::isspace(ch);
+            }));
+    return s;
+}
+
+// Right trimming a string
+static inline std::string& rtrim (std::string& s) {
+    s.erase (std::find_if (s.rbegin(), s.rend(), [](int ch) {
+                return !std::isspace(ch);
+            }).base(), s.end());
+    return s;
+}
+
+// process a single user selection for the values of k and issue an error in
+// case they are incorrect. Otherwise, return a tuple of integers with the the
+// first k, the second and the increment between successive values of k. If
+// necessary, these slots are filled in with default values
 const std::tuple<int, int , int> split_k (std::string& params);
+
+// process the entire user selection for the values of k and issue an error in
+// case they are incorrect. Otherwise, return a vector of tuples of integers
+// containing: first, the the initial value of k; next, the last value of k;
+// finally, the increment between successive values of k. If necessary, these
+// slots are filled in with default values
+const std::vector<std::tuple<int, int , int>> split_ks (std::string& params);
 
 // process the user selection of solvers and issue an error if any is not
 // recognized. Otherwise, return a vector of strings with the signatures of the
@@ -110,35 +133,33 @@ void get_problems (const std::string& filename,
 //     }
 // }
 
-// // return a (plain) pointer to a specific solver for solving instances in the
-// // specified domain D according to the given name. The solver is initialized
-// // with the following data:
-// //
-// // * start: instance to solve
-// // * goal: goal
-// // * beam_width: beam width to use
-// // * h: heuristic value of the start state
-// // * max_depth: maximum depth allowed
-// template<typename D>
-// khs::bssolver<D>* get_solver (const std::string name,
-//                               const D& start, const D& goal,
-//                               const int beam_width, const int h, const int max_depth) {
+// return a (plain) pointer to a specific solver for solving instances in the
+// specified domain D according to the given name. The solver is initialized
+// with the following data:
+//
+// * start: instance to solve
+// * goal: goal
+// * k: number of paths to find
+template<typename D>
+khs::bsolver<D>* get_solver (const std::string name,
+                             const D& start, const D& goal,
+                             const int k) {
 
-//     // create a pointer to a solver
-//     khs::bssolver<D>* m;
+    // create a pointer to a solver
+    khs::bsolver<D>* m;
 
-//     // and now choose according to the given name
-//     if (name == "bs") {
-//         m = new khs::bs<D> (start, goal, beam_width, h, max_depth);
-//     } else if (name == "monobs") {
-//         m = new khs::monobs<D> (start, goal, beam_width, h, max_depth);
-//     } else {
-//         throw std::invalid_argument{"Unknown solver!"};
-//     }
+    // and now choose according to the given name
+    if (name == "mDijkstra") {
+        m = new khs::mA<D> (k, start, goal);
+    } else if (name == "belA0") {
+        m = new khs::bela<D> (k, start, goal);
+    } else {
+        throw std::invalid_argument{"Unknown solver!"};
+    }
 
-//     // and return a pointer to the selected solver
-//     return m;
-// }
+    // and return a pointer to the selected solver
+    return m;
+}
 
 // Given a list of choices, update the first parameter to the one matching one
 // in choices, and return true. If there is no match, return false

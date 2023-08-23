@@ -15,6 +15,7 @@
 
 // definitions
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+#define CMAKE_VERSION "@CMAKE_PROJECT_VERSION@"
 
 // ***initialization ***
 #include "KHSdefs.h"
@@ -24,21 +25,29 @@
 // --- node
 #include "structs/KHSnode_t.h"
 #include "structs/KHSbacknode_t.h"
+#include "structs/KHSlabelednode_t.h"
 
-// // --- open list
-// #include "structs/KHSbucketvd_t.h"
-// #include "structs/KHSbucketvl_t.h"
+// --- open list
+#include "structs/KHSbucket_t.h"
 
-// // --- closed list
-// #include "structs/KHSset_t.h"
+// --- closed list
+#include "structs/KHSclosed_t.h"
 
-// // *** search algorithms
+// -- solutions
+#include "structs/KHSsolution_t.h"
+#include "structs/KHSksolution_t.h"
+#include "structs/KHSksolutions_t.h"
 
-// // --- base definition
-// #include "algorithm/KHSsolver.h"
+// *** search algorithms
 
-// // m-Dijkstra
-// #include "algorithm/KHSmsolver.h"
+// --- base definition
+#include "algorithm/KHSbsolver.h"
+
+// m-Dijkstra
+#include "algorithm/KHSmA.h"
+
+// Bidirectional Edge-Labeled A* (BELA*)
+#include "algorithm/KHSbela.h"
 
 #endif // _KSEARCH_H_
 

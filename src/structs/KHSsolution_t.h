@@ -35,6 +35,8 @@ namespace khs {
         ERR_GOAL,
         ERR_ADJACENT,
         ERR_SOLUTION_COST,
+        ERR_INCR_COST,
+        ERR_NUM_SOLUTIONS,
         NO_ERROR
     };
 
@@ -276,7 +278,7 @@ namespace khs {
             switch (code) {
                 case solution_error::UNCHECKED: return "? Unchecked";
                     break;
-                case solution_error::NO_ERROR: return "✔";
+                case solution_error::NO_ERROR: return "✔ No error";
                     break;
                 case solution_error::ERR_EXPANSIONS: return "✘ No solution found!";
                     break;
@@ -288,7 +290,10 @@ namespace khs {
                     break;
                 case solution_error::ERR_SOLUTION_COST: return "✘ Error solution cost";
                     break;
-
+                case solution_error::ERR_INCR_COST: return "✘ Error increasing cost";
+                    break;
+                case solution_error::ERR_NUM_SOLUTIONS: return "✘ Error number of solutions";
+                    break;
             }
         }
 
