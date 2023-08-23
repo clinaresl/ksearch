@@ -42,6 +42,10 @@ namespace khs {
         size_t _expansions;                       // total number of expansions
         double _cpu_time;                                   // elapsed CPU time
 
+        // all the work being carried out by a specific solver whose signature
+        // is stored also in this container
+        string _solver;
+
         // Finally, a solution to the k-shortest path problem must be verifiable
         // and, as a result, an error code should be given
         solution_error _error_code;
@@ -60,7 +64,8 @@ namespace khs {
             _solutions { std::vector<solution_t<T>>() },
             _h0 { 0 },
             _expansions { 0 },
-            _cpu_time { 0.0 }
+            _cpu_time { 0.0 },
+            _solver { "" }
             {
                 // Initially solutions are not checked unless the doctor service
                 // is invoked
@@ -92,6 +97,9 @@ namespace khs {
         const double get_cpu_time () const {
             return _cpu_time;
         }
+        const string& get_solver () const {
+            return _solver;
+        }
         const solution_error get_error_code () const {
             return _error_code;
         }
@@ -99,6 +107,9 @@ namespace khs {
         // setters
         void set_name (const string& name) {
             _name = name;
+        }
+        void set_solver (const string& solver) {
+            _solver = solver;
         }
 
         // operator overloading
@@ -118,7 +129,7 @@ namespace khs {
         }
 
         // or adding another container directly
-        ksolution_t& operator+= (const ksolution_t<T>& right) {
+        ksolution_t& operator+= (ksolution_t<T>& right) {
 
             // add every solution in the given container
             for (auto i = 0 ; i < right.size () ; i++) {
@@ -135,7 +146,7 @@ namespace khs {
         }
 
         // random access operator
-        const solution_t<T> operator[] (const size_t idx) const {
+        solution_t<T>& operator[] (const size_t idx) {
             if (idx >= _solutions.size ()) {
                 throw std::out_of_range ("[ksolution_t::get] out of bounds!");
             }
@@ -205,6 +216,7 @@ namespace khs {
             ss << solutions.get_h0 () << ";";
             ss << solutions.get_expansions() << ";";
             ss << solutions.get_cpu_time() << ";";
+            ss << solutions.get_solver () << ";";
             ss << solution_t<T>::get_error_msg (solutions.get_error_code ());
 
             // and now redirect the contents of the string stream to the given

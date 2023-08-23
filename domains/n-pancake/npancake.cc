@@ -122,7 +122,7 @@ int main (int argc, char** argv) {
 
     // initialize the list of operators and also the incremental table with the
     // updates of the manhattan distance
-    npancake_t::init ();
+    npancake_t::init (variant);
 
     /* !-------------------------------------------------------------------! */
 
@@ -139,11 +139,11 @@ int main (int argc, char** argv) {
 
     /* !----------------------------- SEARCH ------------------------------! */
 
-    // // initialize a container for storing all solutions and register relevant
-    // // information for all solvers
-    // hbs::solutions_t<npancake_t> results;
-    // results.set_domain (get_domain ());
-    // results.set_variant (variant);
+    // initialize a container for storing all solutions and register relevant
+    // information for all solvers
+    khs::ksolutions_t<npancake_t> results;
+    results.set_domain (get_domain ());
+    results.set_variant (variant);
 
     // start the clock
     tstart = chrono::system_clock::now ();
@@ -153,11 +153,11 @@ int main (int argc, char** argv) {
     // go to different containers of solutions
     for (auto isolver : solvers) {
 
-    //     // initialize a container for storing all solutions and register
-    //     // relevant information about it for this specific solver
-    //     hbs::solutions_t<npancake_t> bag;
-    //     bag.set_domain (get_domain ());
-    //     bag.set_variant (variant);
+        // initialize a container for storing all solutions and register
+        // relevant information about it for this specific solver
+        khs::ksolutions_t<npancake_t> bag;
+        bag.set_domain (get_domain ());
+        bag.set_variant (variant);
 
         // for all values of k selected by the user
         for (auto ispec: kspec) {
@@ -180,64 +180,48 @@ int main (int argc, char** argv) {
                     // and now free the manager
                     delete m;
 
+                    // give a name to every individual solution
+                    for (auto j = 0 ; j < ksolution.size () ; j++) {
+                        ksolution[j].set_name (names[i] + "/" + to_string (1+j));
+                    }
+
                     // and show the result on the standard output. Prior to
                     // that, give it a name so that it can be easily recognized
+                    // and record also the name of the solver used
                     ksolution.set_name (names[i]);
+                    ksolution.set_solver (isolver);
                     ksolution.doctor ();
                     cout << ksolution << endl;
+
+                    // in case verbose output was requested, show every solution
+                    // path to this instance
+                    if (want_verbose) {
+                        for (auto i = 0 ; i < ksolution.size (); i++) {
+                            cout << "   → " << ksolution[i] << endl;
+                        }
+                        cout << endl;
+                    }
+
                 }
             }
         }
 
-    //     // for all beam widths selected by the user
-    //     for (auto bw = k0 ; bw <= k1 ; bw += incr) {
-
-    //         // for all instances
-    //         cout << endl;
-    //         cout << " ⏺ " << isolver << " (" << bw <<  "): " << endl;
-    //         for (auto i = 0 ; i < instances.size () ; i++) {
-
-    //             // create a manager to solve this specific instance
-    //             hbs::bssolver<npancake_t>* m = get_solver (isolver,
-    //                                                        instances[i], goal,
-    //                                                        bw, instances[i].h (goal), max_depth);
-    //             cout << " ⏵ ";cout.flush ();
-    //             auto solution = m->solve ();
-
-    //             // and now free the manager
-    //             delete m;
-
-    //             // and show the result on the standard output. Prior to that, give it a
-    //             // name so that it can be easily recognized
-    //             solution.set_name (names[i]);
-    //             solution.doctor ();
-    //             cout << solution << endl;
-
-    //             // and add this solution to the bag
-    //             bag += solution;
-    //         }
-    //     }
-
-    //     // add all solutions generated to the results to report
-    //     results += bag;
-
-    //     // verify monotonicity in case this is a monotonic algorithm
-    //     cout << endl;
-    //     if (isolver == "monobs") {
-    //         check_monotonicity<npancake_t>(bag, want_verbose);
-    //     }
+        // add all solutions generated to the results to report
+        results += bag;
     }
 
-    // // and stop the clock
-    // tend = chrono::system_clock::now ();
+    // and stop the clock
+    tend = chrono::system_clock::now ();
 
-    // // and write all results to a csv file only in case the user provided a name
-    // // for the output csv file along with a summary of all the error codes
-    // cout << " 🖹 Error summary:" << endl;
-    // cout << results.get_error_summary () << endl;
+    // and write all results to a csv file only in case the user provided a name
+    // for the output csv file along with a summary of the number of errors
+    // generated
+    cout << endl;
+    cout << " 🖹 Error summary:" << endl;
+    cout << results.get_error_summary () << endl;
     // write_csv<npancake_t> (csvname, results);
-    // cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
-    // cout << endl;
+    cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
+    cout << endl;
 
     // Well done! Keep up the good job!
     return (EXIT_OK);

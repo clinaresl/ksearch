@@ -120,7 +120,7 @@ namespace khs {
         // the main service of this class computes a solution of the k-shortest
         // path problem from the start to the goal. Importantly, the solutions
         // shall be returned in the same order they are generated!
-        const ksolution_t<T> solve ();
+        ksolution_t<T> solve ();
 
     }; // class mA<T>
 
@@ -128,7 +128,7 @@ namespace khs {
     // problem from the start to the goal. Importantly, the solutions shall be
     // returned in the same order they are generated!
     template<typename T>
-    const ksolution_t<T> mA<T>::solve () {
+    ksolution_t<T> mA<T>::solve () {
 
         // Start the chrono!
         bsolver<T>::_tstart = chrono::system_clock::now ();

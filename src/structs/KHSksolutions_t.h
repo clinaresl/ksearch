@@ -80,7 +80,7 @@ namespace khs {
             _ksolutions.push_back (right);
             return *this;
         }
-        ksolutions_t& operator+= (const ksolutions_t& right) {
+        ksolutions_t& operator+= (ksolutions_t& right) {
 
             for (const auto& s: right.get_ksolutions ()) {
                 _ksolutions.push_back (s);
@@ -89,7 +89,7 @@ namespace khs {
         }
 
         // random access operator
-        const ksolution_t<T> operator[] (const size_t idx) const {
+        ksolution_t<T> operator[] (size_t idx) const {
             if (idx >= _ksolutions.size ()) {
                 throw std::out_of_range ("[ksolutions_t::get] out of bounds!");
             }
@@ -120,9 +120,88 @@ namespace khs {
         }
 
         // methods
-        size_t size () const {
-            return _ksolutions.size ();
+
+        // produce a string to summarize the errors of all ksolutions in this container
+        const string get_error_summary () const {
+
+            // create a string stream to store the summary
+            std::stringstream ss;
+
+            // number of errors per type
+            int nbexpansions = 0;
+            int nbstart = 0;
+            int nbgoal = 0;
+            int nbadjacent = 0;
+            int nbsolutioncost = 0;
+            int nbincrcost = 0;
+            int numsolutions = 0;
+            int total = 0;
+
+            // for every solution in this container
+            for (const auto& ksolution : _ksolutions) {
+
+                switch (ksolution.get_error_code ()) {
+
+                    // Yeah, I did not forget about the following two! :)
+                    case solution_error::UNCHECKED:
+                    case solution_error::NO_ERROR:
+                        break;
+
+                    case solution_error::ERR_EXPANSIONS:
+                        nbexpansions++;
+                        break;
+                    case solution_error::ERR_START:
+                        nbstart++;
+                        break;
+                    case solution_error::ERR_GOAL:
+                        nbgoal++;
+                        break;
+                    case solution_error::ERR_ADJACENT:
+                        nbadjacent++;
+                        break;
+                    case solution_error::ERR_SOLUTION_COST:
+                        nbsolutioncost++;
+                        break;
+                    case solution_error::ERR_INCR_COST:
+                        nbincrcost++;
+                        break;
+                    case solution_error::ERR_NUM_SOLUTIONS:
+                        numsolutions++;
+                        break;
+                }
+            }
+            // return the number of errors found
+            total = nbexpansions+nbstart + nbgoal + nbadjacent + nbsolutioncost + nbincrcost + numsolutions;
+            ss << "\tNumber of errors: " << total;
+            if (total > 0) {
+                if (nbexpansions > 0) {
+                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_EXPANSIONS) << ": " << nbexpansions;
+                }
+                if (nbstart > 0) {
+                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_START) << ": " << nbstart;
+                }
+                if (nbgoal > 0) {
+                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_GOAL) << ": " << nbgoal;
+                }
+                if (nbadjacent > 0) {
+                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_ADJACENT) << ": " << nbadjacent;
+                }
+                if (nbsolutioncost > 0) {
+                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_SOLUTION_COST) << ": " << nbsolutioncost;
+                }
+                if (nbincrcost > 0) {
+                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_INCR_COST) << ": " << nbincrcost;
+                }
+                if (numsolutions > 0) {
+                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_NUM_SOLUTIONS) << ": " << numsolutions;
+                }
+            }
+            return ss.str ();
         }
+
+        size_t size () const {
+        return _ksolutions.size ();
+    }
 
     }; // class ksolutions_t
 } // namespace khs

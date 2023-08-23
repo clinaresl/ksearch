@@ -74,7 +74,7 @@ namespace khs {
         // the k-shortest path problem which is returned as a container of k
         // solutions. Importantly, the solutions shall be returned in the same
         // order they are generated!
-        virtual const ksolution_t<T> solve () = 0;
+        virtual ksolution_t<T> solve () = 0;
 
     }; // class bsolver<T>
 
