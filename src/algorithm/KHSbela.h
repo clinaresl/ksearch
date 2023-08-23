@@ -449,6 +449,7 @@ namespace khs {
                 // create a single solution with this path and add it to the
                 // collection of solutions to reeturn. Note the cost of every
                 // path is equal to the overall cost of the centroid indeed!
+                bsolver<T>::_tend = chrono::system_clock::now ();
                 solutions += generate_solution (path, centroid.get_cost (), signature ());
 
                 // in case the bound has been reached, return the current
@@ -469,6 +470,9 @@ namespace khs {
     template <typename T>
     const ksolution_t<T> bela<T>::solve () {
 
+        // Start the chrono!
+        bsolver<T>::_tstart = chrono::system_clock::now ();
+
         // First things first, create a container to store all solutions found
         ksolution_t<T> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
 
@@ -482,6 +486,7 @@ namespace khs {
 
             // create then a single solution with no path (and no expansions!)
             std::vector<T> path;
+            bsolver<T>::_tend = chrono::system_clock::now ();
             ksolution += generate_solution (path, 0, signature ());
 
             // and return
@@ -528,7 +533,7 @@ namespace khs {
 
                 // and add them to the solutions already found. In case the
                 // requested number of solutions has been already found, then
-                // exit immediately. Job done!
+                // stop the chrono and exit immediately. Job done!
                 ksolution += solutions;
                 if (ksolution.size () >= bsolver<T>::_k) {
                     return ksolution;
@@ -616,6 +621,7 @@ namespace khs {
             }
 
             // expand this node. Note that the heuristic value is dismissed
+            bsolver<T>::_expansions++;
             vector<tuple<int, int, T>> successors;
             const_cast<T&>(node.get_state ()).children (0, _goal.get_state (), successors);
 
@@ -647,9 +653,10 @@ namespace khs {
 
             // and add them to the solutions already found. In case the
             // requested number of solutions has been already found, then
-            // exit immediately. Job done!
+            // stop the chrono and exit immediately. Job done!
             ksolution += solutions;
             if (ksolution.size () >= bsolver<T>::_k) {
+                bsolver<T>::_tend = chrono::system_clock::now ();
                 return ksolution;
             }
         }

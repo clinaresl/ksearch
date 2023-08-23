@@ -130,6 +130,9 @@ namespace khs {
     template<typename T>
     const ksolution_t<T> mA<T>::solve () {
 
+        // Start the chrono!
+        bsolver<T>::_tstart = chrono::system_clock::now ();
+
         // First things first, create a container to store all solutions found
         ksolution_t<T> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
 
@@ -143,6 +146,7 @@ namespace khs {
 
             // create then a single solution with no path (and no expansions!)
             std::vector<T> path;
+            bsolver<T>::_tend = chrono::system_clock::now ();
             ksolution += generate_solution (path, 0, signature ());
 
             // and return
@@ -173,6 +177,7 @@ namespace khs {
                 // one backpointer, so that is the one used for reconstructing
                 // the path
                 std::vector<T> path;
+                bsolver<T>::_tend = chrono::system_clock::now ();
                 ksolution += generate_solution (_reconstruct_path (closed,
                                                                    node.get_backpointer (0),
                                                                    _goal.get_state ()),
@@ -214,6 +219,7 @@ namespace khs {
             }
 
             // expand this node. Note that the heuristic value is dismissed
+            bsolver<T>::_expansions++;
             vector<tuple<int, int, T>> successors;
             const_cast<T&>(node.get_state ()).children (0, _goal.get_state (), successors);
 
