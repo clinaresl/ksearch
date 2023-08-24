@@ -140,39 +140,42 @@ namespace khs {
             int numsolutions = 0;
             int total = 0;
 
-            // for every solution in this container
+            // for every single solution in this container
             for (const auto& ksolution : _ksolutions) {
+                for (const auto& solution: ksolution.get_solutions ()) {
 
-                switch (ksolution.get_error_code ()) {
+                    switch (solution.get_error_code ()) {
 
-                    // Yeah, I did not forget about the following two! :)
-                    case solution_error::UNCHECKED:
-                    case solution_error::NO_ERROR:
-                        break;
+                        // Yeah, I did not forget about the following two! :)
+                        case solution_error::UNCHECKED:
+                        case solution_error::NO_ERROR:
+                            break;
 
-                    case solution_error::ERR_EXPANSIONS:
-                        nbexpansions++;
-                        break;
-                    case solution_error::ERR_START:
-                        nbstart++;
-                        break;
-                    case solution_error::ERR_GOAL:
-                        nbgoal++;
-                        break;
-                    case solution_error::ERR_ADJACENT:
-                        nbadjacent++;
-                        break;
-                    case solution_error::ERR_SOLUTION_COST:
-                        nbsolutioncost++;
-                        break;
-                    case solution_error::ERR_INCR_COST:
-                        nbincrcost++;
-                        break;
-                    case solution_error::ERR_NUM_SOLUTIONS:
-                        numsolutions++;
-                        break;
+                        case solution_error::ERR_EXPANSIONS:
+                            nbexpansions++;
+                            break;
+                        case solution_error::ERR_START:
+                            nbstart++;
+                            break;
+                        case solution_error::ERR_GOAL:
+                            nbgoal++;
+                            break;
+                        case solution_error::ERR_ADJACENT:
+                            nbadjacent++;
+                            break;
+                        case solution_error::ERR_SOLUTION_COST:
+                            nbsolutioncost++;
+                            break;
+                        case solution_error::ERR_INCR_COST:
+                            nbincrcost++;
+                            break;
+                        case solution_error::ERR_NUM_SOLUTIONS:
+                            numsolutions++;
+                            break;
+                    }
                 }
             }
+
             // return the number of errors found
             total = nbexpansions+nbstart + nbgoal + nbadjacent + nbsolutioncost + nbincrcost + numsolutions;
             ss << "\tNumber of errors: " << total;

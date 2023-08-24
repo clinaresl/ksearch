@@ -166,8 +166,13 @@ namespace khs {
             for (auto& solution : _solutions) {
                 if (!solution.doctor ()) {
                     _error_code = solution.get_error_code ();
-                    return false;
                 }
+            }
+
+            // and in case any failed, then record the whole set as faulty using
+            // the error code of the last error
+            if (_error_code != solution_error::NO_ERROR) {
+                return false;
             }
 
             // in case every solution is correct, verify now that the costs are
