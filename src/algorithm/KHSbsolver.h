@@ -70,6 +70,10 @@ namespace khs {
         const double get_cpu_time () const
             { return 1e-9*chrono::duration_cast<chrono::nanoseconds>(_tend - _tstart).count(); }
 
+        // Every solver must be uniquely identified by a signature used for
+        // reporting purposes
+        virtual const string signature () const = 0;
+
         // the main service of any solver consists of computing the solution of
         // the k-shortest path problem which is returned as a container of k
         // solutions. Importantly, the solutions shall be returned in the same
