@@ -62,6 +62,7 @@ protected:
             std::pair<std::vector<npancake_t>, int> randWalk = randPath (start, 10 + rand () % (MAX_PATH_LENGTH - 10));
 
             // explicitly create other data for populating this solution
+            int k = rand () % MAX_VALUE;
             std::vector<npancake_t> path = randWalk.first;
             int h0 = rand () % MAX_VALUE;
             int cost = randWalk.second;
@@ -70,7 +71,7 @@ protected:
             std::string solver = randString (50);
 
             // Create a solution which stores all this information
-            khs::solution_t<npancake_t> solution (path, start, goal,
+            khs::solution_t<npancake_t> solution (k, path, start, goal,
                                                   h0, cost, expansions, cpu_time, solver);
 
             // and add it to the set of solutions of the k-shortest path problem

@@ -54,6 +54,7 @@ TEST_F (KSolutionFixture, AddSolution) {
         pair<vector<npancake_t>, int> randWalk = randPath (start, 10 + rand () % (MAX_PATH_LENGTH - 10));
 
         // explicitly create other data for populating this solution
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
         int h0 = rand () % MAX_VALUE;
@@ -63,12 +64,11 @@ TEST_F (KSolutionFixture, AddSolution) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // Create a container for storing k solutions from a specific start to
         // another goal
-        int k = rand () % MAX_VALUE;
         khs::ksolution_t ks {k, start, goal};
 
         // and add the solution randomly generated

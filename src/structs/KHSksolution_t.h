@@ -211,6 +211,7 @@ namespace khs {
             // }
 
             ss << solutions.get_name () << ";";
+            ss << solutions.get_k () << ";";
             ss << solutions.get_start () << ";";
             ss << solutions.get_goal () << ";";
             ss << solutions.get_h0 () << ";";

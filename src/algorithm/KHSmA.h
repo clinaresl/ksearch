@@ -95,14 +95,15 @@ namespace khs {
 
         // methods
 
-        // The following method provides a convenient wrapping to generate
+        // The following method provides a convenient wrapper to generate
         // solutions more comfortably
         const solution_t<T> generate_solution (const vector<T>& path,
                                                const int g,
                                                const string& signature) {
 
             // return a solution with this information
-            return solution_t<T> (path,
+            return solution_t<T> (bsolver<T>::_k,
+                                  path,
                                   _start.get_state (),
                                   _goal.get_state (),
                                   bsolver<T>::_h0,

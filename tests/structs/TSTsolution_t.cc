@@ -24,6 +24,7 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
     for (auto i = 0 ; i < NB_TESTS ; i++) {
 
         // explicitly create values to populate a solution
+        int k = rand () % MAX_VALUE;
         vector<int> path = randVectorInt (MAX_VALUES, MAX_VALUES);
         int start = rand () % MAX_VALUE;
         int goal = rand () % MAX_VALUE;
@@ -34,7 +35,7 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         string solver = randString (50);
 
         // create a solution which stores ints
-        khs::solution_t<int> solution{path, start, goal,
+        khs::solution_t<int> solution{k, path, start, goal,
         h0, cost, expansions, cpu_time, solver};
 
         // and give this instance a name
@@ -42,6 +43,7 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         solution.set_name (name);
 
         // verify that all values have been correctly stored
+        ASSERT_EQ (k, solution.get_k ());
         ASSERT_EQ (start, solution.get_start ());
         ASSERT_EQ (goal, solution.get_goal ());
         ASSERT_EQ (path, solution.get_solution ());
@@ -67,6 +69,7 @@ TEST_F (SolutionFixture, EmptySolutionNPancake) {
         // solutions are characterized by an empty solution path which is
         // generated with no expansions at all, and this is correct if and only
         // if the start and goal nodes are the same
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path;
         npancake_t start = randInstance (NB_DISCS);
         npancake_t goal = start;
@@ -77,7 +80,7 @@ TEST_F (SolutionFixture, EmptySolutionNPancake) {
         string solver = randString (50);
 
         // create a solution which stores npancakes
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // check that doctor recognizes this as a correct solution
@@ -102,6 +105,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeUnit) {
         pair<vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
 
         // explicitly create other data for populating this solution
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
         int h0 = rand () % MAX_VALUE;
@@ -111,7 +115,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeUnit) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is correct
@@ -136,6 +140,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeHeavy) {
         pair<vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
 
         // explicitly create other data for populating this solution
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
         int h0 = rand () % MAX_VALUE;
@@ -145,7 +150,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeHeavy) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is correct
@@ -163,6 +168,7 @@ TEST_F (SolutionFixture, ErrorEmptySolutionNPancake) {
         // solutions are characterized by an empty solution path which should
         // generated with no expansions at all, and this is correct if and only
         // if the start and goal nodes are the same
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path;
         npancake_t start = randInstance (NB_DISCS);
         npancake_t goal = start;
@@ -173,7 +179,7 @@ TEST_F (SolutionFixture, ErrorEmptySolutionNPancake) {
         string solver = randString (50);
 
         // create a solution which stores npancakes
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // check that doctor recognizes this solution is incorrect as a strictly
@@ -206,6 +212,7 @@ TEST_F (SolutionFixture, ErrorStartNPancake) {
         // start state is different. Note that the second state in the random
         // walk is necessarily different than the first one (because no state is
         // a descendant of itself) and thus it can be used to simulate this error.
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path = randWalk.first;
         start = path[1];
         npancake_t goal = path.back ();
@@ -216,7 +223,7 @@ TEST_F (SolutionFixture, ErrorStartNPancake) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
@@ -249,6 +256,7 @@ TEST_F (SolutionFixture, ErrorGoalNPancake) {
         // random walk is necessarily different than the last one (because no
         // state is a descendant of itself) and thus it can be used to simulate
         // this error.
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path = randWalk.first;
         npancake_t goal = path[path.size () - 2];
         int h0 = rand () % MAX_VALUE;
@@ -258,7 +266,7 @@ TEST_F (SolutionFixture, ErrorGoalNPancake) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
@@ -289,6 +297,7 @@ TEST_F (SolutionFixture, ErrorAdjacencyNPancake) {
 
         // modify the path so that a couple of states are not adjacent. To do
         // this, randomly pick a location of the path and remove it
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path;
         int idx = 1 + rand () % (randWalk.first.size () - 2);
         copy (randWalk.first.begin (), randWalk.first.begin () + idx, back_inserter (path));
@@ -308,7 +317,7 @@ TEST_F (SolutionFixture, ErrorAdjacencyNPancake) {
 
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
@@ -337,6 +346,7 @@ TEST_F (SolutionFixture, ErrorCostNPancakeHeavy) {
         pair<vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
 
         // explicitly create other data for populating this solution
+        int k = rand () % MAX_VALUE;
         vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
         int h0 = rand () % MAX_VALUE;
@@ -346,7 +356,7 @@ TEST_F (SolutionFixture, ErrorCostNPancakeHeavy) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (path, start, goal,
+        khs::solution_t<npancake_t> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect

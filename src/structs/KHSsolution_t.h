@@ -43,20 +43,16 @@ namespace khs {
     template<typename T>
     class solution_t {
 
-        // INVARIANT: solutions of an instance (identified by a distinctive
-        // name) consist of a concatenation of states that get to the goal from
-        // the start state (which is known to have a initial heuristic value)
-        // which is constructed traversing the closed list backwards from the
-        // given pointer. The solution has a solution length (which is derived
-        // from the solution path) and a cost, which are not necessarily the
-        // same. To compute the solution, a number of nodes is expanded, saving
-        // those that are found in closed, and a specific CPU running time is
-        // used, so that the number of nodes expanded per second is
-        // automatically computed. Duplicate detection is performed by means of
-        // a closed list which is known to have been implemented with an
-        // unordered multimap and thus, the number of buckets and load factor
-        // for each problem is reported as well
+        // INVARIANT: a single solution of an instance (identified by a
+        // distinctive name) of the k shortest-path problem consists of a
+        // concatenation of states that get to the goal from the start state,
+        // which is known to have a initial heuristic value. The solution has a
+        // solution length (which is derived from the solution path) and a cost,
+        // which are not necessarily the same. To compute the solution, a number
+        // of nodes is expanded and a specific CPU running time is used, so that
+        // the number of nodes expanded per second is automatically computed.
         string _name;                                          // instance name
+        int _k;    // number of paths to compute in the k-shortest path problem
         T _start;                                                // start state
         T _goal;                                                  // goal state
         vector<T> _solution;           // solution path as a sequence of states
@@ -79,10 +75,12 @@ namespace khs {
         // Explicit constructor - all data has to be provided but: the name
         // which is empty by default; the solution path, and the solution length
         // which is computed automatically from the solution path
-        solution_t (const vector<T>& solution, const T& start, const T& goal,
+        solution_t (const int k,
+                    const vector<T>& solution, const T& start, const T& goal,
                     const int h0, const int cost, const size_t expansions,
                     const double cpu_time, const string solver) :
             _name       { ""         },
+            _k          { k },
             _start      { start      },
             _goal       { goal       },
             _solution   { solution   },
@@ -110,6 +108,8 @@ namespace khs {
         // getters
         const string& get_name () const
             { return _name; }
+        const int get_k () const
+            { return _k; }
         const T& get_start () const
             { return _start; }
         const T& get_goal () const
@@ -305,6 +305,7 @@ namespace khs {
             // header is generated and this falls within the responsibility of
             // the owner of a solution; second, the solution is not shown
             stream << solution.get_name () << ";";
+            stream << solution.get_k () << ";";
             stream << solution.get_start () << ";";
             stream << solution.get_goal () << ";";
             stream << solution.get_h0 () << ";";

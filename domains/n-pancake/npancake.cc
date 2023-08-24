@@ -221,7 +221,7 @@ int main (int argc, char** argv) {
     cout << endl;
     cout << " 🖹 Error summary:" << endl;
     cout << results.get_error_summary () << endl;
-    // write_csv<npancake_t> (csvname, results);
+    write_csv<npancake_t> (csvname, results);
     cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
     cout << endl;
 

@@ -97,7 +97,7 @@ namespace khs {
         }
 
         // stream out
-        friend ostream& operator<< (std::ostream& stream, const ksolutions_t& solutions) {
+        friend ostream& operator<< (std::ostream& stream, const ksolutions_t& ksolutions) {
 
             // data is written in the csv format using the semicolon as
             // separator. Because each line results of the concatenation of data
@@ -105,11 +105,14 @@ namespace khs {
             // first to a string stream and then copy its output to the given
             // stream
             std::stringstream ss;
-            ss << "domain;variant;id;start;goal;h0;cost;expansions;runtime;expansions/sec;solver" << endl;
-            for (const auto& s : solutions.get_ksolutions ()) {
-                ss << solutions.get_domain () << ";";
-                ss << solutions.get_variant () << ";";
-                ss << s << std::endl;
+            ss << "domain;variant;id prob/id path;k;start;goal;h0;length;cost;expansions;runtime;expansions/sec;solver;doctor" << endl;
+            for (const auto& ksolution : ksolutions.get_ksolutions ()) {
+                for (const auto& solution : ksolution.get_solutions ()) {
+
+                    ss << ksolutions.get_domain () << ";";
+                    ss << ksolutions.get_variant () << ";";
+                    ss << solution << std::endl;
+                }
             }
 
             // and now redirect the contents of the string stream to the given
