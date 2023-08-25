@@ -78,11 +78,9 @@ namespace khs {
             // The enumeration of optimal paths is performed in depth-first
             // order, i.e., recursively
 
-            // base case - node is the start state. The start state is
-            // recognized in closed because it has a null labeled backpointer
-            // stored in the first location
+            // base case - node is the start state
             auto bps = closed[ptr].get_backpointers ();
-            if (bps.size () > 0 && bps[0].get_pointer () == std::string::npos) {
+            if (closed[ptr] == _start) {
 
                 // in case the start has not this backward g-value, then add it
                 if (!closed[ptr].find_gb (cost)) {
@@ -183,11 +181,8 @@ namespace khs {
             // The enumeration of all paths from the given vertex to the goal is
             // performed in depth-first order, i.e., recursively
 
-            // base case - node is the goal state. The goal state is recognized
-            // in closed because it has one backward g-value, and only one,
-            // which is equal to zero.
-            auto gbs = closed[ptr].get_gb ();
-            if (gbs.size ()==1 && gbs[0] == 0) {
+            // base case - node is the goal state
+            if (closed[ptr] == _goal) {
 
                 // add this node to the path
                 path.push_back (closed[ptr].get_state ());

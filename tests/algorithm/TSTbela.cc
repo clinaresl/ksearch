@@ -1631,7 +1631,7 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
     grid_t start = grid_t (SIMPLE_GRID_LENGTH, 0, 0);
-    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
+    grid_t goal = grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1);
     khs::bela<grid_t> manager {k, start, goal};
 
     // First, populate a closed list with the expansions of all nodes in the
@@ -1665,7 +1665,7 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
     suffixes = manager.get_suffixes (closed, z1);
 
     // Next, verify the number of suffixes of any edge (i, j)->(i+1, j), i in
-    // [1, SIMPLE_GRID_LENGTH-3], j in [1, SIMPLE_GRID_LENGTH-3] is correct
+    // [1, SIMPLE_GRID_LENGTH-3], j in [1, SIMPLE_GRID_LENGTH-2] is correct
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-2 ; i++) {
         for (auto j = 1 ; j < SIMPLE_GRID_LENGTH-1 ; j++) {
 
@@ -2043,6 +2043,133 @@ TEST_F (BELAFixture, SolvableNPancakeArbitrary) {
             ASSERT_GE (ksolution[1].get_length (), ksolution[0].get_length ());
         }
 }
+
+// Check that BELA* correctly finds one single solution between two instances of
+// the 5-Pancake in the heavy-cost variant
+TEST_F (BELAFixture, SolvableHeavyCostNPancakeOne) {
+
+        for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+            // create a manager to find a single solution between a couple of
+            // random instances of the 5-Pancake
+            int k = 1;
+            npancake_t start = randInstance (5);
+            npancake_t goal = randInstance (5);
+            khs::bela<npancake_t> manager {k, start, goal};
+
+            // initialize the static information of the n-pancake
+            npancake_t::init ("heavy-cost");
+
+            // and invoke the solver
+            auto ksolution = manager.solve ();
+
+            // verify the solution found contains one single solution
+            ASSERT_EQ (ksolution.size (), k);
+
+            // and verify it is correct
+            khs::solution_t solution = ksolution[0];
+            ASSERT_TRUE (solution.doctor ());
+        }
+}
+
+// Check that BELA* correctly finds two single solutions between two instances
+// of the 5-Pancake in the heavy-cost variant
+TEST_F (BELAFixture, SolvableHeavyCostNPancakeTwo) {
+
+        // for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+            // cout << " i: " << i << endl; cout.flush ();
+
+            // create a manager to find two solutions between a couple of random
+            // instances of the 5-Pancake which are guaranteed to be different
+            int k = 2;
+            // npancake_t start = randInstance (3);
+            // npancake_t goal = randInstance (3);
+            npancake_t start = {1, 0, 2};
+            npancake_t goal = {0, 2, 1};
+            while (start == goal) {
+                goal = randInstance (5);
+            }
+            khs::bela<npancake_t> manager {k, start, goal};
+
+            // initialize the static information of the n-pancake
+            npancake_t::init ("heavy-cost");
+
+            // and invoke the solver
+            auto ksolution = manager.solve ();
+
+            // verify the solution found contains two solutions
+            ASSERT_EQ (ksolution.size (), k);
+
+            // --------------------------------------------------------------
+            if (!ksolution.doctor ()) {
+
+                cout << " start: " << start << endl;
+                cout << " goal : " << goal << endl;
+                cout << " Error: " << khs::solution_t<npancake_t>::get_error_msg (ksolution.get_error_code ()) << endl << endl;
+
+                for (auto u = 0 ; u < k ; u++) {
+                    cout << " Solution #" << u << ":" << endl;
+                    auto path = ksolution[u].get_solution ();
+                    for (const auto& istate: path) {
+                        cout << "\t" << istate << endl;
+                    }
+                }
+            }
+            // --------------------------------------------------------------
+
+            // and verify they are correct
+            khs::solution_t<npancake_t> solution = ksolution[0];
+            ASSERT_TRUE (solution.doctor ());
+
+            solution = ksolution[1];
+            ASSERT_TRUE (solution.doctor ());
+
+            // to conclude, verify that the second solution is strictly larger
+            // or equal than the first one
+            ASSERT_GE (ksolution[1].get_cost (), ksolution[0].get_cost ());
+        // }
+}
+
+// Check that BELA* correctly finds an arbitrary number of solutions (10 <= k <=
+// 20) between two instances of the 5-Pancake in the heavy-cost variant
+TEST_F (BELAFixture, SolvableHeavyCostNPancakeArbitrary) {
+
+        for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+            // create a manager to find an arbitrary number of solutions between
+            // a couple of random instances of the 5-Pancake which are
+            // guaranteed to be different
+            int k = 10 + (rand () % 11);
+            npancake_t start = randInstance (5);
+            npancake_t goal = randInstance (5);
+            while (start == goal) {
+                goal = randInstance (5);
+            }
+            khs::bela<npancake_t> manager {k, start, goal};
+
+            // initialize the static information of the n-pancake
+            npancake_t::init ("heavy-cost");
+
+            // and invoke the solver
+            auto ksolution = manager.solve ();
+
+            // verify the solution found contains two solutions
+            ASSERT_EQ (ksolution.size (), k);
+
+            // and verify they are correct
+            khs::solution_t<npancake_t> solution = ksolution[0];
+            ASSERT_TRUE (solution.doctor ());
+
+            solution = ksolution[1];
+            ASSERT_TRUE (solution.doctor ());
+
+            // to conclude, verify that the second solution is strictly larger
+            // or equal than the first one
+            ASSERT_GE (ksolution[1].get_cost (), ksolution[0].get_cost ());
+        }
+}
+
 
 // Local Variables:
 // mode:cpp
