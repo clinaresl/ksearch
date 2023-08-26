@@ -1962,8 +1962,7 @@ TEST_F (BELAFixture, SolvableNPancakeOne) {
             ASSERT_EQ (ksolution.size (), k);
 
             // and verify it is correct
-            khs::solution_t solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
+            ASSERT_TRUE (ksolution.doctor ());
         }
 }
 
@@ -1993,15 +1992,7 @@ TEST_F (BELAFixture, SolvableNPancakeTwo) {
             ASSERT_EQ (ksolution.size (), k);
 
             // and verify they are correct
-            khs::solution_t<npancake_t> solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
-
-            solution = ksolution[1];
-            ASSERT_TRUE (solution.doctor ());
-
-            // to conclude, verify that the second solution is strictly larger
-            // or equal than the first one
-            ASSERT_GE (ksolution[1].get_length (), ksolution[0].get_length ());
+            ASSERT_TRUE (ksolution.doctor ());
         }
 }
 
@@ -2028,19 +2019,11 @@ TEST_F (BELAFixture, SolvableNPancakeArbitrary) {
             // and invoke the solver
             auto ksolution = manager.solve ();
 
-            // verify the solution found contains two solutions
+            // verify the solution found contains k solutions
             ASSERT_EQ (ksolution.size (), k);
 
             // and verify they are correct
-            khs::solution_t<npancake_t> solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
-
-            solution = ksolution[1];
-            ASSERT_TRUE (solution.doctor ());
-
-            // to conclude, verify that the second solution is strictly larger
-            // or equal than the first one
-            ASSERT_GE (ksolution[1].get_length (), ksolution[0].get_length ());
+            ASSERT_TRUE (ksolution.doctor ());
         }
 }
 
@@ -2067,8 +2050,7 @@ TEST_F (BELAFixture, SolvableHeavyCostNPancakeOne) {
             ASSERT_EQ (ksolution.size (), k);
 
             // and verify it is correct
-            khs::solution_t solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
+            ASSERT_TRUE (ksolution.doctor ());
         }
 }
 
@@ -2076,19 +2058,15 @@ TEST_F (BELAFixture, SolvableHeavyCostNPancakeOne) {
 // of the 5-Pancake in the heavy-cost variant
 TEST_F (BELAFixture, SolvableHeavyCostNPancakeTwo) {
 
-        // for (auto i = 0 ; i < NB_TESTS ; i++) {
-
-            // cout << " i: " << i << endl; cout.flush ();
+        for (auto i = 0 ; i < NB_TESTS ; i++) {
 
             // create a manager to find two solutions between a couple of random
             // instances of the 5-Pancake which are guaranteed to be different
             int k = 2;
-            // npancake_t start = randInstance (3);
-            // npancake_t goal = randInstance (3);
-            npancake_t start = {1, 0, 2};
-            npancake_t goal = {0, 2, 1};
+            npancake_t start = randInstance (3);
+            npancake_t goal = randInstance (3);
             while (start == goal) {
-                goal = randInstance (5);
+                goal = randInstance (3);
             }
             khs::bela<npancake_t> manager {k, start, goal};
 
@@ -2101,34 +2079,9 @@ TEST_F (BELAFixture, SolvableHeavyCostNPancakeTwo) {
             // verify the solution found contains two solutions
             ASSERT_EQ (ksolution.size (), k);
 
-            // --------------------------------------------------------------
-            if (!ksolution.doctor ()) {
-
-                cout << " start: " << start << endl;
-                cout << " goal : " << goal << endl;
-                cout << " Error: " << khs::solution_t<npancake_t>::get_error_msg (ksolution.get_error_code ()) << endl << endl;
-
-                for (auto u = 0 ; u < k ; u++) {
-                    cout << " Solution #" << u << ":" << endl;
-                    auto path = ksolution[u].get_solution ();
-                    for (const auto& istate: path) {
-                        cout << "\t" << istate << endl;
-                    }
-                }
-            }
-            // --------------------------------------------------------------
-
             // and verify they are correct
-            khs::solution_t<npancake_t> solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
-
-            solution = ksolution[1];
-            ASSERT_TRUE (solution.doctor ());
-
-            // to conclude, verify that the second solution is strictly larger
-            // or equal than the first one
-            ASSERT_GE (ksolution[1].get_cost (), ksolution[0].get_cost ());
-        // }
+            ASSERT_TRUE (ksolution.doctor ());
+        }
 }
 
 // Check that BELA* correctly finds an arbitrary number of solutions (10 <= k <=
@@ -2154,19 +2107,11 @@ TEST_F (BELAFixture, SolvableHeavyCostNPancakeArbitrary) {
             // and invoke the solver
             auto ksolution = manager.solve ();
 
-            // verify the solution found contains two solutions
+            // verify the solution found contains k solutions
             ASSERT_EQ (ksolution.size (), k);
 
             // and verify they are correct
-            khs::solution_t<npancake_t> solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
-
-            solution = ksolution[1];
-            ASSERT_TRUE (solution.doctor ());
-
-            // to conclude, verify that the second solution is strictly larger
-            // or equal than the first one
-            ASSERT_GE (ksolution[1].get_cost (), ksolution[0].get_cost ());
+            ASSERT_TRUE (ksolution.doctor ());
         }
 }
 

@@ -138,17 +138,23 @@ namespace khs {
             int nbsolutioncost = 0;
             int nbincrcost = 0;
             int numsolutions = 0;
+            int numdups = 0;
             int total = 0;
 
             // for every single solution in this container
             for (const auto& ksolution : _ksolutions) {
                 for (const auto& solution: ksolution.get_solutions ()) {
 
+                    // First, verify the errors that are detected at the lable
+                    // of a single solution
                     switch (solution.get_error_code ()) {
 
-                        // Yeah, I did not forget about the following two! :)
+                        // Yeah, I did not forget about the following ... :)
                         case solution_error::UNCHECKED:
                         case solution_error::NO_ERROR:
+                        case solution_error::ERR_INCR_COST:
+                        case solution_error::ERR_NUM_SOLUTIONS:
+                        case solution_error::ERR_DUPLICATE_PATH:
                             break;
 
                         case solution_error::ERR_EXPANSIONS:
@@ -166,18 +172,38 @@ namespace khs {
                         case solution_error::ERR_SOLUTION_COST:
                             nbsolutioncost++;
                             break;
-                        case solution_error::ERR_INCR_COST:
-                            nbincrcost++;
-                            break;
-                        case solution_error::ERR_NUM_SOLUTIONS:
-                            numsolutions++;
-                            break;
                     }
+                }
+
+                // next, verify those errors that are detected in the
+                // solution of a k shortest-path problem
+                switch (ksolution.get_error_code ()) {
+
+                    // and I did not forget about these others
+                    case solution_error::UNCHECKED:
+                    case solution_error::NO_ERROR:
+                    case solution_error::ERR_EXPANSIONS:
+                    case solution_error::ERR_START:
+                    case solution_error::ERR_GOAL:
+                    case solution_error::ERR_ADJACENT:
+                    case solution_error::ERR_SOLUTION_COST:
+                        break;
+
+                    case solution_error::ERR_INCR_COST:
+                        nbincrcost++;
+                        break;
+                    case solution_error::ERR_NUM_SOLUTIONS:
+                        numsolutions++;
+                        break;
+                    case solution_error::ERR_DUPLICATE_PATH:
+                        numdups++;
+                        break;
                 }
             }
 
             // return the number of errors found
-            total = nbexpansions+nbstart + nbgoal + nbadjacent + nbsolutioncost + nbincrcost + numsolutions;
+            total = nbexpansions + nbstart + nbgoal + nbadjacent + nbsolutioncost + \
+                nbincrcost + numsolutions + numdups;
             ss << "\tNumber of errors: " << total;
             if (total > 0) {
                 if (nbexpansions > 0) {
@@ -200,6 +226,9 @@ namespace khs {
                 }
                 if (numsolutions > 0) {
                     ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_NUM_SOLUTIONS) << ": " << numsolutions;
+                }
+                if (numdups > 0) {
+                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_DUPLICATE_PATH) << ": " << numdups;
                 }
             }
             return ss.str ();

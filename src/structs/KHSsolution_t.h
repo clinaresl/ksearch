@@ -37,6 +37,7 @@ namespace khs {
         ERR_SOLUTION_COST,
         ERR_INCR_COST,
         ERR_NUM_SOLUTIONS,
+        ERR_DUPLICATE_PATH,
         NO_ERROR
     };
 
@@ -210,6 +211,26 @@ namespace khs {
             return -1;
         }
 
+        // while the operator== verifies that all data members of two different
+        // single solutions are equal, the following service verifies if both
+        // instances have the same solution path or not
+        bool same_solution_path (const solution_t& right) const {
+
+            if (_solution.size () != right.get_solution ().size ()) {
+                return false;
+            }
+
+            // verify that all states in the solution path are the same
+            for (auto i = 0 ; i < _solution.size () ; i++) {
+                if (!(_solution[i] == right.get_solution ()[i])) {
+                    return false;
+                }
+            }
+
+            // at this point, both solution paths are known to be strictly equal
+            return true;
+        }
+
         // given a function which returns true for a pair of states T if the
         // transition between them is *correct* it is possible to verify that
         // all transitions are correct if no pair of adjacent states return
@@ -291,6 +312,8 @@ namespace khs {
                 case solution_error::ERR_SOLUTION_COST: return "✘ Error solution cost";
                     break;
                 case solution_error::ERR_INCR_COST: return "✘ Error increasing cost";
+                    break;
+                case solution_error::ERR_DUPLICATE_PATH: return "✘ Error duplicate solution path";
                     break;
                 case solution_error::ERR_NUM_SOLUTIONS: return "✘ Error number of solutions";
                     break;

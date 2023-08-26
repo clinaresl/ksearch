@@ -641,9 +641,9 @@ namespace khs {
         while (centroids.size () > 0) {
 
             // get the next centroid and compute all its paths. Note that, in
-            // the process, other centroids are expected to be found (and this
-            // is true when solving the k shortest-path problem for non-simple
-            // paths)
+            // the process, other centroids are expected to be found, though
+            // this might not happen in the case of directed graphs, where the
+            // number of paths between two vertices can be bounded
             auto z = centroids.pop_front ();
             ksolution_t<T> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
 
@@ -658,12 +658,11 @@ namespace khs {
         }
 
         // As noted above, when solving the k-shortest non-simple path problem,
-        // the number of solutions is infinite. In fact, even if OPEN becomes
-        // empty, one can compute all paths of every centroid and, in the
-        // process, new centroids must be created. Thus, it is impossible not to
-        // compute a complete set of solutions (unless start=goal). Therefore,
-        // at this point, an exception shall be raised
-        throw std::domain_error ("[bela::solve] Incomplete solution set!");
+        // the number of solutions returned might not get to k. In this case,
+        // there is not much to do other than just returning the number of paths
+        // encountered between both vertices (which is paramount to count the
+        // number of paths between two vertices)
+        return ksolution;
     }
 
 } // namespace khs

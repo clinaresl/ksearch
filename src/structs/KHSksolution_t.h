@@ -154,9 +154,22 @@ namespace khs {
         }
 
         // doctor verifies that this solution to a k shortest path problem is
-        // correct: on one one hand, it verifies every solution separately; it
-        // also verifies that the cost of every solution is greater or equal
-        // than the cost of the previous one
+        // correct:
+        //
+        // 1. It verifies every solution separately;
+        //
+        // 2. it also verifies that the cost of every solution is greater or
+        //    equal than the cost of the previous one, i.e., that the algorithm
+        //    that computed this solution to the k shortest-path problem is
+        //    *stable*
+        //
+        // 3. It also verifies that there are no duplicate solution paths.
+        //
+        // 4. Lastly, it verifies that the number of solutions is correct.
+        //    Because this is not necessarily speaking an error (one might
+        //    require a number of solution paths that exceeds the number of
+        //    existing ones), this is verified last, so that if this error is
+        //    given, all the other verifications are known to have been correct.
         bool doctor () {
 
             // By default, no error is detected
@@ -184,6 +197,17 @@ namespace khs {
                     return false;
                 }
                 prev = solution.get_cost ();
+            }
+
+            // next, verify there are no duplicate solution paths in this
+            // solution to the k shortest-path problem
+            for (auto i = 0 ; i < _solutions.size () ; i++) {
+                for (auto j = i+1 ; j < _solutions.size () ; j++) {
+                    if (_solutions[i].same_solution_path (_solutions[j])) {
+                        _error_code = solution_error::ERR_DUPLICATE_PATH;
+                        return false;
+                    }
+                }
             }
 
             // finally, verify the number of solutions is correct
