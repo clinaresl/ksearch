@@ -2,7 +2,8 @@
 
 This library implements a number of search algorithms to compute *K*
 (non-simple) optimal paths. It provides both *brute-force* and *heuristic*
-search algorithms.
+search algorithms. It also comes with a number of domain-dependent solvers that
+test the performance of these algorithms
 
 
 # Install #
@@ -35,6 +36,14 @@ in your computer, then you can compile and run the tests with:
 ```
 
 from the `libksearch/` directory created after the clone.
+
+# Domain-dependent solvers#
+
+This package comes with a number of domain-dependent solvers under `domains/`:
+
+* *N-Pancake* 
+
+For further details, check out the documentation under this directory.
 
 # License #
 
