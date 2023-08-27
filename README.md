@@ -37,7 +37,7 @@ in your computer, then you can compile and run the tests with:
 
 from the `libksearch/` directory created after the clone.
 
-# Domain-dependent solvers#
+# Domain-dependent solvers #
 
 This package comes with a number of domain-dependent solvers under `domains/`:
 
