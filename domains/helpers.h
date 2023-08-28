@@ -114,25 +114,6 @@ void get_problems (const std::string& filename,
     }
 }
 
-// write the contents of the given container of solutions in the specified file
-// in csv format, if and only if filename is a non-empty string. Otherwise, do
-// nothing other than alerting the user that no csv file has been generated
-template<typename T>
-void write_csv (const std::string& filename, const khs::ksolutions_t<T>& bag) {
-
-    // and write all results to a csv file only in case the user provided a name
-    // for the output csv file
-    if (filename.size ()) {
-
-        // create the output file and truncate its contents in case any exists
-        std::ofstream csvstream {filename, std::ios::out | std::ios::trunc};
-        csvstream << bag;
-        std::cout << " 🛈 CSV file generated!" << std::endl;
-    } else {
-        std::cout << " ⚠ No CSV output generated!" << std::endl;
-    }
-}
-
 // return a (plain) pointer to a specific solver for solving instances in the
 // specified domain D according to the given name. The solver is initialized
 // with the following data:
