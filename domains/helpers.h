@@ -66,81 +66,12 @@ const std::vector<std::string> split_solver (std::string& solver);
 // transform the input string to lower case and return it
 const std::string tolower (std::string& input);
 
-// open the specified filename and retrieve the names and the instances given in
-// each line:
-//
-// 1. This function assumes T has a explicit constructor that receives a vector
-//    of integers
-//
-// 2. No error checking is performed. The following function assumes that each
-//    line consists first of an index problem and then a sequence of integers.
-//    If required, these sequences might satisfy the specific conditions of each
-//    domain, i.e., distinct integers in a specific range, etc.
-template<typename T>
+// open the specified filename and retrieve the name of every instance given in
+// each line and a vector of strings with the contents of the same line
+// following immediately after
 void get_problems (const std::string& filename,
-                   std::vector<std::string>& names, std::vector<T>& instances) {
-
-    std::ifstream stream (filename);
-
-    // read the instances line by line. Note that parsing is necessary because
-    // the length of the instances is unknown
-    std::string line;
-    while (std::getline(stream, line)) {
-
-        // create a regexp to split this line into integers
-        std::regex regex ("\\s+");
-        std::sregex_token_iterator it(line.begin(), line.end(), regex, -1);
-        std::sregex_token_iterator end;
-
-        // and now process each disc separately. Note the first one is the
-        // instance index which has to be stored as its name
-        int idx = 0;
-        std::vector<int> permutation;
-        for ( ; it != end ; ++it) {
-
-            // if we are at the first position, then store it as its name
-            if (!idx) {
-                names.push_back (*it);
-                idx++;
-            } else {
-
-                // otherwise, store this disc as part of the permutation
-                permutation.push_back (stoi (*it));
-            }
-        }
-
-        // and add this instance
-        instances.push_back (T (permutation));
-    }
-}
-
-// return a (plain) pointer to a specific solver for solving instances in the
-// specified domain D according to the given name. The solver is initialized
-// with the following data:
-//
-// * start: instance to solve
-// * goal: goal
-// * k: number of paths to find
-template<typename D>
-khs::bsolver<D>* get_solver (const std::string name,
-                             const D& start, const D& goal,
-                             const int k) {
-
-    // create a pointer to a solver
-    khs::bsolver<D>* m;
-
-    // and now choose according to the given name
-    if (name == "mDijkstra") {
-        m = new khs::mA<D> (k, start, goal);
-    } else if (name == "belA0") {
-        m = new khs::bela<D> (k, start, goal);
-    } else {
-        throw std::invalid_argument{"Unknown solver!"};
-    }
-
-    // and return a pointer to the selected solver
-    return m;
-}
+                   std::vector<std::string>& names,
+                   std::vector<std::vector<std::string>>& instances);
 
 // Given a list of choices, update the first parameter to the one matching one
 // in choices, and return true. If there is no match, return false
@@ -148,7 +79,6 @@ khs::bsolver<D>* get_solver (const std::string name,
 // A match happens when the choice and any of the choices are exactly the same.
 // Two characters are the same even if they are shown in different case.
 bool get_choice (std::string& choice, const std::vector<std::string>& choices);
-
 
 #endif // _HELPERS_H_
 

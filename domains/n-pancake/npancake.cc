@@ -106,8 +106,8 @@ int main (int argc, char** argv) {
 
     // open the given file and retrieve all cases from it
     vector<string> names;
-    vector<npancake_t> instances;
-    get_problems<npancake_t> (filename, names, instances);
+    vector<vector<string>> instances;
+    get_problems (filename, names, instances);
     if (!instances.size ()) {
         cerr << endl;
         cerr << " Error: The file '" << filename << "' contains no instances to solve!" << endl;
@@ -115,10 +115,22 @@ int main (int argc, char** argv) {
         exit (EXIT_FAILURE);
     }
 
-    // create the goal state which is represented as the identity permutation
+    // create the goal state which is represented as the identity permutation.
+    // All instances are assumed to have the same length, so use the length of
+    // any as the length of the N-Pancake to solve next
     vector<int> permutation;
-    for (auto i = 0 ; i < npancake_t::get_n () ; permutation.push_back (i++));
+    for (auto i = 0 ; i < instances[0].size () ; permutation.push_back (i++));
     npancake_t goal (permutation);
+
+    // and now create a vector of tasks to solve
+    vector<instance_t<npancake_t>> tasks;
+    for (auto i = 0 ; i < instances.size () ; i++) {
+        vector<int> permutation;
+        for (auto& disc: instances[i]) {
+            permutation.push_back (stoi (disc));
+        }
+        tasks.push_back (instance_t<npancake_t> {names[i], permutation, goal});
+    }
 
     // initialize the list of operators and also the incremental table with the
     // updates of the manhattan distance
@@ -144,8 +156,7 @@ int main (int argc, char** argv) {
 
     // create an instance of the "generic" domain-dependent solver
     solver<npancake_t> manager (get_domain (), variant,
-                                filename, k_params,
-                                make_unique<npancake_t> (goal));
+                                tasks, k_params);
 
     // solve all the instances with each solver selected by the user and in the
     // same order given
@@ -162,6 +173,8 @@ int main (int argc, char** argv) {
     manager.write_csv (csvname);
     cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
     cout << endl;
+
+    /* !-------------------------------------------------------------------! */
 
     // Well done! Keep up the good job!
     return (EXIT_OK);

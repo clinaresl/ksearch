@@ -15,7 +15,6 @@
 
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -23,6 +22,42 @@
 #include "helpers.h"
 #include "../src/ksearch.h"
 
+// Definition of an instance
+template <typename T>
+class instance_t {
+
+private:
+
+    // INVARIANT: every instance consists of a name and a pair of states, the
+    // start and goal state
+    std::string _name;
+    T _start;
+    T _goal;
+
+public:
+
+    // Default constructors are forbidden
+    instance_t () = delete;
+
+    // Explicit constructor
+    instance_t (std::string name, T start, T goal) :
+        _name { name },
+        _start { start },
+        _goal { goal }
+        {}
+
+    // getters
+    std::string get_name () const { return _name; }
+    T get_start () const { return _start; }
+    T get_goal () const { return _goal; }
+
+}; // class instance_t<T>
+
+// Definition of a "generic" domain-dependent solver for the k shortest-path
+// problem. This solver registers a domain and a variant, a long with a number
+// of k values to try and run specific solvers over a selection of instances.
+// Results are automatically stored in a container
+// ----------------------------------------------------------------------------
 template <typename D>
 class solver {
 
@@ -30,31 +65,51 @@ private:
 
     // INVARIANT: A domain-dependent solver is applied over a specific domain
     // and variant ---where the typename D is the domain type of application,
-    // e.g., npancake. A test file with the start states to solve must be given,
-    // and also a specification of the k values to try which are given as a
-    // string that has to be decoded
+    // e.g., npancake. A vector of instances must be given, and also a
+    // specification of the k values to try which are given as a string that has
+    // to be decoded
     std::string _domain;                                              // Domain
     std::string _variant;                                            // Variant
-    std::string _testfile;                                         // Test file
-    std::string _kspec;                         // specification of the k values
-
-    // the goal state is assumed to be the same for all instances
-    std::unique_ptr<D> _goal;
+    std::vector<instance_t<D>> _instances;                         // instances
+    std::string _kspec;                        // specification of the k values
 
     // the k values to try are internally stored as a vector of tuples, each
     // specifying the first value to try, the last one and the step between
     // successive values of k
     std::vector<std::tuple<int, int, int>> _ks;
 
-    // The result of reading the test files are stored internally as s couple of
-    // vectors. The first one contains the name of every instance, and the
-    // second one contains the instance itself
-    std::vector<std::string> _names;
-    std::vector<D> _instances;
-
     // the results of the execution are internally stored in a container of
     // solutions of instances of the k shortest-path problem
     khs::ksolutions_t<D> _results;
+
+    // methods
+
+    // return a (plain) pointer to a specific solver for solving instances in
+    // the specified domain D according to the given name. The solver is
+    // initialized with the following data:
+    //
+    // * start: instance to solve
+    // * goal: goal to reach
+    // * k: number of paths to find
+    khs::bsolver<D>* _get_solver (const std::string name,
+                                  const D& start, const D& goal,
+                                  const int k) {
+
+        // create a pointer to a solver
+        khs::bsolver<D>* m;
+
+        // and now choose according to the given name
+        if (name == "mDijkstra") {
+            m = new khs::mA<D> (k, start, goal);
+        } else if (name == "belA0") {
+            m = new khs::bela<D> (k, start, goal);
+        } else {
+            throw std::invalid_argument{"Unknown solver!"};
+        }
+
+        // and return a pointer to the selected solver
+        return m;
+    }
 
     public:
 
@@ -62,31 +117,25 @@ private:
     solver () = delete;
 
     // Explicit constructor. Both the domain and variant should be given, along
-    // with the test file, the specification of the k values to try, and the
-    // goal state to consider in *all* instances
+    // with a vector of instances to solve, and the specification of the k
+    // values to try
     solver (std::string domain, std::string variant,
-            std::string testfile, std::string kspec,
-            std::unique_ptr<D> goal) :
+            std::vector<instance_t<D>> instances, std::string kspec) :
         _domain { domain },
         _variant { variant },
-        _testfile { testfile },
-        _kspec { kspec },
-        _goal { std::move (goal) }
+        _instances { instances },
+        _kspec { kspec }
         {
 
             // process the specification of values of k and store the specific
             // limits for every application
             _ks = split_ks (_kspec);
-
-            // next, read the contents of the test file and store the names and
-            // instances internally
-            get_problems<D>(_testfile, _names, _instances);
         }
 
     // getters
     std::string get_domain () const { return _domain; }
     std::string get_variant () const { return _variant; }
-    std::string get_testfile () const { return _testfile; }
+    std::vector<instance_t<D>> get_instances () const { return _instances; }
     std::string get_kspec () const { return _kspec; }
 
     // methods
@@ -102,16 +151,14 @@ private:
         _results.set_domain (_domain);
         _results.set_variant (_variant);
 
-        // solve all the instances with the given solver
-
-        // initialize a container for storing all solutions generated in this
-        // execution
-        khs::ksolutions_t<D> bag;
-        bag.set_domain (_domain);
-        bag.set_variant (_variant);
-
         // for all values of k selected by the user
         for (auto ispec: _ks) {
+
+            // initialize a container for storing all solutions generated in this
+            // execution
+            khs::ksolutions_t<D> bag;
+            bag.set_domain (_domain);
+            bag.set_variant (_variant);
 
             // consider this single specification of k values
             for (auto k = std::get<0>(ispec) ; k <= std::get<1>(ispec) ; k+= std::get<2>(ispec)) {
@@ -123,20 +170,23 @@ private:
                 for (auto i = 0 ; i < _instances.size () ; i++) {
 
                     // create a manager to solve this specific instance
-                    khs::bsolver<D>* m = get_solver (solver_name, _instances[i], *_goal, k);
+                    khs::bsolver<D>* m = _get_solver (solver_name,
+                                                      _instances[i].get_start (),
+                                                      _instances[i].get_goal (),
+                                                      k);
 
                     std::cout << " ⏵ "; std::cout.flush ();
                     auto ksolution = m->solve ();
 
                     // give a name to every individual solution
                     for (auto j = 0 ; j < ksolution.size () ; j++) {
-                        ksolution[j].set_name (_names[i] + "/" + std::to_string (1+j));
+                        ksolution[j].set_name (_instances[i].get_name () + "/" + std::to_string (1+j));
                     }
 
                     // and show the result on the standard output. Prior to
                     // that, give it a name so that it can be easily recognized
                     // and record also the name of the solver used
-                    ksolution.set_name (_names[i]);
+                    ksolution.set_name (_instances[i].get_name ());
                     ksolution.set_solver (m->signature ());
                     ksolution.doctor ();
                     std::cout << ksolution << std::endl;

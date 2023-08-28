@@ -124,6 +124,49 @@ const string tolower (string& input) {
     return input;
 }
 
+// open the specified filename and retrieve the name of every instance given in
+// each line and a vector of strings with the contents of the same line
+// following immediately after
+void get_problems (const string& filename,
+                   vector<string>& names,
+                   vector<vector<string>>& instances)
+{
+
+    ifstream stream (filename);
+
+    // read the instances line by line. Note that parsing is necessary because
+    // the length of the instances is unknown
+    string line;
+    while (getline(stream, line)) {
+
+        // create a regexp to split this line blank separated tokens
+        regex regex ("\\s+");
+        sregex_token_iterator it(line.begin(), line.end(), regex, -1);
+        sregex_token_iterator end;
+
+        // and now process each line separately getting all tokens as strings
+        // and storing them separately
+        int idx = 0;
+        vector<string> contents;
+        for ( ; it != end ; ++it) {
+
+            // if we are at the first position, then store it as its name
+            if (!idx) {
+                names.push_back (*it);
+                idx++;
+            } else {
+
+                // otherwise, store this token as part of the specification of
+                // the task to solve
+                contents.push_back (*it);
+            }
+        }
+
+        // and add this instance
+        instances.push_back (contents);
+    }
+}
+
 // Given a list of choices, update the first parameter to the one matching one
 // in choices, and return true. If there is no match, return false
 //
