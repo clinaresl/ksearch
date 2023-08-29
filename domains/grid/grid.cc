@@ -1,13 +1,13 @@
 // -*- coding: utf-8 -*-
-// npancake.cc
+// grid.cc
 // -----------------------------------------------------------------------------
 //
-// Started on <lun 29-11-2021 18:48:45.490311369 (1638208125)>
+// Started on <mar 29-08-2023 18:43:57.939251692 (1693327437)>
 // Carlos Linares López <carlos.linares@uc3m.es>
 //
 
 //
-// Implementation of a k-shortest path solver for the n-pancake
+// Implementation of a k-shortest path solver for grids with no obstacles
 //
 
 #include <chrono>
@@ -25,7 +25,7 @@
 #include "../solver.h"
 #include "../../src/ksearch.h"
 
-#include "npancake_t.h"
+#include "grid_t.h"
 
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
@@ -41,6 +41,7 @@ char *program_name;                       // The name the program was run with,
 
 static struct option const long_options[] =
 {
+    {"size", required_argument, 0, 'n'},
     {"solver", required_argument, 0, 's'},
     {"file", required_argument, 0, 'f'},
     {"variant", required_argument, 0, 'r'},
@@ -54,8 +55,9 @@ static struct option const long_options[] =
 
 const string get_domain ();
 const string get_variant ();
+const bool verify_state (const int x, const int y, const int length);
 static int decode_switches (int argc, char **argv,
-                            string& solver_name, string& filename, string& variant,
+                            int& size, string& solver_name, string& filename, string& variant,
                             string& k_params, string& csvname,
                             bool& want_verbose);
 static void usage (int status);
@@ -63,6 +65,7 @@ static void usage (int status);
 // main entry point
 int main (int argc, char** argv) {
 
+    int size;                                        // size of the square grid
     string solver_name;                            // user selection of solvers
     string filename;                            // file with all cases to solve
     string variant;                                    // variant of the domain
@@ -73,10 +76,10 @@ int main (int argc, char** argv) {
 
     // variables
     program_name = argv[0];
-    vector<string> variant_choices = {"unit", "heavy-cost"};
+    vector<string> variant_choices = {"unit", "octile"};
 
     // arg parse
-    decode_switches (argc, argv, solver_name, filename, variant, k_params, csvname, want_verbose);
+    decode_switches (argc, argv, size, solver_name, filename, variant, k_params, csvname, want_verbose);
 
     // process the solver names and get a vector with the signatures of all
     // solvers to execute
@@ -101,9 +104,15 @@ int main (int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
+    if (size <= 1) {
+        cerr << "\n The size of the square grid has to be at least 2" << endl;
+        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        exit(EXIT_FAILURE);
+    }
+
     /* do the work */
 
-    /* !------------------------- INITIALIZATION --------------------------! */
+    // /* !------------------------- INITIALIZATION --------------------------! */
 
     // open the given file and retrieve all cases from it
     vector<string> names;
@@ -116,34 +125,45 @@ int main (int argc, char** argv) {
         exit (EXIT_FAILURE);
     }
 
-    // create the goal state which is represented as the identity permutation.
-    // All instances are assumed to have the same length, so use the length of
-    // any as the length of the N-Pancake to solve next
-    vector<int> permutation;
-    for (auto i = 0 ; i < instances[0].size () ; permutation.push_back (i++));
-    npancake_t goal (permutation);
-
     // and now create a vector of tasks to solve
-    vector<instance_t<npancake_t>> tasks;
+    vector<instance_t<grid_t>> tasks;
     for (auto i = 0 ; i < instances.size () ; i++) {
-        vector<int> permutation;
-        for (auto& disc: instances[i]) {
-            permutation.push_back (stoi (disc));
+
+        // verify the start and goal state
+        int sx = stoi (instances[i][0]);
+        int sy = stoi (instances[i][1]);
+        int tx = stoi (instances[i][2]);
+        int ty = stoi (instances[i][3]);
+        if (!verify_state (sx, sy, size)) {
+            cerr << "\n The x and y coordinates of the start state should be within the bounds of a square grid of length " << size << endl;
+            cerr << " (" << sx << "," << sy << ") found in problem id " << names[i] << endl << endl;
+            exit (EXIT_FAILURE);
         }
-        tasks.push_back (instance_t<npancake_t> {names[i], permutation, goal});
+        if (!verify_state (tx, ty, size)) {
+            cerr << "\n The x and y coordinates of the goal state should be within the bounds of a square grid of length " << size << endl;
+            cerr << " (" << tx << "," << ty << ") found in problem id " << names[i] << endl << endl;
+            exit (EXIT_FAILURE);
+        }
+
+        // in case the specification is correct, add it to the pool of
+        // optimization tasks to solve
+        tasks.push_back (instance_t{names[i],
+                grid_t{stoi (instances[i][0]), stoi (instances[i][1])},
+                grid_t{stoi (instances[i][2]), stoi (instances[i][3])}});
     }
 
-    // initialize the list of operators and also the incremental table with the
-    // updates of the manhattan distance
-    npancake_t::init (variant);
+    // initialize the static data members of the definition of a grid
+    grid_t::set_n (size);
+    grid_t::set_variant (variant);
 
     /* !-------------------------------------------------------------------! */
 
     cout << endl;
+    cout << " size         : " << grid_t::get_n () << endl;
     cout << " solver       : " << solver_name << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
-    cout << " variant      : " << variant << endl;
-    cout << " size         : " << npancake_t::get_n () << endl;
+    cout << " variant      : " << grid_t::get_variant () << endl;
+    cout << " size         : " << grid_t::get_n () << endl;
     cout << " K            : ";
     for (auto& ispec: kspec) {
         cout << "[" << get<0>(ispec) << ", " << get<1>(ispec) << ", " << get<2> (ispec) << "] ";
@@ -156,8 +176,8 @@ int main (int argc, char** argv) {
     tstart = chrono::system_clock::now ();
 
     // create an instance of the "generic" domain-dependent solver
-    solver<npancake_t> manager (get_domain (), variant,
-                                tasks, k_params);
+    solver<grid_t> manager (get_domain (), variant,
+                            tasks, k_params);
 
     // solve all the instances with each solver selected by the user and in the
     // same order given
@@ -191,17 +211,24 @@ const string get_variant () {
     return "unit";
 }
 
+// verify the given state is within the bounds of a square grid of length n
+const bool verify_state (const int x, const int y, const int length)
+{
+    return (x >= 0 && x < length && y >= 0 && y < length);
+}
+
 // Set all the option flags according to the switches specified. Return the
 // index of the first non-option argument
 static int
 decode_switches (int argc, char **argv,
-                 string& solver_name, string& filename, string& variant,
+                 int& size, string& solver_name, string& filename, string& variant,
                  string& k_params, string& csvname,
                  bool& want_verbose) {
 
     int c;
 
     // Default values
+    size = 10;
     solver_name = "";
     filename = "";
     variant = "unit";
@@ -210,6 +237,7 @@ decode_switches (int argc, char **argv,
     want_verbose = false;
 
     while ((c = getopt_long (argc, argv,
+                             "n"  /* solver */
                              "s"  /* solver */
                              "f"  /* file */
                              "r"  /* variant */
@@ -220,6 +248,9 @@ decode_switches (int argc, char **argv,
                              "V", /* version */
                              long_options, (int *) 0)) != EOF) {
         switch (c) {
+        case 'n':  /* --size */
+            size = atoi (optarg);
+            break;
         case 's':  /* --solver */
             solver_name = optarg;
             break;
@@ -256,16 +287,18 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the N-Pancake using the GAP heuristic" << endl << endl;
+    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the Grid domain (with no obstacles)" << endl << endl;
     cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
     cout << "\
  Mandatory arguments:\n\
+      -n, --size [NUMBER]        length of the square grid. By default, 10\n\
       -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0'. It is possible to provide\n\
                                  as many as desired in a blank separated list between double quotes, e.g. \"mDijkstra belA0\"\n\
-      -f, --file [STRING]        filename with a line for each instance to solve wrt to the identity permutation.\n\
-                                 Each line consists of a list of numbers separated by spaces in the range [0, N)\n\
-      -r, --variant [STRING]     Variant of the n-Pancake to consider. Choices are {unit, heavy-cost}. By default, unit\n\
-                                 is used\n\
+      -f, --file [STRING]        filename with a line for each instance to solve. Each line consists of five digits: the first\n\
+                                 one is the problem id, which has to be unique; the second and third digits are the x- and\n\
+                                 y-coordinates of the start state; the last two digits are the x- andy-coordinates of the goal\n\
+                                 state\n\
+      -r, --variant [STRING]     Variant of the problem to consider. Choices are {unit, octile}. By default, unit is used\n\
       -k, --k [NUMBER]+          Definition of the different values of K to test.\n\
                                  The entire specification consists of a semicolon separated list of single specifications\n\
                                  e.g., '1 5; 10 90 10; 100'\n\
