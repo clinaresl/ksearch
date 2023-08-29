@@ -7,6 +7,10 @@ different search algorithms implemented in `libksearch`
 
 The N-Pancake domain is implemented under `domains/n-pancake`
 
+## Grid ##
+
+The Grid domain is implemented under `domains/grid`
+
 # Usage #
 
 All solvers acknowledge the flags `--version` and `--help`. Other than these,

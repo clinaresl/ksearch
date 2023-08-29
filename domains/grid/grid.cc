@@ -47,6 +47,7 @@ static struct option const long_options[] =
     {"variant", required_argument, 0, 'r'},
     {"k", required_argument, 0, 'k'},
     {"csv", required_argument, 0, 'C'},
+    {"no-doctor", no_argument, 0, 'D'},
     {"verbose", no_argument, 0, 'v'},
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'V'},
@@ -58,7 +59,7 @@ const string get_variant ();
 const bool verify_state (const int x, const int y, const int length);
 static int decode_switches (int argc, char **argv,
                             int& size, string& solver_name, string& filename, string& variant,
-                            string& k_params, string& csvname,
+                            string& k_params, string& csvname, bool& no_doctor,
                             bool& want_verbose);
 static void usage (int status);
 
@@ -71,6 +72,7 @@ int main (int argc, char** argv) {
     string variant;                                    // variant of the domain
     string k_params;                       // user selection of the values of k
     string csvname;                          // name of the output csv filename
+    bool no_doctor;                    // whether the doctor is disabled or not
     bool want_verbose;                  // whether verbose output was requested
     chrono::time_point<chrono::system_clock> tstart, tend;          // CPU time
 
@@ -79,7 +81,7 @@ int main (int argc, char** argv) {
     vector<string> variant_choices = {"unit", "octile"};
 
     // arg parse
-    decode_switches (argc, argv, size, solver_name, filename, variant, k_params, csvname, want_verbose);
+    decode_switches (argc, argv, size, solver_name, filename, variant, k_params, csvname, no_doctor, want_verbose);
 
     // process the solver names and get a vector with the signatures of all
     // solvers to execute
@@ -182,7 +184,7 @@ int main (int argc, char** argv) {
     // solve all the instances with each solver selected by the user and in the
     // same order given
     for (auto isolver : solvers) {
-        manager.run (isolver, want_verbose);
+        manager.run (isolver, no_doctor, want_verbose);
     }
 
     // and stop the clock
@@ -190,7 +192,7 @@ int main (int argc, char** argv) {
 
     // to conclude, show an error summary and store all the results in a csv
     // file in case any was given
-    manager.show_error_summary ();
+    manager.show_error_summary (no_doctor);
     manager.write_csv (csvname);
     cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
     cout << endl;
@@ -222,7 +224,7 @@ const bool verify_state (const int x, const int y, const int length)
 static int
 decode_switches (int argc, char **argv,
                  int& size, string& solver_name, string& filename, string& variant,
-                 string& k_params, string& csvname,
+                 string& k_params, string& csvname, bool& no_doctor,
                  bool& want_verbose) {
 
     int c;
@@ -234,6 +236,7 @@ decode_switches (int argc, char **argv,
     variant = "unit";
     k_params = "";
     csvname = "";
+    no_doctor = false;
     want_verbose = false;
 
     while ((c = getopt_long (argc, argv,
@@ -243,6 +246,7 @@ decode_switches (int argc, char **argv,
                              "r"  /* variant */
                              "k"  /* k */
                              "C"  /* csv */
+                             "D"  /* no-doctor */
                              "v"  /* verbose */
                              "h"  /* help */
                              "V", /* version */
@@ -265,6 +269,9 @@ decode_switches (int argc, char **argv,
             break;
         case 'C':  /* --csv */
             csvname = optarg;
+            break;
+        case 'D':  /* --no-doctor */
+            no_doctor = true;
             break;
         case 'v':  /* --verbose */
             want_verbose = true;
@@ -309,6 +316,8 @@ usage (int status)
 \n\
  Optional arguments:\n\
       -C, --csv [STRING]         name of the csv output files for storing results. If none is given, no file is generated\n\
+      -D, --no-doctor            If given, the automated error checking is disabled. Otherwise, all solutions are automatically\n\
+                                 checked for correctness\n\
  Misc arguments:\n\
       --verbose                  print more information\n\
       -h, --help                 display this help and exit\n\
