@@ -15,8 +15,8 @@ This domain provides two variants:
   diagonal moves have a cost equal to 14. The heuristic implemented is the
   Octile distance to the goal.
 
-The test files consist of five digits each: the first one is the task id; the
-second and third digits are the *x*and *y* coordinates of the start state; the
+The test file consist of five digits per line: the first one is the task id; the
+second and third digits are the *x* and *y* coordinates of the start state; the
 last two digits are the *x* and *y* coordinates of the goal state. An example
 follows:
 
