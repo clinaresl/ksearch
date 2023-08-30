@@ -14,7 +14,9 @@ The Grid domain is implemented under `domains/grid`
 # Usage #
 
 All solvers acknowledge the flags `--version` and `--help`. Other than these,
-they also honour the following directives:
+they also honour a number of mandatory and optional directives.
+
+Typically, the mandatory arguments are the following:
 
 * `--solvers:` Every domain-dependent solver provides a collection of solvers to
   choose from:
@@ -47,10 +49,22 @@ they also honour the following directives:
   (according to the first *single specification*), 10, 20, 30, 40, 50 (as given
   in the second *single specification*) and finally 100.
 
-Additionally, if an argument is given to `--csv`, then a CSV file with that name
-recording all results will be created as soon as the execution is over. Finally,
-`--verbose` provides additional information, typically consisting of every
-single solution to every instance of the *k* shortest-path problem
+The typical optional arguments are shown next:
+
+* `--csv`: if given, a CSV file with the specified name is created which records
+  all results as soon as the execution is over.
+  
+* `--no-doctor`: once every optimization task is finished, the solver
+  automatically check it for correctness ---see the following section.
+  Sometimes, if the number of paths generated is too large, this might take a
+  very long time. This directive suppress the automated verification.
+
+* `--verbose`: provides additional information, typically consisting of every
+  single solution to every instance of the *k* shortest-path problem
+  
+However, some specific solvers might have a different selection of directives.
+For a detailed description of them, see the corresponding directories listed at
+the top of this entry.
 
 # Error checking #
 
