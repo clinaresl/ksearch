@@ -13,8 +13,8 @@ This domain provides two variants:
 * `heavy-cost`: every operator has an associated cost equal to the size of the
   disc that becomes first when applying the operator. This has two consequences:
   first, there are null-cost edges (since 0 is a valid disc id); second, it
-  engenders an undirected graph because the cost of an operator and its inverse
-  are not equal. The heuristic implemented is a weighted GAP heuristic.
+  engenders a directed graph because the cost of an operator and its inverse are
+  not equal. The heuristic implemented is a weighted GAP heuristic.
 
 The test file consist of a line per optimization task with *n+1* digits in each
 line. The first digit is the task id; the next *n* digits (that must be integers
@@ -40,8 +40,8 @@ follows:
 This solver accepts the same flags discussed in the entry above under `domains/`
 and no other specific directives are provided.
 
-An example for the computation of one million distinct paths for every case
-specified above is shown next:
+An example for the computation of test distinct paths for every case specified
+above under the heavy-cost variant is shown next:
 
 ``` sh
     $ ./npancake --solver "belA0" --file test-10 --variant heavy-cost --k 10
