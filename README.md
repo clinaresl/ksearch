@@ -41,9 +41,10 @@ from the `libksearch/` directory created after the clone.
 
 This package comes with a number of domain-dependent solvers under `domains/`:
 
+* *Grid*
 * *N-Pancake* 
 
-For further details, check out the documentation under this directory.
+For further details, check out the documentation under `domains/`
 
 # License #
 
