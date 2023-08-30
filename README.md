@@ -37,6 +37,17 @@ in your computer, then you can compile and run the tests with:
 
 from the `libksearch/` directory created after the clone.
 
+# Search algorithms #
+
+The search algorithms provided in this library solve the *k* non-simple
+shortest-paths problem. It provides both brute-force and heuristic search
+algorithms:
+
+* Brute-force search algorithms:
+
++ `mDijkstra`: It consists of expanding every node up to *k* times
++ `belA0`: it is the uninformed variant of BELA*
+
 # Domain-dependent solvers #
 
 This package comes with a number of domain-dependent solvers under `domains/`:
