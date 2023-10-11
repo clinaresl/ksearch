@@ -106,7 +106,7 @@ class PLTSerie:
 
         # for all data
         for (x, y) in self._data:
-            output += "{} {}\n".format(x, y)
+            output += "\t{} {}\n".format(x, y)
 
         # return the output
         return output

@@ -37,7 +37,7 @@ LOGGER = utils.LOGGER
 RE_SERIES = "\s*(?P<legend>[^:]+)\s*:(?P<condition>.*)\s*"
 
 # debug messsages
-DEBUG_DATALINE = "Data: {}"
+DEBUG_DATALINE = "Data accepted in serie '{}': {}"
 
 # info messages
 INFO_ACCESSING_SPREADSHEET = "Opening spreadsheet {} ..."
@@ -142,7 +142,8 @@ def get_data(spreadsheet: str,
 
                 # in case a debug level was set, show the data line added to the
                 # pool
-                LOGGER.debug(DEBUG_DATALINE.format((line[xname], line[yname])))
+                LOGGER.debug(DEBUG_DATALINE.format(data[index].get_legend(),
+                                                   (line[xname], line[yname])))
 
         # and increment the number of processed lines
         nblines += 1
@@ -151,10 +152,11 @@ def get_data(spreadsheet: str,
     LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
 
     # once the series have been created, create a GNUplot file with the
-    # information of all series, in case any has been given
+    # information of all series, in case any has been given. Note the titles for
+    # the x and y axis are the same for all series
     gnustream = None
     if gnufilename is not None and len(gnufilename) > 0:
-        gnustream = pltGNUfile.PLTGNUfile(gnufilename)
+        gnustream = pltGNUfile.PLTGNUfile(gnufilename, xname, yname)
 
         # and add all series
         for iserie in data:
@@ -198,6 +200,11 @@ def main():
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in data:
             LOGGER.info(INFO_NUMBER_DATAPOINTS_SERIE.format(iserie.get_legend(), len(iserie)))
+
+        # and generate the gnuplot file with the specified title
+        if params.title is not None and len(params.title) > 0:
+            data.set_title(params.title)
+        data.write_gnuplot()
 
     else:
          LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
