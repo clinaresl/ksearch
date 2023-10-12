@@ -27,7 +27,7 @@
 #include "../solver.h"
 #include "../../src/ksearch.h"
 
-// #include "roadmap_t.h"
+#include "graph_t.h"
 
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
@@ -43,6 +43,7 @@ char *program_name;                       // The name the program was run with,
 
 static struct option const long_options[] =
 {
+    {"graph", required_argument, 0, 'g'},
     {"solver", required_argument, 0, 's'},
     {"file", required_argument, 0, 'f'},
     {"variant", required_argument, 0, 'r'},
@@ -59,7 +60,7 @@ const string get_domain ();
 const string get_variant ();
 void get_testcases (const string& filename, vector<string>& names, vector<pair<string, string>>& instances);
 static int decode_switches (int argc, char **argv,
-                            string& solver_name, string& filename, string& variant,
+                            string& graph_name, string& solver_name, string& filename, string& variant,
                             string& k_params, string& csvname, bool& no_doctor,
                             bool& want_verbose);
 static void usage (int status);
@@ -67,6 +68,7 @@ static void usage (int status);
 // main entry point
 int main (int argc, char** argv) {
 
+    string graph_name;                        // file with the graph definition
     string solver_name;                            // user selection of solvers
     string filename;                            // file with all cases to solve
     string variant;                                    // variant of the domain
@@ -81,7 +83,7 @@ int main (int argc, char** argv) {
     vector<string> variant_choices = {"unit", "octile"};
 
     // arg parse
-    decode_switches (argc, argv, solver_name, filename, variant, k_params, csvname, no_doctor, want_verbose);
+    decode_switches (argc, argv, graph_name, solver_name, filename, variant, k_params, csvname, no_doctor, want_verbose);
 
     // process the solver names and get a vector with the signatures of all
     // solvers to execute
@@ -91,6 +93,13 @@ int main (int argc, char** argv) {
     auto kspec = split_ks (k_params);
 
     // parameter checking
+
+    // --graph
+    if (graph_name == "") {
+        cerr << "\n Please, provide a filename with the description of the graph" << endl;
+        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        exit(EXIT_FAILURE);
+    }
 
     // --file
     if (filename == "") {
@@ -110,6 +119,10 @@ int main (int argc, char** argv) {
 
     /* !------------------------- INITIALIZATION --------------------------! */
 
+    // create a graph and load it with the description given in the graph file
+    graph_t graph;
+    int nbedges = graph.load (graph_name);
+
     // open the given file and retrieve all cases from it
     vector<string> names;
     vector<pair<string, string>> instances;
@@ -121,40 +134,13 @@ int main (int argc, char** argv) {
         exit (EXIT_FAILURE);
     }
 
-    // // and now create a vector of tasks to solve
-    // vector<instance_t<grid_t>> tasks;
-    // for (auto i = 0 ; i < instances.size () ; i++) {
-
-    //     // verify the start and goal state
-    //     int sx = stoi (instances[i][0]);
-    //     int sy = stoi (instances[i][1]);
-    //     int tx = stoi (instances[i][2]);
-    //     int ty = stoi (instances[i][3]);
-    //     if (!verify_state (sx, sy, size)) {
-    //         cerr << "\n The x and y coordinates of the start state should be within the bounds of a square grid of length " << size << endl;
-    //         cerr << " (" << sx << "," << sy << ") found in problem id " << names[i] << endl << endl;
-    //         exit (EXIT_FAILURE);
-    //     }
-    //     if (!verify_state (tx, ty, size)) {
-    //         cerr << "\n The x and y coordinates of the goal state should be within the bounds of a square grid of length " << size << endl;
-    //         cerr << " (" << tx << "," << ty << ") found in problem id " << names[i] << endl << endl;
-    //         exit (EXIT_FAILURE);
-    //     }
-
-    //     // in case the specification is correct, add it to the pool of
-    //     // optimization tasks to solve
-    //     tasks.push_back (instance_t{names[i],
-    //             grid_t{stoi (instances[i][0]), stoi (instances[i][1])},
-    //             grid_t{stoi (instances[i][2]), stoi (instances[i][3])}});
-    // }
-
     // // initialize the static data members of the definition of a grid
-    // grid_t::set_n (size);
     // grid_t::set_variant (variant);
 
     /* !-------------------------------------------------------------------! */
 
     cout << endl;
+    cout << " graph        : " << graph_name << " (" << nbedges << " edges processed)" << endl;
     cout << " solver       : " << solver_name << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << get_variant () << endl;
@@ -249,8 +235,9 @@ void get_testcases (const string& filename, vector<string>& names, vector<pair<s
        exit(EXIT_FAILURE);
    }
 
-   // now, create the pairs of instances to solve
+   // now, create the pairs of instances to solve along with their name
    for (auto i = 0 ; i < starts.size () ; i++) {
+       names.push_back (to_string (i));
        instances.push_back (make_pair (starts[i], goals[i]));
    }
 }
@@ -259,13 +246,14 @@ void get_testcases (const string& filename, vector<string>& names, vector<pair<s
 // index of the first non-option argument
 static int
 decode_switches (int argc, char **argv,
-                 string& solver_name, string& filename, string& variant,
+                 string& graph_name, string& solver_name, string& filename, string& variant,
                  string& k_params, string& csvname, bool& no_doctor,
                  bool& want_verbose) {
 
     int c;
 
     // Default values
+    graph_name = "";
     solver_name = "";
     filename = "";
     variant = "unit";
@@ -275,6 +263,7 @@ decode_switches (int argc, char **argv,
     want_verbose = false;
 
     while ((c = getopt_long (argc, argv,
+                             "g"  /* graph */
                              "n"  /* solver */
                              "s"  /* solver */
                              "f"  /* file */
@@ -287,6 +276,9 @@ decode_switches (int argc, char **argv,
                              "V", /* version */
                              long_options, (int *) 0)) != EOF) {
         switch (c) {
+        case 'g':  /* --graph */
+            graph_name = optarg;
+            break;
         case 's':  /* --solver */
             solver_name = optarg;
             break;
@@ -330,6 +322,8 @@ usage (int status)
     cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
     cout << "\
  Mandatory arguments:\n\
+      -g, --graph [STRING]       filename with the graph to load. The file contents should be arranged according to the 9th DIMACS\n\
+                                 Implementation Challenge: Shortest Paths. See the documentation for additional help\n\
       -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0'. It is possible to provide\n\
                                  as many as desired in a blank separated list between double quotes, e.g. \"mDijkstra belA0\"\n\
       -f, --file [STRING]        filename with the test cases to solve. It consists of of precisely two lines. The i-th test case\n\

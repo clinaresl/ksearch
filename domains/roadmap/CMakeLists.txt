@@ -2,7 +2,7 @@ add_executable (roadmap
   getopt1.c
   getopt.c
   ../helpers.cc
-  # grid_t.cc
+  graph_t.cc
   roadmap.cc)
 
-target_link_libraries (grid LINK_PUBLIC ksearch)
+target_link_libraries (roadmap LINK_PUBLIC ksearch)
