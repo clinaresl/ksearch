@@ -53,7 +53,7 @@ def createPrgArgParser():
     optional.add_argument('-s', '--series',
                           type=str,
                           nargs='*',
-                          help="criteria used for filtering data lines. An arbitrary number of them can be given. Each serie has the format 'legend:condition'. If none is given, all data lines are accepted to generate a single plot with no specific legend unless 'legend:True' is given which assigns the specific legend to a unique series with all data. The 'condition' consists of a valid boolean expression in Python (i.e., 'and', 'or' and 'not' can be used, and also any relational operator, parenthesis, etc.). Each serie creates a different plot with the legend given before the colon.")
+                          help="criteria used for filtering data lines. An arbitrary number of them can be given. Each serie has the format 'legend:condition'. If none is given, all data lines are accepted to generate a single plot with no specific legend unless 'legend:True' is given which assigns the specific legend to a unique series with all data. The 'condition' consists of a valid boolean expression in Python (i.e., 'and', 'or' and 'not' can be used, and also any relational operator, parenthesis, etc.) including also regular expressions. Each serie creates a different plot with the legend given before the colon.")
     optional.add_argument('-t', '--title',
                           type=str,
                           default=None,

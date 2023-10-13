@@ -18,6 +18,12 @@ of a given series
 # -----------------------------------------------------------------------------
 import copy
 
+# globals
+# -----------------------------------------------------------------------------
+COMMAND = """import re
+output_value = {}"""
+
+
 # -----------------------------------------------------------------------------
 # PLTChecker
 #
@@ -63,7 +69,7 @@ class PLTChecker:
             # is executed as ordinary Python code within a context which is the
             # dictionary itself. The result of the evaluation is retrieved in a
             # variable named 'output_value'
-            exec("output_value="+iserie, context)
+            exec(COMMAND.format(iserie), context)
 
             # and write the result of this evaluation in the output list
             output.append(context["output_value"])
