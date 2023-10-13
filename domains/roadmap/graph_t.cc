@@ -29,8 +29,8 @@ bool graph_t::add_vertex (size_t vertex) {
     // new vertex. The reason why we proceed this way is because instead of
     // populating the vector pushing back, we need random access to positions
     // which are available in memory
-    if (vertex >= _edges.capacity ()) {
-        _edges.resize (1+vertex);
+    if (vertex >= _edges.size ()) {
+        _edges.resize (1+vertex, vector<edge_t>());
     }
 
     // and return true
@@ -62,6 +62,9 @@ void graph_t::add_edge (size_t from, size_t to, int weight) {
 // load a graph from a file with the format of the 9th DIMACS competition. It
 // returns the number of edges processed
 int graph_t::load (const std::string& filename) {
+
+    // First of all, ensure the graph is void
+    clear ();
 
     ifstream stream (filename);
 

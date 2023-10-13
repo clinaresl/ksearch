@@ -27,7 +27,7 @@
 #include "../solver.h"
 #include "../../src/ksearch.h"
 
-#include "graph_t.h"
+#include "roadmap_t.h"
 
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
@@ -58,7 +58,7 @@ static struct option const long_options[] =
 
 const string get_domain ();
 const string get_variant ();
-void get_testcases (const string& filename, vector<string>& names, vector<pair<string, string>>& instances);
+void get_testcases (const string& filename, vector<instance_t<roadmap_t>>& instances);
 static int decode_switches (int argc, char **argv,
                             string& graph_name, string& solver_name, string& filename, string& variant,
                             string& k_params, string& csvname, bool& no_doctor,
@@ -80,7 +80,7 @@ int main (int argc, char** argv) {
 
     // variables
     program_name = argv[0];
-    vector<string> variant_choices = {"unit", "octile"};
+    vector<string> variant_choices = {"unit", "dimacs"};
 
     // arg parse
     decode_switches (argc, argv, graph_name, solver_name, filename, variant, k_params, csvname, no_doctor, want_verbose);
@@ -119,14 +119,13 @@ int main (int argc, char** argv) {
 
     /* !------------------------- INITIALIZATION --------------------------! */
 
-    // create a graph and load it with the description given in the graph file
-    graph_t graph;
-    int nbedges = graph.load (graph_name);
+    // initialize the static data members of the definition of a roadmap
+    roadmap_t::init (graph_name, variant);
+    auto nbedges = roadmap_t::get_graph ().get_nbedges ();
 
     // open the given file and retrieve all cases from it
-    vector<string> names;
-    vector<pair<string, string>> instances;
-    get_testcases (filename, names, instances);
+    vector<instance_t<roadmap_t>> instances;
+    get_testcases (filename, instances);
     if (!instances.size ()) {
         cerr << endl;
         cerr << " Error: The file '" << filename << "' contains no instances to solve!" << endl;
@@ -134,16 +133,13 @@ int main (int argc, char** argv) {
         exit (EXIT_FAILURE);
     }
 
-    // // initialize the static data members of the definition of a grid
-    // grid_t::set_variant (variant);
-
     /* !-------------------------------------------------------------------! */
 
     cout << endl;
     cout << " graph        : " << graph_name << " (" << nbedges << " edges processed)" << endl;
     cout << " solver       : " << solver_name << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
-    cout << " variant      : " << get_variant () << endl;
+    cout << " variant      : " << variant << endl;
     cout << " K            : ";
     for (auto& ispec: kspec) {
         cout << "[" << get<0>(ispec) << ", " << get<1>(ispec) << ", " << get<2> (ispec) << "] ";
@@ -152,28 +148,28 @@ int main (int argc, char** argv) {
 
     /* !----------------------------- SEARCH ------------------------------! */
 
-    // // start the clock
-    // tstart = chrono::system_clock::now ();
+    // start the clock
+    tstart = chrono::system_clock::now ();
 
-    // // create an instance of the "generic" domain-dependent solver
-    // solver<grid_t> manager (get_domain (), variant,
-    //                         tasks, k_params);
+    // create an instance of the "generic" domain-dependent solver
+    solver<roadmap_t> manager (get_domain (), variant,
+                               instances, k_params);
 
-    // // solve all the instances with each solver selected by the user and in the
-    // // same order given
-    // for (auto isolver : solvers) {
-    //     manager.run (isolver, no_doctor, want_verbose);
-    // }
+    // solve all the instances with each solver selected by the user and in the
+    // same order given
+    for (auto isolver : solvers) {
+        manager.run (isolver, no_doctor, want_verbose);
+    }
 
-    // // and stop the clock
-    // tend = chrono::system_clock::now ();
+    // and stop the clock
+    tend = chrono::system_clock::now ();
 
-    // // to conclude, show an error summary and store all the results in a csv
-    // // file in case any was given
-    // manager.show_error_summary (no_doctor);
-    // manager.write_csv (csvname);
-    // cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
-    // cout << endl;
+    // to conclude, show an error summary and store all the results in a csv
+    // file in case any was given
+    manager.show_error_summary (no_doctor);
+    manager.write_csv (csvname);
+    cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
+    cout << endl;
 
     /* !-------------------------------------------------------------------! */
 
@@ -194,7 +190,7 @@ const string get_variant () {
 // open the specified filename and retrieve the name of every instance (assigned
 // as an integer from 0 onwards) and a vector of strings with the contents of
 // each case, i.e., the start and goal vertices separated by a blank space
-void get_testcases (const string& filename, vector<string>& names, vector<pair<string, string>>& instances) {
+void get_testcases (const string& filename, vector<instance_t<roadmap_t>>& instances) {
 
    ifstream stream (filename);
 
@@ -235,10 +231,11 @@ void get_testcases (const string& filename, vector<string>& names, vector<pair<s
        exit(EXIT_FAILURE);
    }
 
-   // now, create the pairs of instances to solve along with their name
+   // now, create a vector with the information of each instance
    for (auto i = 0 ; i < starts.size () ; i++) {
-       names.push_back (to_string (i));
-       instances.push_back (make_pair (starts[i], goals[i]));
+       instances.push_back (instance_t{to_string (i),
+           roadmap_t {size_t (stoll (starts[i]))},
+           roadmap_t {size_t (stoll (goals[i]))}});
    }
 }
 
@@ -256,7 +253,7 @@ decode_switches (int argc, char **argv,
     graph_name = "";
     solver_name = "";
     filename = "";
-    variant = "unit";
+    variant = "dimacs";
     k_params = "";
     csvname = "";
     no_doctor = false;

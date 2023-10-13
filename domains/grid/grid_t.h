@@ -60,7 +60,7 @@ public:
     static void set_n (int n) { _n = n; }
     static void set_variant (std::string variant) {
         if (variant != "unit" and variant != "octile") {
-            throw std::invalid_argument ("Invalid variant");
+            throw std::invalid_argument ("[grid_t::set_variant] Invalid variant");
         }
         _variant = variant;
     }

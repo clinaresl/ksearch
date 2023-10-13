@@ -83,6 +83,12 @@ public:
     // immediately raises an exception. Otherwise, it returns nothing
     void add_edge (size_t from, size_t to, int weight);
 
+    // clear entire erases the graph
+    void clear () {
+        _nbedges = 0;
+        _edges.clear ();
+    }
+
     // load a graph from a file with the format of the 9th DIMACS competition.
     // It returns the number of edges processed
     int load (const std::string& filename);

@@ -12,6 +12,8 @@ add_executable(gtest
   domains/TSTnpancake.cc
   ../domains/roadmap/graph_t.cc
   domains/TSTgraph.cc
+  ../domains/roadmap/roadmap_t.cc
+  domains/TSTroadmap.cc
   structs/TSTclosed_t.cc
   structs/TSTsolution_t.cc
   structs/TSTksolution_t.cc

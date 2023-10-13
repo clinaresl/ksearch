@@ -3,6 +3,7 @@ add_executable (roadmap
   getopt.c
   ../helpers.cc
   graph_t.cc
+  roadmap_t.cc
   roadmap.cc)
 
 target_link_libraries (roadmap LINK_PUBLIC ksearch)
