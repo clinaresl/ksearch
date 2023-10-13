@@ -92,6 +92,9 @@ TEST_F (RoadmapFixture, GraphUnitDefinition) {
                 ASSERT_TRUE (find (neighbours.begin (), neighbours.end (), make_pair (successor.get_to (), successor.get_weight ())) != neighbours.end ());
             }
         }
+
+        // remove the graph file
+        ASSERT_EQ (remove (filename.c_str ()), 0);
     }
 }
 
@@ -158,6 +161,9 @@ TEST_F (RoadmapFixture, GrapDimacsDefinition) {
                 ASSERT_TRUE (find (neighbours.begin (), neighbours.end (), make_pair (successor.get_to (), successor.get_weight ())) != neighbours.end ());
             }
         }
+
+        // remove the graph file
+        ASSERT_EQ (remove (filename.c_str ()), 0);
     }
 }
 

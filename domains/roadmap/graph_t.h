@@ -13,6 +13,7 @@
 #ifndef _GRAPH_T_H_
 #define _GRAPH_T_H_
 
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -42,6 +43,12 @@ struct edge_t {
     // accessors
     const size_t get_to () const { return _to; }
     const int get_weight () const { return _weight; }
+
+    // operators
+    bool operator==(const edge_t& other) const {
+        return _to == other.get_to () &&
+            _weight == other.get_weight ();
+    }
 }; // struct edge_t
 
 // Definition of a graph as a vector of adjacency lists whose elements store

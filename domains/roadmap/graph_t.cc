@@ -52,6 +52,12 @@ void graph_t::add_edge (size_t from, size_t to, int weight) {
         throw std::range_error ("[graph_t::add_edge] It was not possible to add the ending vertex");
     }
 
+    // check whether this edge already exists or not
+    vector<edge_t> edges = _edges[from];
+    if (find (edges.begin (), edges.end (), edge_t{to, weight}) != edges.end ()) {
+        return;
+    }
+
     // next, just simply add a new edge to it
     _edges[from].push_back (edge_t {to, weight});
 
