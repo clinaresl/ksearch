@@ -49,7 +49,8 @@ INFO_NUMBER_DATALINES = "Number of data lines: {}"
 INFO_ELAPSED_TIME = "Elapsed time: {0}"
 
 # warning message
-WARNING_NO_GNUPLOT_FILE = "No GNUplot file was created"
+WARNING_NO_DATA = "No data met the given criteria in the series"
+WARNING_NO_GNUPLOT_FILE = "No GNUplot file was generated"
 
 # error messages
 ERROR_UNKNOWN_HEADER = "The {}-name does not exist in the current line and will be ignored {}"
@@ -167,11 +168,17 @@ def get_data(spreadsheet: str,
         # and increment the number of processed lines
         nblines += 1
 
+    # before leaving, remove all series which contain no data
+    output = []
+    for iserie in data:
+        if len(iserie) > 0:
+            output.append(iserie)
+
     # show the number of lines processed
     LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
 
     # and return the data computed with all series
-    return data
+    return output
 
 
 # -----------------------------------------------------------------------------
@@ -243,29 +250,66 @@ def do_plot(params: argparse.Namespace):
     # in case any serie is produced from the given spreadsheet using the
     # variables x and y
     series = get_data(spreadsheet, user_series, params.x, params.y)
-    if series is not None:
+    if series is not None and len(series) > 0:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in series:
             LOGGER.info(INFO_NUMBER_DATAPOINTS_SERIE.format(iserie.get_legend(), len(iserie)))
 
-        # generate the gnuplot file with all the specified options including a
-        # title if any was provided by the user
-        gnufile = create_gnuplotfile(series, params.output, params.title)
-        gnufile.write_gnuplot()
+        # in case data was generated, but no output file was given, then issue a
+        # warning
+        if params.output is None or len(params.output) == 0:
+            LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
+        else:
+
+            # generate the gnuplot file with all the specified options including a
+            # title if any was provided by the user
+            gnufile = create_gnuplotfile(series, params.output, params.title)
+            gnufile.write_gnuplot()
 
     else:
-         LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
+         LOGGER.warning(WARNING_NO_DATA)
 
 # -----------------------------------------------------------------------------
 # do_ktime
 #
 # Execute the ktime command with the given parameters
 # -----------------------------------------------------------------------------
-def do_ktime(params: argparse.Namespace):
+def do_ky(params: argparse.Namespace):
     """Execute the ktime command with the given parameters"""
 
-    print("Not implemented yet!")
+    # spreadsheets have to be given as .xlsx files
+    spreadsheet = utils.get_filename(params.file, ".xlsx")
 
+    # ensure the spreadsheet is readable
+    readable, err = utils.check_file_readable(spreadsheet)
+    if not readable:
+        LOGGER.critical(err)
+        raise ValueError(err)
+
+    # importantly, the series requested by the user have to be provided always
+    # as a list. Moreover, if no serie is requested then one accepting all data
+    # (i.e., with condition True) has to be used instead. In this case the serie
+    # is named after the spreadsheet file
+    user_series = ["{}:True".format(params.file)] if params.series is None else params.series
+
+    # in case any serie si produced from the given spreadsheet using the
+    # variables k and the given y
+    series = get_data(spreadsheet, user_series, "k", params.y)
+    if series is not None and len(series) > 0:
+        LOGGER.info(INFO_NUMBER_DATAPOINTS)
+        for iserie in series:
+            LOGGER.info(INFO_NUMBER_DATAPOINTS_SERIE.format(iserie.get_legend(), len(iserie)))
+
+        # in case data was generated, but no output file was given, then issue a
+        # warning
+        if params.output is None or len(params.output) == 0:
+            LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
+        else:
+            gnufile = create_gnuplotfile(series, params.output, params.title)
+            gnufile.write_gnuplot()
+
+    else:
+        LOGGER.warning(WARNING_NO_DATA)
 
 # -----------------------------------------------------------------------------
 # main body
@@ -290,7 +334,7 @@ def main():
     # execute the specified command
     {
         "plot": do_plot,
-        "ktime": do_ktime
+        "ky": do_ky
     }[params.command](params)
 
     # show the elapsed time

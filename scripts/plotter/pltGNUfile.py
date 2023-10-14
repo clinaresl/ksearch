@@ -148,9 +148,9 @@ class PLTGNUfile:
         for idx, iserie in enumerate(self._data):
 
             if idx < len(self._data)-1:
-                gnustream.write('"-" title "{}"      with lines, '.format(iserie.get_legend()))
+                gnustream.write('"-" title "{}"      with linesp, '.format(iserie.get_legend()))
             else:
-                gnustream.write('"-" title "{}"      with lines\n\n'.format(iserie.get_legend()))
+                gnustream.write('"-" title "{}"      with linesp\n\n'.format(iserie.get_legend()))
 
         # add the datapoints of each serie
         for iserie in self._data:

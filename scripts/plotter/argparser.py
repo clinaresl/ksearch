@@ -36,9 +36,9 @@ def createPrgArgParser():
     plot = subparser.add_parser("plot",
                                 help="Generate a GNUplot file from spreadsheet data without transformations",
                                 description="DESCRIPTION: Generate a GNUplot file from spreadsheet data")
-    ktime = subparser.add_parser("ktime",
-                                 help="Generate a GNUplot file with k versus the average running time",
-                                 description="DESCRIPTION: Generate a GNUplot file with k versus the average running time")
+    ky = subparser.add_parser("ky",
+                              help="Generate a GNUplot file with k versus the average time of the given y column over all problem ids",
+                              description="DESCRIPTION: Generate a GNUplot file with k versus the average time of the given y column over all problem ids")
 
     # plot
     # -------------------------------------------------------------------------
@@ -72,29 +72,33 @@ def createPrgArgParser():
                                default=None,
                                help="Name of the gnuplot file to be generated. If none is given, no output file is generated")
 
-    # ktime
+    # ky
     # -------------------------------------------------------------------------
     # Group of mandatory arguments
-    ktime_mandatory = ktime.add_argument_group("Mandatory arguments", "The following arguments are required")
-    ktime_mandatory.add_argument('-f', '--file',
-                                 required=True,
-                                 type=str,
-                                 help="name of the file containing the .xlsx spreadsheet")
+    ky_mandatory = ky.add_argument_group("Mandatory arguments", "The following arguments are required")
+    ky_mandatory.add_argument('-f', '--file',
+                              required=True,
+                              type=str,
+                              help="name of the file containing the .xlsx spreadsheet")
+    ky_mandatory.add_argument('-y', '--y',
+                              required=True,
+                              type=str,
+                              help="name of the column containing the y values")
 
     # Group of optional arguments
-    ktime_optional = ktime.add_argument_group('Optional', 'The following arguments are optional')
-    ktime_optional.add_argument('-s', '--series',
-                                type=str,
-                                nargs='*',
-                                help="criteria used for filtering data lines. An arbitrary number of them can be given. Each serie has the format 'legend:condition'. If none is given, all data lines are accepted to generate a single plot with no specific legend unless 'legend:True' is given which assigns the specific legend to a unique series with all data. The 'condition' consists of a valid boolean expression in Python (i.e., 'and', 'or' and 'not' can be used, and also any relational operator, parenthesis, etc.) including also regular expressions. Each serie creates a different plot with the legend given before the colon.")
-    ktime_optional.add_argument('-t', '--title',
-                                type=str,
-                                default=None,
-                                help="Provides a title for the resulting plot")
-    ktime_optional.add_argument('-w', '--output',
-                                type=str,
-                                default=None,
-                                help="Name of the gnuplot file to be generated. If none is given, no output file is generated")
+    ky_optional = ky.add_argument_group('Optional', 'The following arguments are optional')
+    ky_optional.add_argument('-s', '--series',
+                             type=str,
+                             nargs='*',
+                             help="criteria used for filtering data lines. An arbitrary number of them can be given. Each serie has the format 'legend:condition'. If none is given, all data lines are accepted to generate a single plot with no specific legend unless 'legend:True' is given which assigns the specific legend to a unique series with all data. The 'condition' consists of a valid boolean expression in Python (i.e., 'and', 'or' and 'not' can be used, and also any relational operator, parenthesis, etc.) including also regular expressions. Each serie creates a different plot with the legend given before the colon.")
+    ky_optional.add_argument('-t', '--title',
+                             type=str,
+                             default=None,
+                             help="Provides a title for the resulting plot")
+    ky_optional.add_argument('-w', '--output',
+                             type=str,
+                             default=None,
+                             help="Name of the gnuplot file to be generated. If none is given, no output file is generated")
 
     # Parser
     # -------------------------------------------------------------------------
