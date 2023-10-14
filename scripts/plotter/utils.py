@@ -45,6 +45,33 @@ LOG_COLOR_PREFIX = {
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
+# seconds_to_str
+#
+# return a string with the number of hours, minutes and seconds corresponding to
+# the given number of seconds
+# -----------------------------------------------------------------------------
+def seconds_to_str(seconds: int) -> str:
+    """return a string with the number of hours, minutes and seconds
+       corresponding to the given number of seconds
+
+    """
+
+    # -- initialization
+    hours = 0
+    minutes = 0
+    seconds = int(seconds)
+
+    # -- compute the number of hours, minutes and seconds
+    hours = seconds // 3600
+    seconds = seconds % 3600
+    minutes = seconds // 60
+    seconds = seconds % 60
+
+    # -- return the result
+    return "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
+
+
+# -----------------------------------------------------------------------------
 # string_to_date
 #
 # casts the given value which should be a string to an instace of datetime.date.

@@ -15,7 +15,9 @@ Generation of GNUplot images from spreadsheet data
 
 # imports
 # -----------------------------------------------------------------------------
+import argparse
 import re
+import time
 
 import pyexcel
 
@@ -44,6 +46,7 @@ INFO_ACCESSING_SPREADSHEET = "Opening spreadsheet {} ..."
 INFO_NUMBER_DATAPOINTS = "Number of datapoints:"
 INFO_NUMBER_DATAPOINTS_SERIE = "\tSerie {}: {}"
 INFO_NUMBER_DATALINES = "Number of data lines: {}"
+INFO_ELAPSED_TIME = "Elapsed time: {0}"
 
 # warning message
 WARNING_NO_GNUPLOT_FILE = "No GNUplot file was created"
@@ -58,24 +61,30 @@ CRITICAL_INVALID_SERIE = "The serie {} can not be parsed. Type '--help' to get a
 # -----------------------------------------------------------------------------
 # get_data
 #
-# return a list of dictionaries with the data read from the spreadsheet. Every
-# dictionary contains the data from a single line where the keyword is the
-# column name and the value is taken from the corresponding cell
+# return an instnace of a GNUplot file with all series of data accepted from the
+# given spreadsheet. The GNUplot file is named after gnufilename. In case it is
+# not given, then this function returns None. The GNUplot file shows the x- and
+# y- legends given in xname and yname
 #
 # Data is filtered according to the given series, which consist of a list of
-# strings. Each serie is a valid Python boolean expression which can use
-# variables that have to be found in the spreadsheet
+# strings. Each serie is a valid Python boolean expression (including matching
+# regular expressions) which can use variables that have to be found in the
+# spreadsheet as header names. Every serie is prefixed with a name which is used
+# as the name of the curve shown in the GNUplot file
 # -----------------------------------------------------------------------------
 def get_data(spreadsheet: str,
              series: list, xname: str, yname: str,
              gnufilename: str) -> pltGNUfile.PLTGNUfile:
-    """return a list of dictionaries with the data read from the spreadsheet.
-       Every dictionary contains the data from a single line where the keyword
-       is the column name and the value is taken from the corresponding cell
+    """return an instnace of a GNUplot file with all series of data accepted
+       from the given spreadsheet. The GNUplot file is named after gnufilename.
+       In case it is not given, then this function returns None. The GNUplot
+       file shows the x- and y- legends given in xname and yname
 
        Data is filtered according to the given series, which consist of a list
-       of strings. Each serie is a valid Python boolean expression which can use
-       variables that have to be found in the spreadsheet
+       of strings. Each serie is a valid Python boolean expression (including
+       matching regular expressions) which can use variables that have to be
+       found in the spreadsheet as header names. Every serie is prefixed with a
+       name which is used as the name of the curve shown in the GNUplot file
 
     """
 
@@ -168,21 +177,12 @@ def get_data(spreadsheet: str,
 
 
 # -----------------------------------------------------------------------------
-# main body
+# do_plot
+#
+# Execute the plot command with the given parameters
 # -----------------------------------------------------------------------------
-def main():
-    """Main body
-
-    """
-
-    # -------------------------------------------------------------------------
-    # --initialization
-
-    # invoke the parser and parse all commands
-    params = argparser.createPrgArgParser().parse_args()
-
-    # set the requested logging level
-    LOGGER.setLevel(utils.get_logging_level(params.level))
+def do_plot(params: argparse.Namespace):
+    """Execute the plot command with the given parameters"""
 
     # spreadsheets have to be given as .xlsx files
     spreadsheet = utils.get_filename(params.file, ".xlsx")
@@ -208,6 +208,48 @@ def main():
 
     else:
          LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
+
+# -----------------------------------------------------------------------------
+# do_ktime
+#
+# Execute the ktime command with the given parameters
+# -----------------------------------------------------------------------------
+def do_ktime(params: argparse.Namespace):
+    """Execute the ktime command with the given parameters"""
+
+    print("Not implemented yet!")
+
+
+# -----------------------------------------------------------------------------
+# main body
+# -----------------------------------------------------------------------------
+def main():
+    """Main body
+
+    """
+
+    # -------------------------------------------------------------------------
+    # --initialization
+
+    # get the current time
+    start_time = time.time()
+
+    # invoke the parser and parse all commands
+    params = argparser.createPrgArgParser().parse_args()
+
+    # set the requested logging level
+    LOGGER.setLevel(utils.get_logging_level(params.level))
+
+    # execute the specified command
+    {
+        "plot": do_plot,
+        "ktime": do_ktime
+    }[params.command](params)
+
+    # show the elapsed time
+    end_time = time.time()
+    LOGGER.info(INFO_ELAPSED_TIME.format(utils.seconds_to_str(end_time - start_time)))
+
 
 # main
 # -----------------------------------------------------------------------------
