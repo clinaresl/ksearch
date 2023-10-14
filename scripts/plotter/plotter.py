@@ -178,12 +178,13 @@ def get_data(spreadsheet: str,
 # create_gnuplotfile
 #
 # Given a list of series represented as instances of PLTserie, return a
-# GNUplotfile which contains all those series and is named after gnufilename
+# GNUplotfile named after gnufilename which contains all those series and the
+# specified title if any is given
 # -----------------------------------------------------------------------------
-def create_gnuplotfile(gnufilename: str, data: list) -> pltGNUfile.PLTGNUfile:
+def create_gnuplotfile(series: list, gnufilename: str, title: str) -> pltGNUfile.PLTGNUfile:
     """Given a list of series represented as instances of PLTserie, return a
-       GNUplotfile which contains all those series and is named after
-       gnufilename
+       GNUplotfile named after gnufilename which contains all those series and
+       the specified title if any is given
 
     """
 
@@ -191,11 +192,11 @@ def create_gnuplotfile(gnufilename: str, data: list) -> pltGNUfile.PLTGNUfile:
     gnustream = None
 
     # in case no serie has been created, then return immediately
-    if len(data) > 0:
+    if len(series) > 0:
 
         # get the x- and y- legends. It is assumed that all series have been
         # created with the same values for the x- and y- axis
-        (xname, yname) = (data[0].get_xtitle(), data[0].get_ytitle)
+        (xname, yname) = (series[0].get_xtitle(), series[0].get_ytitle())
 
         # create a GNUplot file with the information of all the given series, in
         # case any has been given. Note the titles for the x and y axis are the same
@@ -204,8 +205,12 @@ def create_gnuplotfile(gnufilename: str, data: list) -> pltGNUfile.PLTGNUfile:
             gnustream = pltGNUfile.PLTGNUfile(gnufilename, xname, yname)
 
             # and add all series
-            for iserie in data:
+            for iserie in series:
                 gnustream += iserie
+
+            # and give the plot file a title, if any was given
+            if title is not None and len(title) > 0:
+                gnustream.set_title(title)
 
     # finally, return the GNUplot file with all series extracted from the
     # spreadsheet
@@ -229,19 +234,24 @@ def do_plot(params: argparse.Namespace):
         LOGGER.critical(err)
         raise ValueError(err)
 
-    # get the data from the spreadsheet and create a gnuplot file with all
-    # series extracted
-    data = create_gnuplotfile(params.output,
-                              get_data(spreadsheet, params.series, params.x, params.y))
-    if data is not None:
+    # importantly, the series requested by the user have to be provided always
+    # as a list. Moreover, if no serie is requested, then one accepting all data
+    # (i.e., with condition True) has to be used instead. In this case the serie
+    # is named after the spreadsheet file
+    user_series = ["{}:True".format(params.file)] if params.series is None else params.series
+
+    # in case any serie is produced from the given spreadsheet using the
+    # variables x and y
+    series = get_data(spreadsheet, user_series, params.x, params.y)
+    if series is not None:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
-        for iserie in data:
+        for iserie in series:
             LOGGER.info(INFO_NUMBER_DATAPOINTS_SERIE.format(iserie.get_legend(), len(iserie)))
 
-        # and generate the gnuplot file with the specified title
-        if params.title is not None and len(params.title) > 0:
-            data.set_title(params.title)
-        data.write_gnuplot()
+        # generate the gnuplot file with all the specified options including a
+        # title if any was provided by the user
+        gnufile = create_gnuplotfile(series, params.output, params.title)
+        gnufile.write_gnuplot()
 
     else:
          LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
