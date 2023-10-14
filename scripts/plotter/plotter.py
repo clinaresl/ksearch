@@ -61,30 +61,31 @@ CRITICAL_INVALID_SERIE = "The serie {} can not be parsed. Type '--help' to get a
 # -----------------------------------------------------------------------------
 # get_data
 #
-# return an instnace of a GNUplot file with all series of data accepted from the
-# given spreadsheet. The GNUplot file is named after gnufilename. In case it is
-# not given, then this function returns None. The GNUplot file shows the x- and
-# y- legends given in xname and yname
+# return a list with all series of data accepted from the given spreadsheet,
+# represented as instances of PLTserie.
 #
-# Data is filtered according to the given series, which consist of a list of
-# strings. Each serie is a valid Python boolean expression (including matching
-# regular expressions) which can use variables that have to be found in the
-# spreadsheet as header names. Every serie is prefixed with a name which is used
-# as the name of the curve shown in the GNUplot file
+# Each serie is defined by a legend and a condition separated by a colon, e.g.,
+# "k=1:k==1" where the condition is any valid Python boolean expression
+# (including matching regular expressions, e.g., ""Problem #0:
+# re.match('00/\d+', id)"") which can use variables that have to be found in the
+# spreadsheet as header names.
+#
+# Every datapoint of each serie consists of a tuple (x, y) whose values are
+# given by the contents of the headers xname and yname respectively.
 # -----------------------------------------------------------------------------
 def get_data(spreadsheet: str,
-             series: list, xname: str, yname: str,
-             gnufilename: str) -> pltGNUfile.PLTGNUfile:
-    """return an instnace of a GNUplot file with all series of data accepted
-       from the given spreadsheet. The GNUplot file is named after gnufilename.
-       In case it is not given, then this function returns None. The GNUplot
-       file shows the x- and y- legends given in xname and yname
+             series: list, xname: str, yname: str) -> list:
+    """return a list with all series of data accepted from the given
+       spreadsheet, represented as instances of PLTserie.
 
-       Data is filtered according to the given series, which consist of a list
-       of strings. Each serie is a valid Python boolean expression (including
-       matching regular expressions) which can use variables that have to be
-       found in the spreadsheet as header names. Every serie is prefixed with a
-       name which is used as the name of the curve shown in the GNUplot file
+       Each serie is defined by a legend and a condition separated by a colon,
+       e.g., "k=1:k==1" where the condition is any valid Python boolean
+       expression (including matching regular expressions, e.g., ""Problem #0:
+       re.match('00/\d+', id)"") which can use variables that have to be found
+       in the spreadsheet as header names.
+
+       Every datapoint of each serie consists of a tuple (x, y) whose values are
+       given by the contents of the headers xname and yname respectively.
 
     """
 
@@ -127,32 +128,41 @@ def get_data(spreadsheet: str,
             # add this key to the dictionary
             line[ikey] = irecord[ikey]
 
+        # once the entire line has been retrieved, ensure that there are headers
+        # named after the x and y names. If not, skip this line
+        if xname not in line:
+            LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
+            continue
+        if yname not in line:
+            LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
+            continue
+
         # once the entire line has been retrieved in an ordinary dictionary,
-        # check what series are verified
-        checker = pltchecker.PLTChecker(line, conditions)
-        results = checker.check()
-        for index, iresult in enumerate(results):
+        # check what series are verified, in case any has been given
+        if len(series) > 0:
+            checker = pltchecker.PLTChecker(line, conditions)
+            results = checker.check()
+            for index, iresult in enumerate(results):
 
-            # if this condition was satisfied
-            if iresult:
+                # if this condition was satisfied
+                if iresult:
 
-                # verify (repeatedly, ...) that both the x and y names exist in
-                # the current line
-                if xname not in line:
-                    LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
-                    continue
-                if yname not in line:
-                    LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
-                    continue
+                    # then add the corresponding point of this line into its
+                    # respective serie
+                    data[index] += (line[xname], line[yname])
 
-                # then add the corresponding point of this line into its
-                # respective serie
-                data[index] += (line[xname], line[yname])
+                    # in case a debug level was set, show the data line added to the
+                    # pool
+                    LOGGER.debug(DEBUG_DATALINE.format(data[index].get_legend(),
+                                                       (line[xname], line[yname])))
 
-                # in case a debug level was set, show the data line added to the
-                # pool
-                LOGGER.debug(DEBUG_DATALINE.format(data[index].get_legend(),
-                                                   (line[xname], line[yname])))
+        else:
+
+            # otherwise, if no serie was given, then accept all rows, and show a
+            # DEBUG message
+            data[index] += (line[xname], line[yname])
+            LOGGER.debug(DEBUG_DATALINE.format(data[index].get_legend(),
+                                               (line[xname], line[yname])))
 
         # and increment the number of processed lines
         nblines += 1
@@ -160,16 +170,42 @@ def get_data(spreadsheet: str,
     # show the number of lines processed
     LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
 
-    # once the series have been created, create a GNUplot file with the
-    # information of all series, in case any has been given. Note the titles for
-    # the x and y axis are the same for all series
-    gnustream = None
-    if gnufilename is not None and len(gnufilename) > 0:
-        gnustream = pltGNUfile.PLTGNUfile(gnufilename, xname, yname)
+    # and return the data computed with all series
+    return data
 
-        # and add all series
-        for iserie in data:
-            gnustream += iserie
+
+# -----------------------------------------------------------------------------
+# create_gnuplotfile
+#
+# Given a list of series represented as instances of PLTserie, return a
+# GNUplotfile which contains all those series and is named after gnufilename
+# -----------------------------------------------------------------------------
+def create_gnuplotfile(gnufilename: str, data: list) -> pltGNUfile.PLTGNUfile:
+    """Given a list of series represented as instances of PLTserie, return a
+       GNUplotfile which contains all those series and is named after
+       gnufilename
+
+    """
+
+    # --initialization
+    gnustream = None
+
+    # in case no serie has been created, then return immediately
+    if len(data) > 0:
+
+        # get the x- and y- legends. It is assumed that all series have been
+        # created with the same values for the x- and y- axis
+        (xname, yname) = (data[0].get_xtitle(), data[0].get_ytitle)
+
+        # create a GNUplot file with the information of all the given series, in
+        # case any has been given. Note the titles for the x and y axis are the same
+        # for all series
+        if gnufilename is not None and len(gnufilename) > 0:
+            gnustream = pltGNUfile.PLTGNUfile(gnufilename, xname, yname)
+
+            # and add all series
+            for iserie in data:
+                gnustream += iserie
 
     # finally, return the GNUplot file with all series extracted from the
     # spreadsheet
@@ -193,9 +229,10 @@ def do_plot(params: argparse.Namespace):
         LOGGER.critical(err)
         raise ValueError(err)
 
-    # get the data from the spreadsheet and show information on the standard
-    # output
-    data = get_data(spreadsheet, params.series, params.x, params.y, params.output)
+    # get the data from the spreadsheet and create a gnuplot file with all
+    # series extracted
+    data = create_gnuplotfile(params.output,
+                              get_data(spreadsheet, params.series, params.x, params.y))
     if data is not None:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in data:
