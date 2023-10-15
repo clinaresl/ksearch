@@ -11,6 +11,10 @@ The N-Pancake domain is implemented under `domains/n-pancake`
 
 The Grid domain is implemented under `domains/grid`
 
+## Roadmap ##
+
+The Roadmap domain is implemented under `domains/roadmap`
+
 # Usage #
 
 All solvers acknowledge the flags `--version` and `--help`. Other than these,

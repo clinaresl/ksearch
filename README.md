@@ -53,7 +53,8 @@ algorithms:
 This package comes with a number of domain-dependent solvers under `domains/`:
 
 * *Grid*
-* *N-Pancake* 
+* *N-Pancake*
+* *Roadmap* 
 
 For further details, check out the documentation under `domains/`
 

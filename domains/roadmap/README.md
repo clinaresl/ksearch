@@ -1,67 +1,71 @@
 # Roadmap #
 
-The roadmap domain is the [9th DIMACS Implementation Challenge: Shortest
-Paths](http://www.dis.uniroma1.it/~challenge9)
+The roadmap domain is taken from the [9th DIMACS Implementation Challenge:
+Shortest Paths](http://www.diag.uniroma1.it/~challenge9/download.shtml#benchmark)
 
-The specific case is given in the file `bayareadist.gr` where every line
-consists of an edge identified by its two vertices represented with integer
-indices and the third value is the edge cost. Data lines are preceded with `a`
-whereas comments are preceded with the hash symbol `#`.
+The available benchmarks are stored in the directory `benchmarks`. The graphs
+are suffixed with `.gr` where, every line consists of an edge identified by its
+two vertices represented with integer indices, and the third value is the edge
+cost. Data lines are preceded with `a` whereas comments are preceded with the
+hash symbol `#`. See the available
+[help](http://www.diag.uniroma1.it/~challenge9/format.shtml) for more
+information on the formats.
 
 This domain provides two variants:
 
 * `unit`: all operators cost the same, i.e., the edge cost is ignored and set to
   one for all edges.
-* `dimacs`: in this variant the edge cost is preserved. 
+* `dimacs`: in this variant the edge cost is preserved as retrieved from the
+  `.gr`file.
 
 No heuristics are used in any case.
 
-The particular instances to solve are given in the file `bayaredist.test` which
-consists of precisely two lines. The i-th test case uses the i-th vertex from
-the first line as the starting vertex and the i-th vertex from the second line
-as the goal.
+The particular instances to solve are given in the files `.test` which consist
+of precisely two lines. The i-th test case uses the i-th vertex from the first
+line as the starting vertex and the i-th vertex from the second line as the
+goal. For example, the test file:
+
+``` text
+109245 150503
+149048 71654
+```
+
+defines two instances. The first one consists of getting to node 149048 from
+vertex 109245; and second one gets from 150503 to 71654.
 
 # Usage #
 
 In addition to all directives discussed for all domains, this solver honours an
 additional flag:
 
-* `--size`: length of the square grid.
+* `--graph`: filename with the `.gr` graph definition file
 
 which is a mandatory argument.
 
-An example for the computation of one million distinct paths for every case
+An example for the computation of one thousand distinct paths for every case
 specified above is shown next:
 
 ``` sh
-    $ ./grid --size 10 --solver "belA0" --file test-10 --variant unit --k 1000000 --no-doctor
+    $ ./roadmap --graph benchmark/bayareadist.gr --solver "belA0" --file benchmark/bayareadist.test --variant dimacs --k 1000
     
-      size         : 10
+      graph        : benchmark/bayareadist.gr (794830 edges processed)
       solver       : belA0
-      file         : test-10 (10 instances)
-      variant      : unit
-      size         : 10
-      K            : [1000000, 1000000, 1] 
+      file         : benchmark/bayareadist.test (2 instances)
+      variant      : dimacs
+      K            : [1000, 1000, 1] 
 
-      ⏺ belA0 ( k=1000000 ): 
-      ⏵ 00;1000000;(0, 0);(9, 9);18;99;1.35236;BELA*;? Unchecked
-      ⏵ 01;1000000;(1, 1);(8, 8);14;99;1.06715;BELA*;? Unchecked
-      ⏵ 02;1000000;(2, 2);(7, 7);10;99;1.19695;BELA*;? Unchecked
-      ⏵ 03;1000000;(3, 3);(6, 6);6;99;1.11041;BELA*;? Unchecked
-      ⏵ 04;1000000;(4, 4);(5, 5);2;99;1.0797;BELA*;? Unchecked
-      ⏵ 05;1000000;(5, 5);(4, 4);2;99;1.09474;BELA*;? Unchecked
-      ⏵ 06;1000000;(6, 6);(3, 3);6;99;1.13207;BELA*;? Unchecked
-      ⏵ 07;1000000;(7, 7);(2, 2);10;99;1.1462;BELA*;? Unchecked
-      ⏵ 08;1000000;(8, 8);(1, 1);14;99;1.0636;BELA*;? Unchecked
-      ⏵ 09;1000000;(9, 9);(0, 0);18;99;1.34752;BELA*;? Unchecked
+      ⏺ belA0 ( k=1000 ): 
+      ⏵ 0;1000;109245;149048;0;9797;0.0410145;BELA*;✔ No error
+      ⏵ 1;1000;150503;71654;0;114029;0.284162;BELA*;✔ No error
 
-      📊 Error summary: <doctor disabled>
-      ⚠ No CSV output generated!
-      🕒 CPU time: 14.3588 seconds
+     📊 Error summary: 
+            Number of errors: 0
+     ⚠ No CSV output generated!
+     🕒 CPU time: 0.485845 seconds
 ```
 
-Note the importance of using `no-doctor` here and that `--verbose` is unfeasible
-due to the high value of *k*
+Note that solutions are automatically checked for correctness, because
+`--no-doctor` has not been used.
 
 # License #
 
