@@ -17,6 +17,7 @@ Generation of GNUplot images from data given in different series
 # -----------------------------------------------------------------------------
 from datetime import datetime
 
+import pltkserie
 import pltserie
 import utils
 import version
@@ -57,11 +58,12 @@ class PLTGNUfile:
         self._idx = 0
 
 
-    def __iadd__(self, data: pltserie.PLTSerie):
+    def __iadd__(self, data):
         """adds a new serie to the data stored in this GNUplot file"""
 
-        # verify the data is properly given as an instance of a PLTSerie
-        if not isinstance(data, pltserie.PLTSerie):
+        # verify the data is properly given as an instance of a PLTSerie or PLTKSerie
+        if not isinstance(data, pltserie.PLTSerie) and \
+           not isinstance(data, pltkserie.PLTKSerie):
             LOGGER.critical(CRITICAL_INVALID_DATA)
             raise ValueError(CRITICAL_INVALID_DATA)
 
