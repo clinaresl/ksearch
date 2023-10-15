@@ -323,14 +323,16 @@ def get_k_data(spreadsheet: str,
 # -----------------------------------------------------------------------------
 # create_gnuplotfile
 #
-# Given a list of series represented as instances of PLTserie, return a
-# GNUplotfile named after gnufilename which contains all those series and the
-# specified title if any is given
+# Given a list of series represented as instances of either PLTserie or
+# PLTKSerie, return a GNUplotfile named after gnufilename which contains all
+# those series and the specified title if any is given. In case a png filename
+# is given, specific commands are added to generate the png file
 # -----------------------------------------------------------------------------
-def create_gnuplotfile(series: list, gnufilename: str, title: str) -> pltGNUfile.PLTGNUfile:
-    """Given a list of series represented as instances of PLTserie, return a
-       GNUplotfile named after gnufilename which contains all those series and
-       the specified title if any is given
+def create_gnuplotfile(series: list, gnufilename: str, title: str, png: str) -> pltGNUfile.PLTGNUfile:
+    """Given a list of series represented as instances of either PLTserie or
+       PLTKSerie, return a GNUplotfile named after gnufilename which contains
+       all those series and the specified title if any is given. In case a png
+       filename is given, specific commands are added to generate the png file
 
     """
 
@@ -363,7 +365,11 @@ def create_gnuplotfile(series: list, gnufilename: str, title: str) -> pltGNUfile
                     # otherwise, add the serie straight away
                     gnustream += iserie
 
-            # and give the plot file a title, if any was given
+            # create a png image, in case it was requested
+            if png is not None and len(png) > 0:
+                gnustream.set_png(png)
+
+            # give the plot file a title, if any was given
             if title is not None and len(title) > 0:
                 gnustream.set_title(title)
 
@@ -411,7 +417,7 @@ def do_plot(params: argparse.Namespace):
 
             # generate the gnuplot file with all the specified options including a
             # title if any was provided by the user
-            gnufile = create_gnuplotfile(series, params.output, params.title)
+            gnufile = create_gnuplotfile(series, params.output, params.title, params.png)
             gnufile.write_gnuplot()
 
     else:
@@ -454,7 +460,7 @@ def do_ky(params: argparse.Namespace):
         if params.output is None or len(params.output) == 0:
             LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
         else:
-            gnufile = create_gnuplotfile(series, params.output, params.title)
+            gnufile = create_gnuplotfile(series, params.output, params.title, params.png)
             gnufile.write_gnuplot()
 
     else:

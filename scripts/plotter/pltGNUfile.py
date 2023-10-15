@@ -49,13 +49,18 @@ class PLTGNUfile:
         """
 
         # copy the attributes and initialize the title of the plot to None
-        (self._filename, self._xtitle, self._ytitle, self._title) = (filename, xtitle, ytitle, None)
+        (self._filename, self._xtitle, self._ytitle) = (filename, xtitle, ytitle)
 
         # initialize the data
         self._data = []
 
         # and also the counter used for iterating
         self._idx = 0
+
+        # other data members that are initialized by other services are listed
+        # below
+        self._png = None
+        self._title = None
 
 
     def __iadd__(self, data):
@@ -115,6 +120,11 @@ class PLTGNUfile:
         # return the y title
         return self._ytitle
 
+    def set_png(self, value: str):
+        """Set the value of a png file to be generated"""
+
+        self._png = value
+
     def set_title(self, value: str):
         """Set the title of this plot"""
 
@@ -144,6 +154,11 @@ class PLTGNUfile:
         # in case a title was given add it
         if self._title is not None and len(self._title) > 0:
             gnustream.write('set title "{}"\n\n'.format(self._title))
+
+        # in case a png file was given add it
+        if self._png is not None and len(self._png) > 0:
+            gnustream.write('set terminal png enhanced font "Ariel,10"\n')
+            gnustream.write(f"set output '{self._png}'\n\n")
 
         # next, add the gnuplot commands to plot the series
         gnustream.write("plot ")

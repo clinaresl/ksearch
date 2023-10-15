@@ -71,6 +71,10 @@ def createPrgArgParser():
                                type=str,
                                default=None,
                                help="Name of the gnuplot file to be generated. If none is given, no output file is generated")
+    plot_optional.add_argument('-p', '--png',
+                               type=str,
+                               default=None,
+                               help="Name of the png file to be generated. If none is given, no png file is generated")
 
     # ky
     # -------------------------------------------------------------------------
@@ -99,6 +103,10 @@ def createPrgArgParser():
                              type=str,
                              default=None,
                              help="Name of the gnuplot file to be generated. If none is given, no output file is generated")
+    ky_optional.add_argument('-p', '--png',
+                             type=str,
+                             default=None,
+                             help="Name of the png file to be generated. If none is given, no png file is generated")
 
     # Parser
     # -------------------------------------------------------------------------
