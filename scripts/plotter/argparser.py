@@ -46,8 +46,9 @@ def createPrgArgParser():
     plot_mandatory = plot.add_argument_group("Mandatory arguments", "The following arguments are required")
     plot_mandatory.add_argument('-f', '--file',
                                 required=True,
+                                nargs="+",
                                 type=str,
-                                help="name of the file containing the .xlsx spreadsheet")
+                                help="name of the file(s) containing the .xlsx spreadsheet. It is possible to provide an arbitrary number of them to generate a single plot with all data")
     plot_mandatory.add_argument('-x', '--x',
                                 required=True,
                                 type=str,
@@ -82,8 +83,9 @@ def createPrgArgParser():
     ky_mandatory = ky.add_argument_group("Mandatory arguments", "The following arguments are required")
     ky_mandatory.add_argument('-f', '--file',
                               required=True,
+                              nargs="+",
                               type=str,
-                              help="name of the file containing the .xlsx spreadsheet")
+                              help="name of the file(s) containing the .xlsx spreadsheet. It is possible to provide an arbitrary number of them to generate a single plot with all data")
     ky_mandatory.add_argument('-y', '--y',
                               required=True,
                               type=str,

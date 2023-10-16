@@ -119,8 +119,8 @@ def filter_data(data: list, line: dict,
 # -----------------------------------------------------------------------------
 # get_data
 #
-# return a list with all series of data accepted from the given spreadsheet,
-# represented as instances of PLTserie.
+# return a list with all series of data accepted from a list of spreadsheets,
+# each represented as an intance of PLTSerie
 #
 # Each serie is defined by a legend and a condition separated by a colon, e.g.,
 # "k=1:k==1" where the condition is any valid Python boolean expression
@@ -131,10 +131,10 @@ def filter_data(data: list, line: dict,
 # Every datapoint of each serie consists of a tuple (x, y) whose values are
 # given by the contents of the headers xname and yname respectively.
 # -----------------------------------------------------------------------------
-def get_data(spreadsheet: str,
+def get_data(spreadsheets: list,
              series: list, xname: str, yname: str) -> list:
-    """return a list with all series of data accepted from the given
-       spreadsheet, represented as instances of PLTserie.
+    """return a list with all series of data accepted from a list of
+       spreadsheets, each represented as an intance of PLTSerie
 
        Each serie is defined by a legend and a condition separated by a colon,
        e.g., "k=1:k==1" where the condition is any valid Python boolean
@@ -146,10 +146,6 @@ def get_data(spreadsheet: str,
        given by the contents of the headers xname and yname respectively.
 
     """
-
-    # --initialization
-    nblines = 0
-    LOGGER.info(INFO_ACCESSING_SPREADSHEET.format(spreadsheet))
 
     # create a list of strings with the legends and conditions of each serie,
     # and also, a container for each serie to reteurn
@@ -172,44 +168,52 @@ def get_data(spreadsheet: str,
             LOGGER.critical(CRITICAL_INVALID_SERIE.format(iserie))
             raise ValueError(CRITICAL_INVALID_SERIE.format(iserie))
 
-    # process all records to get a list of ordinary dictionaries
-    for irecord in pyexcel.get_records(file_name=spreadsheet):
+    # process all spreadsheets
+    for spreadsheet in spreadsheets:
 
-        # create an ordinary dictionary to represent the information of this line
-        line = {}
-        for ikey in irecord:
+        LOGGER.info(INFO_ACCESSING_SPREADSHEET.format(spreadsheet))
 
-            # check this header is not duplicated
-            if ikey in line:
-                LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
+        # count the processed lines
+        nblines = 0
 
-            # add this key to the dictionary
-            line[ikey] = irecord[ikey]
+        # process all records to get a list of ordinary dictionaries
+        for irecord in pyexcel.get_records(file_name=spreadsheet):
 
-        # once the entire line has been retrieved, ensure that there are headers
-        # named after the x and y names. If not, skip this line
-        if xname not in line:
-            LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
-            continue
-        if yname not in line:
-            LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
-            continue
+            # create an ordinary dictionary to represent the information of this line
+            line = {}
+            for ikey in irecord:
 
-        # once the entire line has been retrieved in an ordinary dictionary,
-        # check what series are verified, in case any has been given
-        filter_data(data, line, conditions, xname, yname)
+                # check this header is not duplicated
+                if ikey in line:
+                    LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
 
-        # and increment the number of processed lines
-        nblines += 1
+                # add this key to the dictionary
+                line[ikey] = irecord[ikey]
+
+            # once the entire line has been retrieved, ensure that there are headers
+            # named after the x and y names. If not, skip this line
+            if xname not in line:
+                LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
+                continue
+            if yname not in line:
+                LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
+                continue
+
+            # once the entire line has been retrieved in an ordinary dictionary,
+            # check what series are verified, in case any has been given
+            filter_data(data, line, conditions, xname, yname)
+
+            # and increment the number of processed lines
+            nblines += 1
+
+        # show the number of lines processed
+        LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
 
     # before leaving, remove all series which contain no data
     output = []
     for iserie in data:
         if len(iserie) > 0:
             output.append(iserie)
-
-    # show the number of lines processed
-    LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
 
     # and return the data computed with all series
     return output
@@ -218,8 +222,8 @@ def get_data(spreadsheet: str,
 # -----------------------------------------------------------------------------
 # get_k_data
 #
-# return a list with all series of data accepted from the given spreadsheet,
-# represented as instances of PLTKSerie.
+# return a list with all series of data accepted from a list of spreadsheets,
+# each represented as an instance of PLTKSerie.
 #
 # Each serie is defined by a legend and a condition separated by a colon, e.g.,
 # "k=1:k==1" where the condition is any valid Python boolean expression
@@ -230,10 +234,10 @@ def get_data(spreadsheet: str,
 # Every datapoint of each serie consists of a tuple (x, y) whose values are
 # given by the contents of the headers xname and yname respectively.
 # -----------------------------------------------------------------------------
-def get_k_data(spreadsheet: str,
+def get_k_data(spreadsheets: list,
                series: list, xname: str, yname: str) -> list:
-    """return a list with all series of data accepted from the given
-       spreadsheet, represented as instances of PLTKSerie.
+    """return a list with all series of data accepted from a list of
+       spreadsheets, each represented as an instance of PLTKSerie.
 
        Each serie is defined by a legend and a condition separated by a colon,
        e.g., "k=1:k==1" where the condition is any valid Python boolean
@@ -245,10 +249,6 @@ def get_k_data(spreadsheet: str,
        given by the contents of the headers xname and yname respectively.
 
     """
-
-    # --initialization
-    nblines = 0
-    LOGGER.info(INFO_ACCESSING_SPREADSHEET.format(spreadsheet))
 
     # create a list of strings with the legends and conditions of each serie,
     # and also, a container for each serie to reteurn
@@ -271,50 +271,58 @@ def get_k_data(spreadsheet: str,
             LOGGER.critical(CRITICAL_INVALID_SERIE.format(iserie))
             raise ValueError(CRITICAL_INVALID_SERIE.format(iserie))
 
-    # process all records to get a list of ordinary dictionaries
-    for irecord in pyexcel.get_records(file_name=spreadsheet):
+    # process all spreadsheets
+    for spreadsheet in spreadsheets:
 
-        # create an ordinary dictionary to represent the information of this line
-        line = {}
-        for ikey in irecord:
+        LOGGER.info(INFO_ACCESSING_SPREADSHEET.format(spreadsheet))
 
-            # check this header is not duplicated
-            if ikey in line:
-                LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
+        # count the processed lines
+        nblines = 0
 
-            # add this key to the dictionary
-            line[ikey] = irecord[ikey]
+        # process all records to get a list of ordinary dictionaries
+        for irecord in pyexcel.get_records(file_name=spreadsheet):
 
-        # verify whether this is the case where the number of paths found equals
-        # the number of paths requested. If not, skip it
-        m = re.match(RE_PROBLEM_ID, line["id"])
-        if int(m.group("k")) != int(line["k"]):
-            continue
+            # create an ordinary dictionary to represent the information of this line
+            line = {}
+            for ikey in irecord:
 
-        # once the entire line has been retrieved, ensure that there are headers
-        # named after the x and y names. If not, skip this line
-        if xname not in line:
-            LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
-            continue
-        if yname not in line:
-            LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
-            continue
+                # check this header is not duplicated
+                if ikey in line:
+                    LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
 
-        # once the entire line has been retrieved in an ordinary dictionary,
-        # check what series are verified, in case any has been given
-        filter_data(data, line, conditions, xname, yname)
+                # add this key to the dictionary
+                line[ikey] = irecord[ikey]
 
-        # and increment the number of processed lines
-        nblines += 1
+            # verify whether this is the case where the number of paths found equals
+            # the number of paths requested. If not, skip it
+            m = re.match(RE_PROBLEM_ID, line["id"])
+            if int(m.group("k")) != int(line["k"]):
+                continue
+
+            # once the entire line has been retrieved, ensure that there are headers
+            # named after the x and y names. If not, skip this line
+            if xname not in line:
+                LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
+                continue
+            if yname not in line:
+                LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
+                continue
+
+            # once the entire line has been retrieved in an ordinary dictionary,
+            # check what series are verified, in case any has been given
+            filter_data(data, line, conditions, xname, yname)
+
+            # and increment the number of processed lines
+            nblines += 1
+
+        # show the number of lines processed
+        LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
 
     # before leaving, remove all series which contain no data
     output = []
     for iserie in data:
         if len(iserie) > 0:
             output.append(iserie)
-
-    # show the number of lines processed
-    LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
 
     # and return the data computed with all series
     return output
@@ -387,23 +395,28 @@ def do_plot(params: argparse.Namespace):
     """Execute the plot command with the given parameters"""
 
     # spreadsheets have to be given as .xlsx files
-    spreadsheet = utils.get_filename(params.file, ".xlsx")
+    spreadsheets = []
+    for ifile in params.file:
+        spreadsheet = utils.get_filename(ifile, ".xlsx")
 
-    # ensure the spreadsheet is readable
-    readable, err = utils.check_file_readable(spreadsheet)
-    if not readable:
-        LOGGER.critical(err)
-        raise ValueError(err)
+        # ensure each spreadsheet is readable
+        readable, err = utils.check_file_readable(spreadsheet)
+        if not readable:
+            LOGGER.critical(err)
+            raise ValueError(err)
+
+        # finally, add it to the list of spreadsheets to process
+        spreadsheets.append(spreadsheet)
 
     # importantly, the series requested by the user have to be provided always
     # as a list. Moreover, if no serie is requested, then one accepting all data
     # (i.e., with condition True) has to be used instead. In this case the serie
-    # is named after the spreadsheet file
-    user_series = ["{}:True".format(params.file)] if params.series is None else params.series
+    # is named after a concatenation of the names of all spreadsheets
+    user_series = ["{}:True".format("/".join(spreadsheets))] if params.series is None else params.series
 
     # in case any serie is produced from the given spreadsheet using the
     # variables x and y
-    series = get_data(spreadsheet, user_series, params.x, params.y)
+    series = get_data(spreadsheets, user_series, params.x, params.y)
     if series is not None and len(series) > 0:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in series:
@@ -433,23 +446,28 @@ def do_ky(params: argparse.Namespace):
     """Execute the ktime command with the given parameters"""
 
     # spreadsheets have to be given as .xlsx files
-    spreadsheet = utils.get_filename(params.file, ".xlsx")
+    spreadsheets = []
+    for ifile in params.file:
+        spreadsheet = utils.get_filename(ifile, ".xlsx")
 
-    # ensure the spreadsheet is readable
-    readable, err = utils.check_file_readable(spreadsheet)
-    if not readable:
-        LOGGER.critical(err)
-        raise ValueError(err)
+        # ensure each spreadsheet is readable
+        readable, err = utils.check_file_readable(spreadsheet)
+        if not readable:
+            LOGGER.critical(err)
+            raise ValueError(err)
+
+        # finally, add it to the list of spreadsheets to process
+        spreadsheets.append(spreadsheet)
 
     # importantly, the series requested by the user have to be provided always
     # as a list. Moreover, if no serie is requested then one accepting all data
     # (i.e., with condition True) has to be used instead. In this case the serie
-    # is named after the spreadsheet file
-    user_series = ["{}:True".format(params.file)] if params.series is None else params.series
+    # is named after a concatenation of the names of all spreadhseets
+    user_series = ["{}:True".format("/".join(spreadsheets))] if params.series is None else params.series
 
     # in case any serie si produced from the given spreadsheet using the
     # variables k and the given y
-    series = get_k_data(spreadsheet, user_series, "k", params.y)
+    series = get_k_data(spreadsheets, user_series, "k", params.y)
     if series is not None and len(series) > 0:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in series:
