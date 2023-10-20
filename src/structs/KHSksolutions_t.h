@@ -105,7 +105,7 @@ namespace khs {
             // first to a string stream and then copy its output to the given
             // stream
             std::stringstream ss;
-            ss << "domain;variant;id prob/id path;k;start;goal;h0;length;cost;expansions;runtime;expansions/sec;solver;doctor" << endl;
+            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;runtime;expansions/sec;solver;doctor" << endl;
             for (const auto& ksolution : ksolutions.get_ksolutions ()) {
                 for (const auto& solution : ksolution.get_solutions ()) {
 
