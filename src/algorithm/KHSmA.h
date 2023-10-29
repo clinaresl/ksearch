@@ -97,12 +97,12 @@ namespace khs {
 
         // The following method provides a convenient wrapper to generate
         // solutions more comfortably
-        const solution_t<T> generate_solution (const vector<T>& path,
+        const solution_t<T, vector> generate_solution (const vector<T>& path,
                                                const int g,
                                                const string& signature) {
 
             // return a solution with this information
-            return solution_t<T> (bsolver<T>::_k,
+            return solution_t<T, vector> (bsolver<T>::_k,
                                   path,
                                   _start.get_state (),
                                   _goal.get_state (),
@@ -121,7 +121,7 @@ namespace khs {
         // the main service of this class computes a solution of the k-shortest
         // path problem from the start to the goal. Importantly, the solutions
         // shall be returned in the same order they are generated!
-        ksolution_t<T> solve ();
+        ksolution_t<T, vector> solve ();
 
     }; // class mA<T>
 
@@ -129,13 +129,13 @@ namespace khs {
     // problem from the start to the goal. Importantly, the solutions shall be
     // returned in the same order they are generated!
     template<typename T>
-    ksolution_t<T> mA<T>::solve () {
+    ksolution_t<T, vector> mA<T>::solve () {
 
         // Start the chrono!
         bsolver<T>::_tstart = chrono::system_clock::now ();
 
         // First things first, create a container to store all solutions found
-        ksolution_t<T> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
+        ksolution_t<T, vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
 
         // In case the start and the goal nodes are the same, return immediately
         // with a single empty solution, and only one in spite of the number of

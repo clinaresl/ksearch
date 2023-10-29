@@ -73,6 +73,11 @@ public:
         return _index == other.get_index ();
     }
 
+    // this instance is not equal to another if and only if its indices are different
+    bool operator!= (const roadmap_t& other) const {
+        return _index != other.get_index ();
+    }
+
     friend std::ostream& operator<< (std::ostream& stream, const roadmap_t& right) {
         stream << right.get_index ();
         return stream;

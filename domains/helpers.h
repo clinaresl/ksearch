@@ -27,7 +27,7 @@
 #include "../src/ksearch.h"
 
 // signatures of acknowledged solvers
-static std::vector<std::string> ack_solvers {"mDijkstra", "belA0"};
+static std::vector<std::string> ack_solvers {"mDijkstra", "belA0", "K0"};
 
 // Left trimming a string
 static inline std::string& ltrim (std::string& s) {

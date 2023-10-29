@@ -47,6 +47,7 @@ algorithms:
 
 + `mDijkstra`: It consists of expanding every node up to *k* times
 + `belA0`: it is the uninformed variant of BELA*
++ `K0`: Uninformed variant of K*
 
 # Domain-dependent solvers #
 
