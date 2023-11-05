@@ -35,7 +35,7 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         string solver = randString (50);
 
         // create a solution which stores ints
-        khs::solution_t<int> solution{k, path, start, goal,
+        khs::solution_t<int, vector> solution{k, path, start, goal,
         h0, cost, expansions, cpu_time, solver};
 
         // and give this instance a name
@@ -80,7 +80,7 @@ TEST_F (SolutionFixture, EmptySolutionNPancake) {
         string solver = randString (50);
 
         // create a solution which stores npancakes
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // check that doctor recognizes this as a correct solution
@@ -115,7 +115,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeUnit) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is correct
@@ -150,7 +150,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeHeavy) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is correct
@@ -179,7 +179,7 @@ TEST_F (SolutionFixture, ErrorEmptySolutionNPancake) {
         string solver = randString (50);
 
         // create a solution which stores npancakes
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // check that doctor recognizes this solution is incorrect as a strictly
@@ -223,7 +223,7 @@ TEST_F (SolutionFixture, ErrorStartNPancake) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
@@ -266,7 +266,7 @@ TEST_F (SolutionFixture, ErrorGoalNPancake) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
@@ -317,7 +317,7 @@ TEST_F (SolutionFixture, ErrorAdjacencyNPancake) {
 
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
@@ -356,7 +356,7 @@ TEST_F (SolutionFixture, ErrorCostNPancakeHeavy) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect

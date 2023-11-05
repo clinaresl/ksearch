@@ -61,7 +61,7 @@ TEST_F (KSolutionsFixture, AddSingleNPancakeSolution) {
             // the parameter k is randomly chosen, but is guaranteed to be at
             // least 1
             int k = 1 + (rand () % MAX_VALUES);
-            khs::ksolution_t<npancake_t> ksolution = randKSolution (k);
+            khs::ksolution_t<npancake_t, vector> ksolution = randKSolution (k);
 
             // Add this solution to the container of solutions
             solutions += ksolution;
@@ -94,7 +94,7 @@ TEST_F (KSolutionsFixture, AddMultipleNPancakeSolution) {
             // the parameter k is randomly chosen, but is guaranteed to be at
             // least 1
             int k = 1 + (rand () % MAX_VALUES);
-            khs::ksolution_t<npancake_t> ksolution = randKSolution (k);
+            khs::ksolution_t<npancake_t, vector> ksolution = randKSolution (k);
 
             // Add this solution to the container of solutions
             solutions += ksolution;

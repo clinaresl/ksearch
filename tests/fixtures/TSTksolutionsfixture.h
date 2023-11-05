@@ -42,7 +42,7 @@ protected:
     // Generate a solution of the k-shortest path problem for the specified
     // value of k. The length of each solution is randomly chosen and the
     // solution generated is not necessarily correct.
-    khs::ksolution_t<npancake_t> randKSolution (const int k) {
+    khs::ksolution_t<npancake_t, std::vector> randKSolution (const int k) {
 
         // randomly create a start and goal states
         npancake_t start = randInstance (NB_DISCS);
@@ -50,7 +50,7 @@ protected:
 
         // create a container for storing k solutions of the k-shortest path
         // problem
-        khs::ksolution_t<npancake_t> ksolution{k, start, goal};
+        khs::ksolution_t<npancake_t, std::vector> ksolution{k, start, goal};
 
         // initialize the unit cost model
         npancake_t::init ("unit");
@@ -71,7 +71,7 @@ protected:
             std::string solver = randString (50);
 
             // Create a solution which stores all this information
-            khs::solution_t<npancake_t> solution (k, path, start, goal,
+            khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal,
                                                   h0, cost, expansions, cpu_time, solver);
 
             // and add it to the set of solutions of the k-shortest path problem
