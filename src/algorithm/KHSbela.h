@@ -176,7 +176,7 @@ namespace khs {
         std::vector<std::vector<T>> _get_suffixes (const size_t ptr,
                                                    closed_t<labelednode_t<T>>& closed,
                                                    int cost,
-                                                   std::vector<T> path) {
+                                                   std::vector<T>& path) {
 
             // The enumeration of all paths from the given vertex to the goal is
             // performed in depth-first order, i.e., recursively
@@ -411,7 +411,8 @@ namespace khs {
         }
 
         // return all suffixes.
-        return _get_suffixes (ptr, closed, bg, {});
+        vector<T> path;
+        return _get_suffixes (ptr, closed, bg, path);
     }
 
     // Given a centroid, return all paths it represeents as a solution of the
