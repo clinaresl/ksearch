@@ -90,6 +90,12 @@ public:
         return _perm == right.get_perm ();
     }
 
+    // two instancse are not the same if they have different permutations
+    bool operator!=(const npancake_t& right) const {
+        return _perm != right.get_perm ();
+    }
+
+
     // get the contents of the i-th location. In case i is out of bounds the
     // results are undefined
     const int operator[](int i) const {
