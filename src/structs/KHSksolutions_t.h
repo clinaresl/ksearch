@@ -30,7 +30,7 @@ namespace khs {
         // INVARIANT: a sequential container of solutions of the k-shortest path
         // problem consist just of a vector of them that refers to the same
         // domain/variant
-        std::vector<ksolution_t<T>> _ksolutions;      // container of solutions
+        std::vector<ksolution_t<T, vector>> _ksolutions;      // container of solutions
         std::string _domain;
         std::string _variant;
 
@@ -38,7 +38,7 @@ namespace khs {
 
         // Default constructor
         ksolutions_t () :
-            _ksolutions { std::vector<ksolution_t<T>>() },
+            _ksolutions { std::vector<ksolution_t<T, vector>>() },
             _domain    { "" },
             _variant { "" }
             {}
@@ -48,7 +48,7 @@ namespace khs {
         ksolutions_t (ksolutions_t&&) = delete;
 
         // getters
-        const std::vector<ksolution_t<T>>& get_ksolutions () const {
+        const std::vector<ksolution_t<T, vector>>& get_ksolutions () const {
             return _ksolutions;
         }
         const std::string get_domain () const {
@@ -74,10 +74,11 @@ namespace khs {
 
         // ksolutions can be augmented by either adding a single solution of the
         // k-shortest path problem or another container of ksolutions
-        ksolutions_t& operator+= (const ksolution_t<T>& right) {
+        template<template<typename ...> class C>
+        ksolutions_t& operator+= (const ksolution_t<T, C>& right) {
 
             // add this solution to the container
-            _ksolutions.push_back (right);
+            _ksolutions.push_back (static_cast<ksolution_t<T, std::vector>>(right));
             return *this;
         }
         ksolutions_t& operator+= (ksolutions_t& right) {
@@ -89,7 +90,7 @@ namespace khs {
         }
 
         // random access operator
-        ksolution_t<T> operator[] (size_t idx) const {
+        ksolution_t<T, vector> operator[] (size_t idx) const {
             if (idx >= _ksolutions.size ()) {
                 throw std::out_of_range ("[ksolutions_t::get] out of bounds!");
             }
@@ -207,28 +208,28 @@ namespace khs {
             ss << "\tNumber of errors: " << total;
             if (total > 0) {
                 if (nbexpansions > 0) {
-                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_EXPANSIONS) << ": " << nbexpansions;
+                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_EXPANSIONS) << ": " << nbexpansions;
                 }
                 if (nbstart > 0) {
-                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_START) << ": " << nbstart;
+                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_START) << ": " << nbstart;
                 }
                 if (nbgoal > 0) {
-                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_GOAL) << ": " << nbgoal;
+                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_GOAL) << ": " << nbgoal;
                 }
                 if (nbadjacent > 0) {
-                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_ADJACENT) << ": " << nbadjacent;
+                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_ADJACENT) << ": " << nbadjacent;
                 }
                 if (nbsolutioncost > 0) {
-                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_SOLUTION_COST) << ": " << nbsolutioncost;
+                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_SOLUTION_COST) << ": " << nbsolutioncost;
                 }
                 if (nbincrcost > 0) {
-                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_INCR_COST) << ": " << nbincrcost;
+                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_INCR_COST) << ": " << nbincrcost;
                 }
                 if (numsolutions > 0) {
-                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_NUM_SOLUTIONS) << ": " << numsolutions;
+                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_NUM_SOLUTIONS) << ": " << numsolutions;
                 }
                 if (numdups > 0) {
-                    ss << endl << "\t\t" << solution_t<T>::get_error_msg (solution_error::ERR_DUPLICATE_PATH) << ": " << numdups;
+                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_DUPLICATE_PATH) << ": " << numdups;
                 }
             }
             return ss.str ();

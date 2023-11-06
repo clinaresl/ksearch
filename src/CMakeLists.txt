@@ -10,7 +10,8 @@ add_library (ksearch
   structs/KHSksolution_t.h
   algorithm/KHSbsolver.h
   algorithm/KHSmA.h
-  algorithm/KHSbela.h)
+  algorithm/KHSbela.h
+  algorithm/KHSIK.h)
 
 # Generate the main header file from its template
 configure_file(ksearch.h.in ./ksearch.h)

@@ -102,6 +102,15 @@ namespace khs {
       T pop_front ()
       { return remove (_mini); }
 
+      // returns the first element without popping it
+      T front () {
+          return std::move(_queue[_mini].back ());
+      }
+
+      bool empty() {
+          return _size == 0;
+      }
+
   }; // class bucket_t<T>
 
   // set the number of buckets to the value specified. In case the number of

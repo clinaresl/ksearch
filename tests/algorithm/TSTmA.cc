@@ -127,7 +127,7 @@ TEST_F (MAFixture, SolvableNPancakeTwo) {
             ASSERT_EQ (ksolution.size (), k);
 
             // and verify they are correct
-            khs::solution_t<npancake_t> solution = ksolution[0];
+            khs::solution_t<npancake_t, vector> solution = ksolution[0];
             ASSERT_TRUE (solution.doctor ());
 
             solution = ksolution[1];
@@ -166,7 +166,7 @@ TEST_F (MAFixture, SolvableNPancakeArbitrary) {
             ASSERT_EQ (ksolution.size (), k);
 
             // and verify they are correct
-            khs::solution_t<npancake_t> solution = ksolution[0];
+            khs::solution_t<npancake_t, vector> solution = ksolution[0];
             ASSERT_TRUE (solution.doctor ());
 
             solution = ksolution[1];

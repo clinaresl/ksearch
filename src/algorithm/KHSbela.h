@@ -281,12 +281,13 @@ namespace khs {
 
         // The following method provides a convenient wrapper to generate
         // solutions more comfortably
-        const solution_t<T> generate_solution (const vector<T>& path,
+        const solution_t<T, vector> generate_solution (const vector<T>& path,
                                                const int g,
+
                                                const string& signature) {
 
             // return a solution with this information
-            return solution_t<T> (bsolver<T>::_k,
+            return solution_t<T, vector> (bsolver<T>::_k,
                                   path,
                                   _start.get_state (),
                                   _goal.get_state (),
@@ -330,7 +331,7 @@ namespace khs {
         // The process: first, needs to access the closed list; second, new
         // centroids might be discovered. This is why the closed list and the sorted
         // bucket of centroids must be specified as well
-        ksolution_t<T> get_paths (const centroid_t& centroid,
+        ksolution_t<T, vector> get_paths (const centroid_t& centroid,
                                   closed_t<labelednode_t<T>>& closed,
                                   bucket_t<centroid_t>& centroids,
                                   size_t bound = std::numeric_limits<size_t>::max ());
@@ -338,7 +339,7 @@ namespace khs {
         // the main service of this class computes a solution of the k-shortest
         // path problem from the start to the goal. Importantly, the solutions
         // shall be returned in the same order they are generated!
-        ksolution_t<T> solve ();
+        ksolution_t<T, vector> solve ();
 
     }; // class bela<T>
 
@@ -432,7 +433,7 @@ namespace khs {
     // centroids might be discovered. This is why the closed list and the sorted
     // bucket of centroids must be specified as well
     template <typename T>
-    ksolution_t<T> bela<T>::get_paths (const centroid_t& centroid,
+    ksolution_t<T, vector> bela<T>::get_paths (const centroid_t& centroid,
                                        closed_t<labelednode_t<T>>& closed,
                                        bucket_t<centroid_t>& centroids,
                                        size_t bound) {
@@ -440,7 +441,7 @@ namespace khs {
         // Every centroid is the representative of a class of paths that get
         // from s to t through it. Their computation is just the cross product
         // of all its prefixes with all its suffixes
-        ksolution_t<T> solutions { bsolver<T>::_k, _start.get_state (), _goal.get_state () };
+        ksolution_t<T, vector> solutions { bsolver<T>::_k, _start.get_state (), _goal.get_state () };
         for (auto& prefix : get_prefixes (closed, centroid, centroids)) {
             for (auto& suffix: get_suffixes (closed, centroid)) {
 
@@ -482,13 +483,13 @@ namespace khs {
     // problem from the start to the goal. Importantly, the solutions shall be
     // returned in the same order they are generated!
     template <typename T>
-    ksolution_t<T> bela<T>::solve () {
+    ksolution_t<T, vector> bela<T>::solve () {
 
         // Start the chrono!
         bsolver<T>::_tstart = chrono::system_clock::now ();
 
         // First things first, create a container to store all solutions found
-        ksolution_t<T> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
+        ksolution_t<T, vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
 
         // In case the start and the goal nodes are the same, return immediately
         // with a single empty solution, and only one in spite of the number of
@@ -543,7 +544,7 @@ namespace khs {
                 // of solution paths already found, so that if that number is
                 // achieved now it is possible to abort execution and exit with
                 // k shortest-paths
-                ksolution_t<T> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
+                ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
 
                 // and add them to the solutions already found. In case the
                 // requested number of solutions has been already found, then
@@ -663,7 +664,7 @@ namespace khs {
             // this might not happen in the case of directed graphs, where the
             // number of paths between two vertices can be bounded
             auto z = centroids.pop_front ();
-            ksolution_t<T> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
+            ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
 
             // and add them to the solutions already found. In case the
             // requested number of solutions has been already found, then

@@ -23,7 +23,7 @@
 
 namespace khs {
 
-    template<typename T>
+    template<typename T, template <typename...> class path_t>
     class ksolution_t {
 
         // INVARIANT: the solution of a k-shortest path problem (identified with
@@ -33,7 +33,7 @@ namespace khs {
         int _k;                                                   // value of k
         T _start;                               // start state of all solutions
         T _goal;                                 // goal state of all solutions
-        std::vector<solution_t<T>> _solutions;        // container of solutions
+        std::vector<solution_t<T, path_t>> _solutions;        // container of solutions
 
         // In addition, a number of statistics are reported. Note that these are
         // equal to the same statistics of the last single solution reported in
@@ -61,7 +61,7 @@ namespace khs {
             _k { k },
             _start { start },
             _goal { goal },
-            _solutions { std::vector<solution_t<T>>() },
+            _solutions { std::vector<solution_t<T, path_t>>() },
             _h0 { 0 },
             _expansions { 0 },
             _cpu_time { 0.0 },
@@ -85,7 +85,7 @@ namespace khs {
         const T& get_goal () const {
             return _goal;
         }
-        const std::vector<solution_t<T>>& get_solutions () const {
+        const std::vector<solution_t<T, path_t>>& get_solutions () const {
             return _solutions;
         }
         const int get_h0 () const {
@@ -114,8 +114,19 @@ namespace khs {
 
         // operator overloading
 
+        // Conversion operator to make all solutions stored as vectors
+        // This allows us to convert ksolution_t classes with different underlying containers into ones with underlying
+        // vectors so they can all be placed into a ksolutions_t class after the algorithm is done running, and said conversion won't count towards runtime
+        operator ksolution_t<T, std::vector>(){
+            ksolution_t<T, std::vector> n(this->_k, this->_start, this->_goal);
+            for (auto & i : _solutions)
+                n += static_cast<solution_t<T, std::vector>>(i);
+            return n;
+        }
+
+
         // solutions can be augmented by adding a single solution
-        ksolution_t& operator+= (const solution_t<T>& right) {
+        ksolution_t& operator+= (const solution_t<T, path_t>& right) {
 
             // add this solution to the container
             _solutions.push_back (right);
@@ -129,7 +140,7 @@ namespace khs {
         }
 
         // or adding another container directly
-        ksolution_t& operator+= (ksolution_t<T>& right) {
+        ksolution_t& operator+= (ksolution_t<T, path_t>& right) {
 
             // add every solution in the given container
             for (auto i = 0 ; i < right.size () ; i++) {
@@ -146,7 +157,7 @@ namespace khs {
         }
 
         // random access operator
-        solution_t<T>& operator[] (const size_t idx) {
+        solution_t<T, path_t>& operator[] (const size_t idx) {
             if (idx >= _solutions.size ()) {
                 throw std::out_of_range ("[ksolution_t::get] out of bounds!");
             }
@@ -247,7 +258,7 @@ namespace khs {
             ss << solutions.get_expansions() << ";";
             ss << solutions.get_cpu_time() << ";";
             ss << solutions.get_solver () << ";";
-            ss << solution_t<T>::get_error_msg (solutions.get_error_code ());
+            ss << solution_t<T, path_t>::get_error_msg (solutions.get_error_code ());
 
             // and now redirect the contents of the string stream to the given
             // stream

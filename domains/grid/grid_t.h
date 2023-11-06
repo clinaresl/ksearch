@@ -79,6 +79,11 @@ public:
         return (_x == other._x) and (_y == other._y);
     }
 
+    // this instance is not equal to another if either coordinate is not equal
+    bool operator!= (const grid_t& other) const {
+        return (_x != other._x) or (_y != other._y);
+    }
+
     friend std::ostream& operator<< (std::ostream& stream, const grid_t& right) {
 
         // Show the coordinates

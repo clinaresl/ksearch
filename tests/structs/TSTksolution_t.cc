@@ -28,7 +28,7 @@ TEST_F (KSolutionFixture, ExplicitConstructor) {
         int k = rand () % MAX_VALUE;
         npancake_t start = randInstance (10 + rand () % (NB_DISCS-10));
         npancake_t goal = randInstance (10 + rand () % (NB_DISCS-10));
-        khs::ksolution_t ks {k, start, goal};
+        khs::ksolution_t<npancake_t, vector> ks {k, start, goal};
 
         // and now ensure that all parameters have been correctly set
         ASSERT_EQ (ks.get_k (), k);
@@ -64,12 +64,12 @@ TEST_F (KSolutionFixture, AddSolution) {
         string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t> solution (k, path, start, goal,
+        khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
                                               h0, cost, expansions, cpu_time, solver);
 
         // Create a container for storing k solutions from a specific start to
         // another goal
-        khs::ksolution_t ks {k, start, goal};
+        khs::ksolution_t<npancake_t, vector> ks {k, start, goal};
 
         // and add the solution randomly generated
         ks += solution;

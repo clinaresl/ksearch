@@ -49,6 +49,9 @@
 // Bidirectional Edge-Labeled A* (BELA*)
 #include "algorithm/KHSbela.h"
 
+// K* (Ian's Implementation)
+#include "algorithm/KHSIK.h"
+
 #endif // _KSEARCH_H_
 
 // Local Variables:

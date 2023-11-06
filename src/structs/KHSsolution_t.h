@@ -41,7 +41,7 @@ namespace khs {
         NO_ERROR
     };
 
-    template<typename T>
+    template<typename T, template <typename...> class path_t>
     class solution_t {
 
         // INVARIANT: a single solution of an instance (identified by a
@@ -56,7 +56,7 @@ namespace khs {
         int _k;    // number of paths to compute in the k-shortest path problem
         T _start;                                                // start state
         T _goal;                                                  // goal state
-        vector<T> _solution;           // solution path as a sequence of states
+        path_t<T> _solution;           // solution path as a sequence of states
         int _h0;                       // heuristic distance of the start state
         int _length;                  // solution length, i.e., number of steps
         int _cost;           // solution cost, i.e., sum of the cost of all ops
@@ -77,7 +77,7 @@ namespace khs {
         // which is empty by default; the solution path, and the solution length
         // which is computed automatically from the solution path
         solution_t (const int k,
-                    const vector<T>& solution, const T& start, const T& goal,
+                    const path_t<T>& solution, const T& start, const T& goal,
                     const int h0, const int cost, const size_t expansions,
                     const double cpu_time, const string solver) :
             _name       { ""         },
@@ -115,7 +115,7 @@ namespace khs {
             { return _start; }
         const T& get_goal () const
             { return _goal; }
-        const vector<T>& get_solution () const
+        const path_t<T>& get_solution () const
             { return _solution; }
         const int get_h0 () const
             { return _h0; }
@@ -158,6 +158,15 @@ namespace khs {
                 _expansions == right.get_expansions () &&
                 _cpu_time == right.get_cpu_time ();
         }
+
+        // Conversion operator to make solution stored as vector
+        // Allows us to homogenize solutions after the fact if we want to store them with solutions from solvers which
+        // return solutions in a different container
+        operator solution_t<T, std::vector>() {
+            return solution_t<T, std::vector>(this->_k, std::vector<T>(_solution.begin(), _solution.end()),
+                    this->_start, this->_goal, this->_h0, this->_cost, this->_expansions, this->_cpu_time, this->_solver);
+        }
+
 
         // methods
 
