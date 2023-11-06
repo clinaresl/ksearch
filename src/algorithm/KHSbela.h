@@ -282,20 +282,19 @@ namespace khs {
         // The following method provides a convenient wrapper to generate
         // solutions more comfortably
         const solution_t<T, vector> generate_solution (const vector<T>& path,
-                                               const int g,
-
-                                               const string& signature) {
+                                                       const int g,
+                                                       const string& signature) {
 
             // return a solution with this information
             return solution_t<T, vector> (bsolver<T>::_k,
-                                  path,
-                                  _start.get_state (),
-                                  _goal.get_state (),
-                                  bsolver<T>::_h0,
-                                  g,
-                                  bsolver<T>::_expansions,
-                                  bsolver<T>::get_cpu_time (),
-                                  signature);
+                                          path,
+                                          _start.get_state (),
+                                          _goal.get_state (),
+                                          bsolver<T>::_h0,
+                                          g,
+                                          bsolver<T>::_expansions,
+                                          bsolver<T>::get_cpu_time (),
+                                          signature);
         }
 
         // every solver must be uniquely identified by a signature
@@ -332,9 +331,9 @@ namespace khs {
         // centroids might be discovered. This is why the closed list and the sorted
         // bucket of centroids must be specified as well
         ksolution_t<T, vector> get_paths (const centroid_t& centroid,
-                                  closed_t<labelednode_t<T>>& closed,
-                                  bucket_t<centroid_t>& centroids,
-                                  size_t bound = std::numeric_limits<size_t>::max ());
+                                          closed_t<labelednode_t<T>>& closed,
+                                          bucket_t<centroid_t>& centroids,
+                                          size_t bound = std::numeric_limits<size_t>::max ());
 
         // the main service of this class computes a solution of the k-shortest
         // path problem from the start to the goal. Importantly, the solutions
@@ -434,9 +433,9 @@ namespace khs {
     // bucket of centroids must be specified as well
     template <typename T>
     ksolution_t<T, vector> bela<T>::get_paths (const centroid_t& centroid,
-                                       closed_t<labelednode_t<T>>& closed,
-                                       bucket_t<centroid_t>& centroids,
-                                       size_t bound) {
+                                               closed_t<labelednode_t<T>>& closed,
+                                               bucket_t<centroid_t>& centroids,
+                                               size_t bound) {
 
         // Every centroid is the representative of a class of paths that get
         // from s to t through it. Their computation is just the cross product

@@ -81,7 +81,7 @@ TEST_F (SolutionFixture, EmptySolutionNPancake) {
 
         // create a solution which stores npancakes
         khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
-                                              h0, cost, expansions, cpu_time, solver);
+                                                      h0, cost, expansions, cpu_time, solver);
 
         // check that doctor recognizes this as a correct solution
         ASSERT_TRUE (solution.doctor ());
@@ -116,7 +116,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeUnit) {
 
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
-                                              h0, cost, expansions, cpu_time, solver);
+                                                      h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is correct
         ASSERT_TRUE (solution.doctor ());
@@ -151,7 +151,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeHeavy) {
 
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
-                                              h0, cost, expansions, cpu_time, solver);
+                                                      h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is correct
         ASSERT_TRUE (solution.doctor ());
@@ -180,7 +180,7 @@ TEST_F (SolutionFixture, ErrorEmptySolutionNPancake) {
 
         // create a solution which stores npancakes
         khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
-                                              h0, cost, expansions, cpu_time, solver);
+                                                      h0, cost, expansions, cpu_time, solver);
 
         // check that doctor recognizes this solution is incorrect as a strictly
         // positive number of expanions is reported
@@ -224,7 +224,7 @@ TEST_F (SolutionFixture, ErrorStartNPancake) {
 
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
-                                              h0, cost, expansions, cpu_time, solver);
+                                                      h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -267,7 +267,7 @@ TEST_F (SolutionFixture, ErrorGoalNPancake) {
 
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
-                                              h0, cost, expansions, cpu_time, solver);
+                                                      h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -318,7 +318,7 @@ TEST_F (SolutionFixture, ErrorAdjacencyNPancake) {
 
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
-                                              h0, cost, expansions, cpu_time, solver);
+                                                      h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -357,7 +357,7 @@ TEST_F (SolutionFixture, ErrorCostNPancakeHeavy) {
 
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, vector> solution (k, path, start, goal,
-                                              h0, cost, expansions, cpu_time, solver);
+                                                      h0, cost, expansions, cpu_time, solver);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());

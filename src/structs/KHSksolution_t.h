@@ -33,7 +33,7 @@ namespace khs {
         int _k;                                                   // value of k
         T _start;                               // start state of all solutions
         T _goal;                                 // goal state of all solutions
-        std::vector<solution_t<T, path_t>> _solutions;        // container of solutions
+        std::vector<solution_t<T, path_t>> _solutions;   // container solutions
 
         // In addition, a number of statistics are reported. Note that these are
         // equal to the same statistics of the last single solution reported in
@@ -115,9 +115,12 @@ namespace khs {
         // operator overloading
 
         // Conversion operator to make all solutions stored as vectors
-        // This allows us to convert ksolution_t classes with different underlying containers into ones with underlying
-        // vectors so they can all be placed into a ksolutions_t class after the algorithm is done running, and said conversion won't count towards runtime
-        operator ksolution_t<T, std::vector>(){
+        //
+        // This allows us to convert ksolution_t classes with different
+        // underlying containers into ones with underlying vectors so they can
+        // all be placed into a ksolutions_t class after the algorithm is done
+        // running, and said conversion won't count towards runtime
+        operator ksolution_t<T, std::vector>() {
             ksolution_t<T, std::vector> n(this->_k, this->_start, this->_goal);
             for (auto & i : _solutions)
                 n += static_cast<solution_t<T, std::vector>>(i);

@@ -98,19 +98,19 @@ namespace khs {
         // The following method provides a convenient wrapper to generate
         // solutions more comfortably
         const solution_t<T, vector> generate_solution (const vector<T>& path,
-                                               const int g,
-                                               const string& signature) {
+                                                       const int g,
+                                                       const string& signature) {
 
             // return a solution with this information
             return solution_t<T, vector> (bsolver<T>::_k,
-                                  path,
-                                  _start.get_state (),
-                                  _goal.get_state (),
-                                  bsolver<T>::_h0,
-                                  g,
-                                  bsolver<T>::_expansions,
-                                  bsolver<T>::get_cpu_time (),
-                                  signature);
+                                          path,
+                                          _start.get_state (),
+                                          _goal.get_state (),
+                                          bsolver<T>::_h0,
+                                          g,
+                                          bsolver<T>::_expansions,
+                                          bsolver<T>::get_cpu_time (),
+                                          signature);
         }
 
         // every solver must be uniquely identified by a signature

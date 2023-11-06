@@ -72,7 +72,7 @@ protected:
 
             // Create a solution which stores all this information
             khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal,
-                                                  h0, cost, expansions, cpu_time, solver);
+                                                               h0, cost, expansions, cpu_time, solver);
 
             // and add it to the set of solutions of the k-shortest path problem
             ksolution += solution;

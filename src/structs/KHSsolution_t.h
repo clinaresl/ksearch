@@ -160,11 +160,14 @@ namespace khs {
         }
 
         // Conversion operator to make solution stored as vector
-        // Allows us to homogenize solutions after the fact if we want to store them with solutions from solvers which
-        // return solutions in a different container
+        //
+        // Allows us to homogenize solutions after the fact if we want to store
+        // them with solutions from solvers which return solutions in a
+        // different container
         operator solution_t<T, std::vector>() {
             return solution_t<T, std::vector>(this->_k, std::vector<T>(_solution.begin(), _solution.end()),
-                    this->_start, this->_goal, this->_h0, this->_cost, this->_expansions, this->_cpu_time, this->_solver);
+                                              this->_start, this->_goal, this->_h0, this->_cost, this->_expansions,
+                                              this->_cpu_time, this->_solver);
         }
 
 

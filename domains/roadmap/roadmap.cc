@@ -321,8 +321,9 @@ usage (int status)
  Mandatory arguments:\n\
       -g, --graph [STRING]       filename with the graph to load. The file contents should be arranged according to the 9th DIMACS\n\
                                  Implementation Challenge: Shortest Paths. See the documentation for additional help\n\
-      -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0'. It is possible to provide\n\
-                                 as many as desired in a blank separated list between double quotes, e.g. \"mDijkstra belA0\"\n\
+      -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0' and 'K0'. It is possible\n\
+                                 to provide as many as desired in a blank separated list between double quotes, e.g.\n\
+                                  \"mDijkstra belA0\"\n\
       -f, --file [STRING]        filename with the test cases to solve. It consists of of precisely two lines. The i-th test case\n\
                                  uses the i-th vertex from the first line as the starting vertex and the i-th vertex from the second\n\
                                  line as the goal.\n\

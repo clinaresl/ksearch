@@ -299,8 +299,9 @@ usage (int status)
     cout << "\
  Mandatory arguments:\n\
       -n, --size [NUMBER]        length of the square grid. By default, 10\n\
-      -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0'. It is possible to provide\n\
-                                 as many as desired in a blank separated list between double quotes, e.g. \"mDijkstra belA0\"\n\
+      -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0' and 'K0'. It is possible\n\
+                                 to provide as many as desired in a blank separated list between double quotes, e.g.\n\
+                                  \"mDijkstra belA0\"\n\
       -f, --file [STRING]        filename with a line for each instance to solve. Each line consists of five digits: the first\n\
                                  one is the problem id, which has to be unique; the second and third digits are the x- and\n\
                                  y-coordinates of the start state; the last two digits are the x- andy-coordinates of the goal\n\
