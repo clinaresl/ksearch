@@ -69,11 +69,14 @@ namespace khs {
         // process of looking for optimal paths, also update the information
         // about centroids, if any is found, and store the new backward
         // g-values. The cost given last is used for this purpose indeed.
-        std::vector<std::vector<T>> _get_prefixes (const size_t ptr,
-                                                   closed_t<labelednode_t<T>>& closed,
-                                                   int cost,
-                                                   bucket_t<centroid_t>& centroids,
-                                                   std::vector<T> path) {
+        //
+        // Note that prefixes are returned as vectors of pointers to the closed
+        // list from where the state can be retrieved
+        std::vector<std::vector<size_t>> _get_prefixes (const size_t ptr,
+                                                        closed_t<labelednode_t<T>>& closed,
+                                                        int cost,
+                                                        bucket_t<centroid_t>& centroids,
+                                                        std::vector<size_t> path) {
 
             // The enumeration of optimal paths is performed in depth-first
             // order, i.e., recursively
@@ -102,16 +105,16 @@ namespace khs {
 
                 // add this node to the path and reverse it so that it correctly
                 // starts from the start state
-                path.push_back (closed[ptr].get_state ());
+                path.push_back (ptr);
                 std::reverse (path.begin (), path.end ());
 
                 // and return this solution
-                return std::vector<std::vector<T>> { path };
+                return std::vector<std::vector<size_t>> { path };
             }
 
             // general case - this node is not the start state, then follow only
             // the backpointers that lead to optimal paths
-            std::vector<std::vector<T>> prefixes;
+            std::vector<std::vector<size_t>> prefixes;
 
             // in case this node has not this backward g-value, then add it, and
             // remember you did because there is an opportunity then to discover
@@ -138,7 +141,7 @@ namespace khs {
 
                     // and recursively look for the optimal paths to the parent
                     // node incrementing the backward g-value accordingly
-                    path.push_back (closed[ptr].get_state ());
+                    path.push_back (ptr);
                     auto subprefixes = _get_prefixes (ibp.get_pointer (),
                                                       closed, cost + ibp.get_cost (),
                                                       centroids, path);
@@ -173,10 +176,13 @@ namespace khs {
 
         // return all paths from the designated vertex to the goal. For doing
         // this, use the information stored in the given closed list.
-        std::vector<std::vector<T>> _get_suffixes (const size_t ptr,
-                                                   closed_t<labelednode_t<T>>& closed,
-                                                   int cost,
-                                                   std::vector<T>& path) {
+        //
+        // Note that suffixes are returned as vectors of pointers to the closed
+        // list from where the state can be retrieved
+        std::vector<std::vector<size_t>> _get_suffixes (const size_t ptr,
+                                                        closed_t<labelednode_t<T>>& closed,
+                                                        int cost,
+                                                        std::vector<size_t> path) {
 
             // The enumeration of all paths from the given vertex to the goal is
             // performed in depth-first order, i.e., recursively
@@ -185,13 +191,13 @@ namespace khs {
             if (closed[ptr] == _goal) {
 
                 // add this node to the path
-                path.push_back (closed[ptr].get_state ());
+                path.push_back (ptr);
 
                 // and return this solution
-                return std::vector<std::vector<T>> { path };
+                return std::vector<std::vector<size_t>> { path };
             }
 
-            std::vector<std::vector<T>> suffixes;
+            std::vector<std::vector<size_t>> suffixes;
 
             // general case - this node is not the goal state, then expand this
             // node and select only those children with backward g-values that
@@ -203,7 +209,7 @@ namespace khs {
             state.children (0, state, successors);
 
             // and consider all successors from this node
-            path.push_back (closed[ptr].get_state ());
+            path.push_back (ptr);
             for (auto& successor: successors) {
 
                 // look for this node in CLOSED
@@ -304,18 +310,20 @@ namespace khs {
         // added to the centroids bucket.
         //
         // The result is given as a vector of paths which, in turn, are defined
-        // as a vector of nodes
-        std::vector<std::vector<T>> get_prefixes (closed_t<labelednode_t<T>>& closed,
-                                                  const centroid_t& centroid,
-                                                  bucket_t<centroid_t>& centroids);
+        // as a vector of pointers to CLOSED
+        std::vector<std::vector<size_t>> get_prefixes (closed_t<labelednode_t<T>>& closed,
+                                                       const centroid_t& centroid,
+                                                       bucket_t<centroid_t>& centroids);
 
         // The following service computes all suffixes of the given centroid.
         // Because all the necessary information is in CLOSED, it has to be
         // passed as an argument also
-        std::vector<std::vector<T>> get_suffixes (closed_t<labelednode_t<T>>& closed,
-                                                  const centroid_t& centroid);
+        //
+        // Each suffix is represented as a vector of pointers to CLOSED
+        std::vector<std::vector<size_t>> get_suffixes (closed_t<labelednode_t<T>>& closed,
+                                                       const centroid_t& centroid);
 
-        // Given a centroid, return all paths it represeents as a solution of
+         // Given a centroid, return all paths it represeents as a solution of
         // the k-shortest path problem. In case a bound is given, no more than
         // bound paths are returned
         //
@@ -340,11 +348,11 @@ namespace khs {
     // the process and thus it is not passed as a const reference.
     //
     // The result is given as a vector of paths which, in turn, are defined as a
-    // vector of nodes
+    // vector of pointers to CLOSED
     template <typename T>
-    std::vector<std::vector<T>> bela<T>::get_prefixes (closed_t<labelednode_t<T>>& closed,
-                                                       const centroid_t& centroid,
-                                                       bucket_t<centroid_t>& centroids) {
+    std::vector<std::vector<size_t>> bela<T>::get_prefixes (closed_t<labelednode_t<T>>& closed,
+                                                            const centroid_t& centroid,
+                                                            bucket_t<centroid_t>& centroids) {
 
         // Prefixes are defined as all *optimal* paths getting to the start
         // vertex of the centroid. The backward g-values of all nodes in the
@@ -361,9 +369,11 @@ namespace khs {
     // The following service computes all suffixes of the given centroid.
     // Because all the necessary information is in CLOSED, it has to be
     // passed as an argument also
+    //
+    // Each suffix is represented as a vector of pointers to CLOSED
     template <typename T>
-    std::vector<std::vector<T>> bela<T>::get_suffixes (closed_t<labelednode_t<T>>& closed,
-                                                       const centroid_t& centroid) {
+    std::vector<std::vector<size_t>> bela<T>::get_suffixes (closed_t<labelednode_t<T>>& closed,
+                                                            const centroid_t& centroid) {
 
         // Suffixes are defined as any path (non necessarily optimal) getting to
         // the goal from the end vertex of the centroid. To generate them, the
@@ -411,8 +421,7 @@ namespace khs {
         }
 
         // return all suffixes.
-        vector<T> path;
-        return _get_suffixes (ptr, closed, bg, path);
+        return _get_suffixes (ptr, closed, bg, {});
     }
 
     // Given a centroid, return all paths it represeents as a solution of the
@@ -440,8 +449,16 @@ namespace khs {
                 // prefix, and that all suffixes start with its ending vertex,
                 // and so there is no need to add it explicitly here
                 std::vector<T> path;
-                path.insert (path.end (), prefix.begin (), prefix.end ());
-                path.insert (path.end (), suffix.begin (), suffix.end ());
+
+                // both the prefix and the suffix are given as pointers to
+                // CLOSED, so that the states are retrieved now, while
+                // generating each solution path
+                for (auto& iprefix : prefix) {
+                    path.push_back (closed[iprefix].get_state ());
+                }
+                for (auto& jsuffix : suffix) {
+                    path.push_back (closed[jsuffix].get_state ());
+                }
 
                 // create a single solution with this path and add it to the
                 // collection of solutions to reeturn. Note the cost of every
