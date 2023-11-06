@@ -275,12 +275,12 @@ TEST_F (BELAFixture, NullPrefixSimpleGrid) {
     khs::centroid_t z0 = khs::centroid_t (closed.find (start),
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, 1, 0)),
                                           1);
-    vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // verify there is only one prefix, which consists of the start state itself
     ASSERT_TRUE (prefixes.size () == 1);
     ASSERT_TRUE (prefixes[0].size () == 1);
-    ASSERT_TRUE (prefixes[0][0] == start);
+    ASSERT_TRUE (closed[prefixes[0][0]].get_state () == start);
 
     khs::centroid_t z1 = khs::centroid_t (closed.find (start),
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, 1, 1)),
@@ -290,7 +290,7 @@ TEST_F (BELAFixture, NullPrefixSimpleGrid) {
     // verify there is only one prefi, which consists of the start state itselfx
     ASSERT_TRUE (prefixes.size () == 1);
     ASSERT_TRUE (prefixes[0].size () == 1);
-    ASSERT_TRUE (prefixes[0][0] == start);
+    ASSERT_TRUE (closed[prefixes[0][0]].get_state () == start);
 }
 
 // Check that centroids with null prefixes return only one path in the grid
@@ -317,12 +317,12 @@ TEST_F (BELAFixture, NullPrefixGrid) {
     khs::centroid_t z0 = khs::centroid_t (closed.find (start),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, 1, 0)),
                                           1);
-    vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // verify there is only one prefix, which consists of the start state itself
     ASSERT_TRUE (prefixes.size () == 1);
     ASSERT_TRUE (prefixes[0].size () == 1);
-    ASSERT_TRUE (prefixes[0][0] == start);
+    ASSERT_TRUE (closed[prefixes[0][0]].get_state () == start);
 
     khs::centroid_t z1 = khs::centroid_t (closed.find (start),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, 1)),
@@ -332,7 +332,7 @@ TEST_F (BELAFixture, NullPrefixGrid) {
     // verify there is only one prefi, which consists of the start state itselfx
     ASSERT_TRUE (prefixes.size () == 1);
     ASSERT_TRUE (prefixes[0].size () == 1);
-    ASSERT_TRUE (prefixes[0][0] == start);
+    ASSERT_TRUE (closed[prefixes[0][0]].get_state () == start);
 }
 
 // Verify that the number of non-null prefixes is correct in the simple grid domain
@@ -365,7 +365,7 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              1);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify there is only one prefix
         ASSERT_TRUE (prefixes.size () == 1);
@@ -374,8 +374,8 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         // and everyone is a descendant of the previous one
         ASSERT_TRUE (prefixes[0].size () == i+1);
         for (auto j = 0 ; j <= i ; j++) {
-            ASSERT_TRUE (prefixes[0][j].get_x () == j);
-            ASSERT_TRUE (prefixes[0][j].get_y () == 0);
+            ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_x () == j);
+            ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_y () == 0);
         }
     }
 
@@ -390,7 +390,7 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, y)),
                                              1);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify there is only one prefix
         ASSERT_TRUE (prefixes.size () == 1);
@@ -399,14 +399,14 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         // and everyone is a descendant of the previous one
         ASSERT_TRUE (prefixes[0].size () == i+1);
         for (auto j = 0 ; j <= i ; j++) {
-            ASSERT_TRUE (prefixes[0][j].get_x () == j);
+            ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_x () == j);
 
             // note that every path starts in (0,0) even if it then goes through
             // the upper line
             if (j==0) {
-                ASSERT_TRUE (prefixes[0][j].get_y () == 0);
+                ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_y () == 0);
             } else {
-                ASSERT_TRUE (prefixes[0][j].get_y () == 1);
+                ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_y () == 1);
             }
         }
     }
@@ -420,7 +420,7 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         khs::centroid_t z {closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                            closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                            2};
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes(closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes(closed, z, centroids);
 
         // verify there is only one prefix
         ASSERT_TRUE (prefixes.size () == 1);
@@ -429,14 +429,14 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         // and everyone is a descendant of the previous one
         ASSERT_TRUE (prefixes[0].size () == i+1);
         for (auto j = 0 ; j <= i ; j++) {
-            ASSERT_TRUE (prefixes[0][j].get_x () == j);
+            ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_x () == j);
 
             // note that every path starts in (0,0) even if it then goes through
             // the upper line
             if (j==0) {
-                ASSERT_TRUE (prefixes[0][j].get_y () == 0);
+                ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_y () == 0);
             } else {
-                ASSERT_TRUE (prefixes[0][j].get_y () == 1);
+                ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_y () == 1);
             }
         }
     }
@@ -465,7 +465,7 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
         khs::centroid_t z {closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
                            closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
                            1};
-        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify there is only one path
         ASSERT_TRUE (prefixes.size () == 1);
@@ -474,8 +474,8 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
         // and everyone is a descendant of the previous one
         ASSERT_TRUE (prefixes[0].size () == i+1);
         for (auto j = 0 ; j <= i ; j++) {
-            ASSERT_TRUE (prefixes[0][j].get_x () == 0);
-            ASSERT_TRUE (prefixes[0][j].get_y () == j);
+            ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_x () == 0);
+            ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_y () == j);
         }
     }
 
@@ -485,7 +485,7 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
         khs::centroid_t z {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, 0)),
                            closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                            1};
-        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify there is only one path
         ASSERT_TRUE (prefixes.size () == 1);
@@ -494,14 +494,14 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
         // and everyone is a descendant of the previous one
         ASSERT_TRUE (prefixes[0].size () == i+1);
         for (auto j = 0 ; j <= i ; j++) {
-            ASSERT_TRUE (prefixes[0][j].get_x () == j);
-            ASSERT_TRUE (prefixes[0][j].get_y () == 0);
+            ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_x () == j);
+            ASSERT_TRUE (closed[prefixes[0][j]].get_state ().get_y () == 0);
         }
     }
 
     // now, all nodes, but the ones considered previously have a significant
     // number of optimal paths
-    vector<vector<grid_t>> prefixes;
+    vector<vector<size_t>> prefixes;
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
         for (auto j = 1 ; j < SIMPLE_GRID_LENGTH ; j++) {
 
@@ -578,7 +578,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              SIMPLE_GRID_LENGTH);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 0 ; j <= i ; j++) {
@@ -607,7 +607,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1)),
                                              1+SIMPLE_GRID_LENGTH);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 1 ; j <= i ; j++) {
@@ -634,7 +634,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              1+SIMPLE_GRID_LENGTH);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 1 ; j <= i ; j++) {
@@ -679,7 +679,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
                                              closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
                                              2*SIMPLE_GRID_LENGTH);
-        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 0 ; j <= i ; j++) {
@@ -708,7 +708,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                              closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              2*(SIMPLE_GRID_LENGTH-1));
-        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 0 ; j <= i ; j++) {
@@ -741,7 +741,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)),
                                                 2*(SIMPLE_GRID_LENGTH - 1));
-           vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+           vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
            // verify the backward g-values are correct
            for (auto k = 0 ; k <= i ; k++) {
@@ -776,7 +776,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
                                                 2*(SIMPLE_GRID_LENGTH - 1));
-           vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+           vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
            // verify the backward g-values are correct
            for (auto k = 0 ; k <= i ; k++) {
@@ -807,7 +807,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
                                                 2*SIMPLE_GRID_LENGTH);
-           vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+           vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
            // verify the backward g-values are correct
            for (auto k = 0 ; k <= i ; k++) {
@@ -838,7 +838,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j-1)),
                                                 2*SIMPLE_GRID_LENGTH);
-           vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+           vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
            // verify the backward g-values are correct
            for (auto k = 0 ; k <= i ; k++) {
@@ -888,7 +888,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsSimpleGrid) {
         khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                               closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                               SIMPLE_GRID_LENGTH);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
         // and also consider the edge (i, 1) -> (i+1, 0) and propagate the
         // backward g-values
@@ -940,7 +940,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsSimpleGrid) {
         khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                               closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1)),
                                               SIMPLE_GRID_LENGTH+1);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
         // and also consider the edge (i, 1) -> (i+1, 0) and propagate the
         // backward g-values
@@ -1008,7 +1008,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsGrid) {
             khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+            vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
             // note the edge (i, j-1) -> (i, j) is not a true centroid as it
             // belongs to the optimal path to get to (i,j). Nevertheless,
@@ -1064,7 +1064,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsGrid) {
             khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j-1)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+            vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
             // note the edge (i, j) -> (i-1, j) is a true centroid
             khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
@@ -1135,7 +1135,7 @@ TEST_F (BELAFixture, NullCentroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              SIMPLE_GRID_LENGTH+1);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify that no new centroids were created
         ASSERT_EQ (centroids.size (), 0);
@@ -1170,7 +1170,7 @@ TEST_F (BELAFixture, NonNullCenntroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              SIMPLE_GRID_LENGTH);
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the correct number of centroids was created
         ASSERT_EQ (centroids.size (), i-1);
@@ -1230,7 +1230,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
                                               closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
                                               2*(SIMPLE_GRID_LENGTH-1));
-        vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the correct number of centroids was created
         ASSERT_EQ (centroids.size (), 2*(i+1));
@@ -1271,7 +1271,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+            vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
             // verify the correct number of centroids was created. Account for
             // the boundary effects. If i=SIMPLE_GRID_LENGTH-1, then there is no
@@ -1310,7 +1310,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+            vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
             // verify the correct number of centroids was created. Account for
             // the boundary effects. If j=SIMPLE_GRID_LENGTH-1, then there is no
@@ -1354,11 +1354,11 @@ TEST_F (BELAFixture, NullSuffixSimpleGrid) {
                                          closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                          SIMPLE_GRID_LENGTH);
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
     // next, compute the suffixes of the last edge (SIMPLE_GRID_LENGTH-1,
     // 0)->(SIMPLE_GRID_LENGTH)
-    vector<vector<simplegrid_t>> suffixes = manager.get_suffixes (closed, z);
+    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
     // As a result, the backward g-value of the goal should be updated to 0, and
     // it should contain only one
@@ -1370,7 +1370,7 @@ TEST_F (BELAFixture, NullSuffixSimpleGrid) {
     // that contains the goal state
     ASSERT_EQ (suffixes.size (), 1);
     ASSERT_EQ (suffixes[0].size (), 1);
-    ASSERT_EQ (suffixes[0][0], goal);
+    ASSERT_EQ (closed[suffixes[0][0]], goal);
 }
 
 // Check that centroids that contain no suffix correctly return only the goal
@@ -1395,11 +1395,11 @@ TEST_F (BELAFixture, NullSuffixGrid) {
                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                          2*(SIMPLE_GRID_LENGTH-1));
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
     // next, compute the suffixes of the last horizontal edge getting to the
     // goal
-    vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z);
+    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
     // As a result, the backward g-value of the goal should be updated to 0, and
     // it should contain only one
@@ -1411,7 +1411,7 @@ TEST_F (BELAFixture, NullSuffixGrid) {
     // that contains the goal state
     ASSERT_EQ (suffixes.size (), 1);
     ASSERT_EQ (suffixes[0].size (), 1);
-    ASSERT_EQ (suffixes[0][0], goal);
+    ASSERT_EQ (closed[suffixes[0][0]], goal);
 }
 
 // Check that centroids that contain a single non-null suffix correctly compute
@@ -1436,11 +1436,11 @@ TEST_F (BELAFixture, NonNullSuffixSimpleGrid) {
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                           SIMPLE_GRID_LENGTH);
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // next, compute the suffixes of the last horizontal edge to get to the
     // goal. This step is necessary to update the backward g-value of the goal.
-    vector<vector<simplegrid_t>> suffixes = manager.get_suffixes (closed, z0);
+    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
 
     // next, consider all horizontal edges in the lower line as centroids (even
     // if they are not centroids indeed) and verify that all suffixes are
@@ -1465,8 +1465,8 @@ TEST_F (BELAFixture, NonNullSuffixSimpleGrid) {
         // with x-values in the range [i+1, SIMPLE_GRID_LENGTH] and y=0
         ASSERT_EQ (suffixes.size (), 1);
         for (auto j = 0 ; j < suffixes[0].size () ;j++) {
-            ASSERT_EQ (suffixes[0][j].get_x (), j+i+1);
-            ASSERT_EQ (suffixes[0][j].get_y (), 0);
+            ASSERT_EQ (closed[suffixes[0][j]].get_state ().get_x (), j+i+1);
+            ASSERT_EQ (closed[suffixes[0][j]].get_state ().get_y (), 0);
         }
     }
 
@@ -1492,8 +1492,8 @@ TEST_F (BELAFixture, NonNullSuffixSimpleGrid) {
         // with x-values in the range [i+1, SIMPLE_GRID_LENGTH] and y=0
         ASSERT_EQ (suffixes.size (), 1);
         for (auto j = 0 ; j < suffixes[0].size () ;j++) {
-            ASSERT_EQ (suffixes[0][j].get_x (), j+i+1);
-            ASSERT_EQ (suffixes[0][j].get_y (), 0);
+            ASSERT_EQ (closed[suffixes[0][j]].get_state ().get_x (), j+i+1);
+            ASSERT_EQ (closed[suffixes[0][j]].get_state ().get_y (), 0);
         }
     }
 }
@@ -1520,11 +1520,11 @@ TEST_F (BELAFixture, NonNullSuffixGrid) {
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                           2*(SIMPLE_GRID_LENGTH-1));
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // next, compute the suffixes of the last horizontal edge to get to the
     // goal. This step is necessary to update the backward g-value of the goal.
-    vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z0);
+    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
 
     // next, consider all horizontal edges in the upper line as centroids (even
     // if they are not centroids indeed) and verify that all suffixes are
@@ -1551,8 +1551,8 @@ TEST_F (BELAFixture, NonNullSuffixGrid) {
         // y=SIMPLE_GRID_LENGTH-1
         ASSERT_EQ (suffixes.size (), 1);
         for (auto j = 0 ; j < suffixes[0].size () ;j++) {
-            ASSERT_EQ (suffixes[0][j].get_x (), j+i+1);
-            ASSERT_EQ (suffixes[0][j].get_y (), SIMPLE_GRID_LENGTH-1);
+            ASSERT_EQ (closed[suffixes[0][j]].get_state ().get_x (), j+i+1);
+            ASSERT_EQ (closed[suffixes[0][j]].get_state ().get_y (), SIMPLE_GRID_LENGTH-1);
         }
     }
 }
@@ -1582,8 +1582,8 @@ TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                           SIMPLE_GRID_LENGTH);
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
-    vector<vector<simplegrid_t>> suffixes = manager.get_suffixes (closed, z0);
+    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
 
     // Secondly, to propagate the backward g-values to nodes in the upper line
     // it is necessary know to process a true centroid
@@ -1602,8 +1602,8 @@ TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1)),
                                              1+SIMPLE_GRID_LENGTH);
         khs::bucket_t<khs::centroid_t> centroids;
-        vector<vector<simplegrid_t>> prefixes = manager.get_prefixes (closed, z, centroids);
-        vector<vector<simplegrid_t>> suffixes = manager.get_suffixes (closed, z);
+        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
         // Next, verify the number of suffixes is correct
         ASSERT_EQ (suffixes.size (), SIMPLE_GRID_LENGTH-i-1);
@@ -1611,13 +1611,13 @@ TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
         // and also that every suffix contains the right nodes
         for (auto j = 0 ; j < suffixes.size () ; j++) {
             for (auto k = 0 ; k < suffixes[j].size () ; k++) {
-                ASSERT_EQ (suffixes[j][k].get_x (), k+i+1);
+                ASSERT_EQ (closed[suffixes[j][k]].get_state ().get_x (), k+i+1);
 
                 // the verification on the y-coordinate is much trickier because
                 // it depends on the order the suffixes are generated. I
                 // intentionally disregard that and thus I'm only verifying the
                 // rather trivial condition that y is either 0 or 1
-                ASSERT_TRUE (suffixes[j][k].get_y () == 0 || suffixes[j][k].get_y () == 1 );
+                ASSERT_TRUE (closed[suffixes[j][k]].get_state ().get_y () == 0 || closed[suffixes[j][k]].get_state ().get_y () == 1 );
             }
         }
     }
@@ -1648,11 +1648,11 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                           2*(SIMPLE_GRID_LENGTH-1));
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<grid_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // Compute the suffixes of this centroid to ensure that the backward g-value
     // of the goal state gets updated int CLOSED
-    vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z0);
+    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
 
     khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-2)),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
@@ -1673,7 +1673,7 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z);
+            vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
             // Next, verify the number of suffixes is correct, i.e., it is equal
             // to the binomial coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 3))
@@ -1691,7 +1691,7 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z);
+            vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
             // Next, verify the number of suffixes is correct, i.e., it is equal
             // to the binomial coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 3))
@@ -1711,7 +1711,7 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
                                                  2*SIMPLE_GRID_LENGTH);
-            vector<vector<grid_t>> suffixes = manager.get_suffixes (closed, z);
+            vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
             // Next, verify the number of suffixes is correct, i.e., it is equal
             // to the binomial coefficient 2*SIMPLE_GRID_LENGTH - i - j - 3

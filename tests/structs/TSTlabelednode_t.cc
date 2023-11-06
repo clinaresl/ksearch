@@ -414,6 +414,130 @@ TEST_F (LabeledNodeFixture, SetgBackwardString) {
     }
 }
 
+// Checks that gb-values are correctly found in int nodes
+// ----------------------------------------------------------------------------
+TEST_F (LabeledNodeFixture, FindgBackwardInt) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a node which just holds an array of integers randomly
+        // generated
+        auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
+        khs::labelednode_t<vector<int>> n {values};
+
+        // randomly determine the number of backward g-values to set ---even
+        // zero. Make'em all different even if that does not mind, but the true
+        // scenario will be this
+        auto gbs = randVectorInt (rand () % MAX_VALUES, MAX_VALUE, true);
+
+        // set the backward g-values one by one
+        for (auto gb: gbs) {
+            n += gb;
+        }
+
+        // next, search for all gb-values in gbs
+        for (auto gb : gbs) {
+            ASSERT_TRUE (n.find_gb (gb));
+        }
+    }
+}
+
+// Checks that gb-values are correctly *not* found in int nodes
+// ----------------------------------------------------------------------------
+TEST_F (LabeledNodeFixture, FindNotgBackwardInt) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a node which just holds an array of integers randomly
+        // generated
+        auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
+        khs::labelednode_t<vector<int>> n {values};
+
+        // randomly determine MAX_VALUES g-values to set. Make'em all different
+        // so that inserting the first half will ensure that no item in the
+        // second half can be found in the list of gb-values
+        auto gbs = randVectorInt (MAX_VALUES, MAX_VALUE, true);
+
+        // set the first half of backward g-values
+        for (auto i = 0 ; i < MAX_VALUES / 2 ; i++) {
+            n += gbs[i];
+        }
+
+        // next, search for all gb-values in gbs
+        for (auto i = 0 ; i < MAX_VALUES / 2 ; i++) {
+
+            // elements in the first half must be found, whereas elements in the
+            // second half should not be present in the list of gb-values
+            if (i < MAX_VALUES / 2) {
+                ASSERT_TRUE (n.find_gb (gbs[i]));
+            } else {
+                ASSERT_FALSE (n.find_gb (gbs[i]));
+            }
+        }
+    }
+}
+
+// Checks that gb-values are correctly found in string nodes
+// ----------------------------------------------------------------------------
+TEST_F (LabeledNodeFixture, FindgBackwardString) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a node which just holds a string randomly generated
+        auto value = randString (MAX_VALUES);
+        khs::labelednode_t<string> n {value};
+
+        // randomly determine the number of backward g-values to set ---even
+        // zero. Make'em all different even if that does not mind, but the true
+        // scenario will be this
+        auto gbs = randVectorInt (rand () % MAX_VALUES, MAX_VALUE, true);
+
+        // set the backward g-values one by one
+        for (auto gb: gbs) {
+            n += gb;
+        }
+
+        // next, search for all gb-values in gbs
+        for (auto gb : gbs) {
+            ASSERT_TRUE (n.find_gb (gb));
+        }
+    }
+}
+
+// Checks that gb-values are correctly *not* found in string nodes
+// ----------------------------------------------------------------------------
+TEST_F (LabeledNodeFixture, FindNotgBackwardString) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a node which just holds a string randomly generated
+        auto value = randString (MAX_VALUES);
+        khs::labelednode_t<string> n {value};
+
+        // randomly determine MAX_VALUES g-values to set. Make'em all different
+        // so that inserting the first half will ensure that no item in the
+        // second half can be found in the list of gb-values
+        auto gbs = randVectorInt (MAX_VALUES, MAX_VALUE, true);
+
+        // set the first half of backward g-values
+        for (auto i = 0 ; i < MAX_VALUES / 2 ; i++) {
+            n += gbs[i];
+        }
+
+        // next, search for all gb-values in gbs
+        for (auto i = 0 ; i < MAX_VALUES / 2 ; i++) {
+
+            // elements in the first half must be found, whereas elements in the
+            // second half should not be present in the list of gb-values
+            if (i < MAX_VALUES / 2) {
+                ASSERT_TRUE (n.find_gb (gbs[i]));
+            } else {
+                ASSERT_FALSE (n.find_gb (gbs[i]));
+            }
+        }
+    }
+}
+
 
 
 // Local Variables:
