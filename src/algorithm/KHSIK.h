@@ -373,7 +373,7 @@ namespace khs {
             treeHeap[curState].push_back(ste);
 
         if (!removalDone)
-            for (j; j != treeHeap[curState].end(); ++j)
+            for (; j != treeHeap[curState].end(); ++j)
                 if ((*j) == oldSte) {
                     treeHeap[curState].erase(j);
                     break;
