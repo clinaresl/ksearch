@@ -84,8 +84,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-# Author #
+# Authors #
 
 Carlos Linares Lopez <carlos.linares@uc3m.es>  
 Computer Science and Engineering Department <https://www.inf.uc3m.es/en>  
 Universidad Carlos III de Madrid <https://www.uc3m.es/home>
+
+Ian Herman <iankherman@gmail.com>  
+Computer Science and Engineering Department <https://www.inf.uc3m.es/en>  
+Universidad Carlos III de Madrid <https://www.uc3m.es/home>  
