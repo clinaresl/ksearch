@@ -76,8 +76,14 @@ def createPrgArgParser():
                                type=str,
                                default=None,
                                help="Name of the png file to be generated. If none is given, no png file is generated")
+    # Group of flags
+    plot_flag = plot.add_argument_group('Flags', 'The following are optional flags which enable different behaviours')
+    plot_flag.add_argument('-c', '--csv',
+                           action='store_true',
+                           help="Tells plotter to expect csv files as opposed to xlsx files")
 
-    # ky
+
+# ky
     # -------------------------------------------------------------------------
     # Group of mandatory arguments
     ky_mandatory = ky.add_argument_group("Mandatory arguments", "The following arguments are required")
@@ -109,6 +115,11 @@ def createPrgArgParser():
                              type=str,
                              default=None,
                              help="Name of the png file to be generated. If none is given, no png file is generated")
+    # Group of flags
+    ky_flag = ky.add_argument_group('Flags', 'The following are optional flags which enable different behaviours')
+    ky_flag.add_argument('-c', '--csv',
+                           action='store_true',
+                           help="Tells plotter to expect csv files as opposed to xlsx files")
 
     # Parser
     # -------------------------------------------------------------------------
