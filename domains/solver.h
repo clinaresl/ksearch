@@ -105,7 +105,10 @@ private:
             m = new khs::bela<D> (k, start, goal);
         } else if (name == "K0") {
             // TODO: Implement some way to set K* flags
-            m = new khs::kStar<D> (k, start, goal, true, 20, 20, false);
+            m = new khs::kStarBlind<D> (k, start, goal, true, 20, 20, false);
+        } else if (name == "K*") {
+            // TODO: Implement some way to set K* flags
+            m = new khs::kStar<D>(k, start, goal, true, 20, 20, false);
         } else {
             throw std::invalid_argument{"Unknown solver!"};
         }

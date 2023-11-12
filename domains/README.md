@@ -28,6 +28,7 @@ Typically, the mandatory arguments are the following:
   - **belA0**: Brute-force Bidirectional Edge-labelling A* search algorithm
   - **mDijkstra**: Brute-force mA* search algorithm 
   - **K0**: Brute-force K* search algorithm
+  - **K**: Informed K* search algorithm
 
 * `--file`: file with the description of the test set to solve. Details might be
   different among solvers but, in general, they consist of several lines with

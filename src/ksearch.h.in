@@ -52,6 +52,9 @@
 // K* (Ian's Implementation)
 #include "algorithm/KHSIK.h"
 
+// K* (Ian's Implementation, Heuristic enabled)
+#include "algorithm/KHSIKStar.h"
+
 #endif // _KSEARCH_H_
 
 // Local Variables:
