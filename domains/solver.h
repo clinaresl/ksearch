@@ -102,10 +102,13 @@ private:
         if (name == "mDijkstra") {
             m = new khs::mA<D> (k, start, goal);
         } else if (name == "belA0") {
-            m = new khs::bela<D> (k, start, goal);
+            m = new khs::bela<D> (k, start, goal, true);
         } else if (name == "K0") {
-            // TODO: Implement some way to set K* flags
             m = new khs::kStar<D> (k, start, goal, true, 20, 20, false);
+        } else if (name == "mA") {
+            m = new khs::mA<D> (k, start, goal);
+        } else if (name == "belA") {
+            m = new khs::bela<D> (k, start, goal, false);
         } else {
             throw std::invalid_argument{"Unknown solver!"};
         }
@@ -176,9 +179,9 @@ private:
 
                     // create a manager to solve this specific instance
                     auto m = _get_solver (solver_name,
-                                                      _instances[i].get_start (),
-                                                      _instances[i].get_goal (),
-                                                      k);
+                                          _instances[i].get_start (),
+                                          _instances[i].get_goal (),
+                                          k);
 
                     std::cout << " ⏵ "; std::cout.flush ();
                     auto ksolution = m->solve ();

@@ -61,6 +61,10 @@ namespace khs {
         labelednode_t<T> _start;                                  // start node
         labelednode_t<T> _goal;                                    // goal node
 
+        // In addition, this solver can be executed as a brute-force search
+        // algorithm, or using heuristics
+        bool _brute_force;      // whether the brute-force variant is requested
+
     private:
 
         // return all optimal paths to the designated node (which is identified
@@ -239,11 +243,13 @@ namespace khs {
         // Default constructors are forbidden
         bela () = delete;
 
-        // Explicit constructor
-        bela (const int k, const T& start, const T& goal) :
+        // Explicit constructor. Note that the brute-force search variant is
+        // used by default. To enable heuristic search use brute_force=false
+        bela (const int k, const T& start, const T& goal, const bool brute_force = true) :
             bsolver<T>(k),
-            _start    { start },
-            _goal     { goal }
+            _start       { start },
+            _goal        { goal },
+            _brute_force { brute_force }
         {
 
             // compute the heuristic estimate of the start state to the goal
@@ -336,8 +342,15 @@ namespace khs {
                                           size_t bound = std::numeric_limits<size_t>::max ());
 
         // the main service of this class computes a solution of the k-shortest
-        // path problem from the start to the goal. Importantly, the solutions
-        // shall be returned in the same order they are generated!
+        // path problem from the start to the goal using one variant of BELA*:
+        //
+        //    * If brute_force is true, then BELA0*, i.e., with no heuristics is
+        //      used
+        //    * If brute_force is false then the heuristic variant of BELA* is
+        //      employed
+        //
+        // Importantly, the solutions shall be returned in the same order they
+        // are generated!
         ksolution_t<T, vector> solve ();
 
     }; // class bela<T>
@@ -479,8 +492,15 @@ namespace khs {
     }
 
     // the main service of this class computes a solution of the k-shortest path
-    // problem from the start to the goal. Importantly, the solutions shall be
-    // returned in the same order they are generated!
+    // problem from the start to the goal using one variant of BELA*:
+    //
+    //    * If brute_force is true, then BELA0*, i.e., with no heuristics is
+    //      used
+    //    * If brute_force is false then the heuristic variant of BELA* is
+    //      employed
+    //
+    // Importantly, the solutions shall be returned in the same order they are
+    // generated!
     template <typename T>
     ksolution_t<T, vector> bela<T>::solve () {
 
@@ -501,18 +521,19 @@ namespace khs {
             // create then a single solution with no path (and no expansions!)
             std::vector<T> path;
             bsolver<T>::_tend = chrono::system_clock::now ();
-            ksolution += generate_solution (path, 0, signature ());
+            ksolution += generate_solution (path, 0, (_brute_force) ? "BELA0*" : "BELA*");
 
             // and return
             return ksolution;
         }
 
         // if the start and goal nodes are different, then create an open list
-        // and add the start state to it with a f-value equal to its g-value, 0
-        // and no labeled backpointer
+        // and add the start state to it with its f-value and no labeled
+        // backpointer
         _start += labeledbackpointer_t{string::npos, 0};
         bucket_t<labelednode_t<T>> open;
-        open.insert (_start, 0);
+        _start.set_h ((_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
+        open.insert (_start, (_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
 
         // also, create a closed list for storing expanded nodes
         closed_t<labelednode_t<T>> closed;
@@ -532,7 +553,7 @@ namespace khs {
             // centroids with a cost less or equal than the f-value value of the
             // current layer
             auto minz = centroids.get_mini ();
-            while (centroids.size () > 0 && minz <= node.get_g () && centroids.size (minz) > 0 ) {
+            while (centroids.size () > 0 && minz <= node.get_f () && centroids.size (minz) > 0 ) {
 
                 // add all paths represented by this centroid and add them to
                 // the solution of the k shortest-path problem
@@ -563,7 +584,7 @@ namespace khs {
                 // first, ensure that the goal state gets also stored in CLOSED
                 auto ptr = closed.find (node);
 
-                // in case has never been generated
+                // in case it has never been generated
                 if (ptr == string::npos) {
 
                     // then add it to the CLOSED list
@@ -617,7 +638,7 @@ namespace khs {
 
                     // if, and only if, this node has been used in the
                     // construction of prefixes before, i.e., if and only if it
-                    // has at least one backward g-value. Then, create a new
+                    // has at least one backward g-value, then create a new
                     // centroid for each backward g-value found
                     for (auto ibg : closed[ptr].get_gb ()) {
 
@@ -634,23 +655,26 @@ namespace khs {
                 continue;
             }
 
-            // expand this node. Note that the heuristic value is dismissed
+            // expand this node
             bsolver<T>::_expansions++;
             vector<tuple<int, int, T>> successors;
-            const_cast<T&>(node.get_state ()).children (0, _goal.get_state (), successors);
+            const_cast<T&>(node.get_state ()).children ((_brute_force) ? 0 : node.get_h (),
+                                                        _goal.get_state (),
+                                                        successors);
 
             // and insert them all in OPEN adding the right labeled backpointers
             for (auto& successor : successors) {
 
-                // create a new labeled node with this successor. Note that the
-                // h value is dismissed
-                labelednode_t<T> onode{get<2>(successor), 0, node.get_g ()+get<0>(successor)};
+                // create a new labeled node with this successor
+                labelednode_t<T> onode{get<2>(successor),
+                    (_brute_force) ? 0 : get<1>(successor),
+                    node.get_g ()+get<0>(successor)};
 
                 // set the labeled backpointer to the location of its parent
                 onode += labeledbackpointer_t{ptr, get<0>(successor)};
 
-                // and add it to OPEN using f=g
-                open.insert (onode, onode.get_g ());
+                // and add it to OPEN using the f-value as its index
+                open.insert (onode, onode.get_f ());
             }
         }
 
