@@ -16,7 +16,7 @@
 #include<cmath>
 
 #include "KHSbsolver.h"
-#include "../structs/KHSlabelednode_t.h"
+#include "../structs/IBaseNode.h"
 
 namespace khs {
 
