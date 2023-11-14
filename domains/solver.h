@@ -107,9 +107,9 @@ private:
             m = new khs::kStarBlind<D> (k, start, goal, true, 20, 20, false);
         } else if (name == "K*") {
             m = new khs::kStar<D>(k, start, goal, true, 20, 20, false);
-        } else if (name == "mA") {
+        } else if (name == "mA*") {
             m = new khs::mA<D> (k, start, goal);
-        } else if (name == "belA") {
+        } else if (name == "belA*") {
             m = new khs::bela<D> (k, start, goal, false);
         } else {
             throw std::invalid_argument{"Unknown solver!"};

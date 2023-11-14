@@ -305,9 +305,9 @@ usage (int status)
                                        > 'K0': brute-force variant of K*\n\
                                        > 'belA0': brute-force variant of belA*\n\
                                     + Heuristic search algorithms:\n\
-                                       > 'mA': mA*\n\
-                                       > 'K': K*\n\
-                                       > 'belA': BELA*\n\
+                                       > 'mA*': mA*\n\
+                                       > 'K*': K*\n\
+                                       > 'belA*': BELA*\n\
                                  It is possible to provide as many as desired in a blank separated list between double quotes,\n\
                                  e.g., \"mDijkstra belA0\"\n\
       -f, --file [STRING]        filename with a line for each instance to solve. Each line consists of five digits: the first\n\
