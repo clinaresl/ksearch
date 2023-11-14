@@ -13,6 +13,8 @@
 #ifndef _KHSBELA_H_
 #define _KHSBELA_H_
 
+#include<cmath>
+
 #include "KHSbsolver.h"
 #include "../structs/IBaseNode.h"
 
@@ -61,14 +63,19 @@ namespace khs {
         labelednode_t<T> _start;                                  // start node
         labelednode_t<T> _goal;                                    // goal node
 
+        // In addition, this solver can be executed as a brute-force search
+        // algorithm, or using heuristics
+        bool _brute_force;      // whether the brute-force variant is requested
+
     private:
 
-        // return all optimal paths to the designated node (which is identified
-        // by its pointer to the closed list) from the start state. For doing
-        // this, use the information stored in the given closed list. In the
-        // process of looking for optimal paths, also update the information
-        // about centroids, if any is found, and store the new backward
-        // g-values. The cost given last is used for this purpose indeed.
+        // return all optimal paths (but never more than the given bound) to the
+        // designated node (which is identified by its pointer to the closed
+        // list) from the start state. For doing this, use the information
+        // stored in the given closed list. In the process of looking for
+        // optimal paths, also update the information about centroids, if any is
+        // found, and store the new backward g-values. The cost given last is
+        // used for this purpose indeed.
         //
         // Note that prefixes are returned as vectors of pointers to the closed
         // list from where the state can be retrieved
@@ -76,7 +83,8 @@ namespace khs {
                                                         closed_t<labelednode_t<T>>& closed,
                                                         int cost,
                                                         bucket_t<centroid_t>& centroids,
-                                                        std::vector<size_t> path) {
+                                                        std::vector<size_t> path,
+                                                        const size_t bound = std::numeric_limits<int>::max ()) {
 
             // The enumeration of optimal paths is performed in depth-first
             // order, i.e., recursively
@@ -144,13 +152,18 @@ namespace khs {
                     path.push_back (ptr);
                     auto subprefixes = _get_prefixes (ibp.get_pointer (),
                                                       closed, cost + ibp.get_cost (),
-                                                      centroids, path);
+                                                      centroids, path, bound);
                     path.pop_back ();
 
                     // add the optimal paths to the prefixes
                     prefixes.insert (prefixes.end (),
                                      subprefixes.begin (),
                                      subprefixes.end ());
+
+                    // if the maximum number of prefixes has been reached, exit
+                    if (prefixes.size () >= bound) {
+                        break;
+                    }
                 }
                 else if (new_gb) {
 
@@ -174,15 +187,17 @@ namespace khs {
             return prefixes;
         }
 
-        // return all paths from the designated vertex to the goal. For doing
-        // this, use the information stored in the given closed list.
+        // return all paths (but never more than the given bound) from the designated
+        // vertex to the goal. For doing this, use the information stored in the
+        // given closed list.
         //
         // Note that suffixes are returned as vectors of pointers to the closed
         // list from where the state can be retrieved
         std::vector<std::vector<size_t>> _get_suffixes (const size_t ptr,
                                                         closed_t<labelednode_t<T>>& closed,
                                                         int cost,
-                                                        std::vector<size_t> path) {
+                                                        std::vector<size_t> path,
+                                                        const size_t bound = std::numeric_limits<int>::max ()) {
 
             // The enumeration of all paths from the given vertex to the goal is
             // performed in depth-first order, i.e., recursively
@@ -223,10 +238,16 @@ namespace khs {
                     if (closed[it].find_gb (cost - std::get<0>(successor))) {
 
                         // then continue recursively
-                        auto subpaths = _get_suffixes (it, closed, cost - std::get<0>(successor), path);
+                        auto subpaths = _get_suffixes (it, closed, cost - std::get<0>(successor), path, bound);
 
                         // and add them to the suffixes to return
                         suffixes.insert (suffixes.end (), subpaths.begin (), subpaths.end ());
+
+                        // if the maximum number of suffixes has been reached,
+                        // exit
+                        if (suffixes.size () >= bound) {
+                            break;
+                        }
                     }
                 }
             }
@@ -239,11 +260,13 @@ namespace khs {
         // Default constructors are forbidden
         bela () = delete;
 
-        // Explicit constructor
-        bela (const int k, const T& start, const T& goal) :
+        // Explicit constructor. Note that the brute-force search variant is
+        // used by default. To enable heuristic search use brute_force=false
+        bela (const int k, const T& start, const T& goal, const bool brute_force = true) :
             bsolver<T>(k),
-            _start    { start },
-            _goal     { goal }
+            _start       { start },
+            _goal        { goal },
+            _brute_force { brute_force }
         {
 
             // compute the heuristic estimate of the start state to the goal
@@ -302,7 +325,9 @@ namespace khs {
             return "BELA*";
         }
 
-        // The following service computes all prefixes of a given centroid.
+        // The following service computes all prefixes of a given centroid. In
+        // case a bound is given, no more than bound prefixes are returned.
+        //
         // Because all the necessary information is in CLOSED, it has to be
         // passed as an argument also. Note that the CLOSED list might be
         // updated during the process and thus it is not passed as a const
@@ -313,17 +338,21 @@ namespace khs {
         // as a vector of pointers to CLOSED
         std::vector<std::vector<size_t>> get_prefixes (closed_t<labelednode_t<T>>& closed,
                                                        const centroid_t& centroid,
-                                                       bucket_t<centroid_t>& centroids);
+                                                       bucket_t<centroid_t>& centroids,
+                                                       const size_t bound = std::numeric_limits<size_t>::max ());
 
-        // The following service computes all suffixes of the given centroid.
+        // The following service computes all suffixes of the given centroid. In
+        // case a bound is given, no more than bound suffixes are returned
+        //
         // Because all the necessary information is in CLOSED, it has to be
         // passed as an argument also
         //
         // Each suffix is represented as a vector of pointers to CLOSED
         std::vector<std::vector<size_t>> get_suffixes (closed_t<labelednode_t<T>>& closed,
-                                                       const centroid_t& centroid);
+                                                       const centroid_t& centroid,
+                                                       const size_t bound = std::numeric_limits<size_t>::max ());
 
-         // Given a centroid, return all paths it represeents as a solution of
+        // Given a centroid, return all paths it represents as a solution of
         // the k-shortest path problem. In case a bound is given, no more than
         // bound paths are returned
         //
@@ -336,8 +365,15 @@ namespace khs {
                                           size_t bound = std::numeric_limits<size_t>::max ());
 
         // the main service of this class computes a solution of the k-shortest
-        // path problem from the start to the goal. Importantly, the solutions
-        // shall be returned in the same order they are generated!
+        // path problem from the start to the goal using one variant of BELA*:
+        //
+        //    * If brute_force is true, then BELA0*, i.e., with no heuristics is
+        //      used
+        //    * If brute_force is false then the heuristic variant of BELA* is
+        //      employed
+        //
+        // Importantly, the solutions shall be returned in the same order they
+        // are generated!
         ksolution_t<T, vector> solve ();
 
     }; // class bela<T>
@@ -349,10 +385,24 @@ namespace khs {
     //
     // The result is given as a vector of paths which, in turn, are defined as a
     // vector of pointers to CLOSED
+
+
+    // The following service computes all prefixes of a given centroid. In
+    // case a bound is given, no more than bound prefixes are returned.
+    //
+    // Because all the necessary information is in CLOSED, it has to be
+    // passed as an argument also. Note that the CLOSED list might be
+    // updated during the process and thus it is not passed as a const
+    // reference. In the process, new centroids might be discovered and
+    // added to the centroids bucket.
+    //
+    // The result is given as a vector of paths which, in turn, are defined
+    // as a vector of pointers to CLOSED
     template <typename T>
     std::vector<std::vector<size_t>> bela<T>::get_prefixes (closed_t<labelednode_t<T>>& closed,
                                                             const centroid_t& centroid,
-                                                            bucket_t<centroid_t>& centroids) {
+                                                            bucket_t<centroid_t>& centroids,
+                                                            const size_t bound) {
 
         // Prefixes are defined as all *optimal* paths getting to the start
         // vertex of the centroid. The backward g-values of all nodes in the
@@ -363,17 +413,21 @@ namespace khs {
         return _get_prefixes (centroid.get_start(),
                               closed,
                               centroid.get_cost () - gstart,
-                              centroids, {});
+                              centroids, {},
+                              bound);
     }
 
-    // The following service computes all suffixes of the given centroid.
+    // The following service computes all suffixes of the given centroid. In
+    // case a bound is given, no more than bound suffixes are returned
+    //
     // Because all the necessary information is in CLOSED, it has to be
     // passed as an argument also
     //
     // Each suffix is represented as a vector of pointers to CLOSED
     template <typename T>
     std::vector<std::vector<size_t>> bela<T>::get_suffixes (closed_t<labelednode_t<T>>& closed,
-                                                            const centroid_t& centroid) {
+                                                            const centroid_t& centroid,
+                                                            const size_t bound) {
 
         // Suffixes are defined as any path (non necessarily optimal) getting to
         // the goal from the end vertex of the centroid. To generate them, the
@@ -421,7 +475,7 @@ namespace khs {
         }
 
         // return all suffixes.
-        return _get_suffixes (ptr, closed, bg, {});
+        return _get_suffixes (ptr, closed, bg, {}, bound);
     }
 
     // Given a centroid, return all paths it represeents as a solution of the
@@ -440,9 +494,11 @@ namespace khs {
         // Every centroid is the representative of a class of paths that get
         // from s to t through it. Their computation is just the cross product
         // of all its prefixes with all its suffixes
+        auto prefixes = get_prefixes (closed, centroid, centroids, bound);
+        auto suffixes = get_suffixes (closed, centroid, size_t (ceil (double (bound)/double (prefixes.size ()))));
         ksolution_t<T, vector> solutions { bsolver<T>::_k, _start.get_state (), _goal.get_state () };
-        for (auto& prefix : get_prefixes (closed, centroid, centroids)) {
-            for (auto& suffix: get_suffixes (closed, centroid)) {
+        for (auto& prefix : prefixes) {
+            for (auto& suffix: suffixes) {
 
                 // compute the concatenation of this prefix and suffix. Note
                 // that the starting vertex of the centroid is included in the
@@ -479,8 +535,15 @@ namespace khs {
     }
 
     // the main service of this class computes a solution of the k-shortest path
-    // problem from the start to the goal. Importantly, the solutions shall be
-    // returned in the same order they are generated!
+    // problem from the start to the goal using one variant of BELA*:
+    //
+    //    * If brute_force is true, then BELA0*, i.e., with no heuristics is
+    //      used
+    //    * If brute_force is false then the heuristic variant of BELA* is
+    //      employed
+    //
+    // Importantly, the solutions shall be returned in the same order they are
+    // generated!
     template <typename T>
     ksolution_t<T, vector> bela<T>::solve () {
 
@@ -501,18 +564,19 @@ namespace khs {
             // create then a single solution with no path (and no expansions!)
             std::vector<T> path;
             bsolver<T>::_tend = chrono::system_clock::now ();
-            ksolution += generate_solution (path, 0, signature ());
+            ksolution += generate_solution (path, 0, (_brute_force) ? "BELA0*" : "BELA*");
 
             // and return
             return ksolution;
         }
 
         // if the start and goal nodes are different, then create an open list
-        // and add the start state to it with a f-value equal to its g-value, 0
-        // and no labeled backpointer
+        // and add the start state to it with its f-value and no labeled
+        // backpointer
         _start += labeledbackpointer_t{string::npos, 0};
         bucket_t<labelednode_t<T>> open;
-        open.insert (_start, 0);
+        _start.set_h ((_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
+        open.insert (_start, (_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
 
         // also, create a closed list for storing expanded nodes
         closed_t<labelednode_t<T>> closed;
@@ -532,7 +596,7 @@ namespace khs {
             // centroids with a cost less or equal than the f-value value of the
             // current layer
             auto minz = centroids.get_mini ();
-            while (centroids.size () > 0 && minz <= node.get_g () && centroids.size (minz) > 0 ) {
+            while (centroids.size () > 0 && minz <= node.get_f () && centroids.size (minz) > 0 ) {
 
                 // add all paths represented by this centroid and add them to
                 // the solution of the k shortest-path problem
@@ -563,7 +627,7 @@ namespace khs {
                 // first, ensure that the goal state gets also stored in CLOSED
                 auto ptr = closed.find (node);
 
-                // in case has never been generated
+                // in case it has never been generated
                 if (ptr == string::npos) {
 
                     // then add it to the CLOSED list
@@ -617,7 +681,7 @@ namespace khs {
 
                     // if, and only if, this node has been used in the
                     // construction of prefixes before, i.e., if and only if it
-                    // has at least one backward g-value. Then, create a new
+                    // has at least one backward g-value, then create a new
                     // centroid for each backward g-value found
                     for (auto ibg : closed[ptr].get_gb ()) {
 
@@ -634,23 +698,26 @@ namespace khs {
                 continue;
             }
 
-            // expand this node. Note that the heuristic value is dismissed
+            // expand this node
             bsolver<T>::_expansions++;
             vector<tuple<int, int, T>> successors;
-            const_cast<T&>(node.get_state ()).children (0, _goal.get_state (), successors);
+            const_cast<T&>(node.get_state ()).children ((_brute_force) ? 0 : node.get_h (),
+                                                        _goal.get_state (),
+                                                        successors);
 
             // and insert them all in OPEN adding the right labeled backpointers
             for (auto& successor : successors) {
 
-                // create a new labeled node with this successor. Note that the
-                // h value is dismissed
-                labelednode_t<T> onode{get<2>(successor), 0, node.get_g ()+get<0>(successor)};
+                // create a new labeled node with this successor
+                labelednode_t<T> onode{get<2>(successor),
+                    (_brute_force) ? 0 : get<1>(successor),
+                    node.get_g ()+get<0>(successor)};
 
                 // set the labeled backpointer to the location of its parent
                 onode += labeledbackpointer_t{ptr, get<0>(successor)};
 
-                // and add it to OPEN using f=g
-                open.insert (onode, onode.get_g ());
+                // and add it to OPEN using the f-value as its index
+                open.insert (onode, onode.get_f ());
             }
         }
 

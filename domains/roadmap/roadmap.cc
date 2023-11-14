@@ -324,6 +324,17 @@ usage (int status)
       -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0' and 'K0'. It is possible\n\
                                  to provide as many as desired in a blank separated list between double quotes, e.g.\n\
                                   \"mDijkstra belA0\"\n\
+      -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are:\n\
+                                    + Brute-force search algorithms:\n\
+                                       > 'mDijkstra': brute-force variant of mA*\n\
+                                       > 'K0': brute-force variant of K*\n\
+                                       > 'belA0': brute-force variant of belA*\n\
+                                    + Heuristic search algorithms:\n\
+                                       > 'mA': mA*\n\
+                                       > 'K': K*\n\
+                                       > 'belA': BELA*\n\
+                                 It is possible to provide as many as desired in a blank separated list between double quotes,\n\
+                                 e.g., \"mDijkstra belA0\"\n\
       -f, --file [STRING]        filename with the test cases to solve. It consists of of precisely two lines. The i-th test case\n\
                                  uses the i-th vertex from the first line as the starting vertex and the i-th vertex from the second\n\
                                  line as the goal.\n\
