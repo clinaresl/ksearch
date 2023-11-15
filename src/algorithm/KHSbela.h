@@ -523,12 +523,12 @@ namespace khs {
                 labelednode_t<T> parent = closed[ibp.get_pointer ()];
                 if (parent.get_g () + ibp.get_cost () == closed[ptr].get_g ()) {
                     if (firstChild) { // Continue with same prefix
-                        recursionStack.emplace(prefixIndex, ibp.get_pointer(), cost + ibp.get_cost());
+                        recursionStack.push(params_t{prefixIndex, ibp.get_pointer(), cost + ibp.get_cost()});
                         firstChild = false;
                     } else { // Continue with new prefix
                         int nextPrefix = prefixes.size();
                         prefixes.emplace_back(prefixes[prefixIndex]);
-                        recursionStack.emplace(nextPrefix, ibp.get_pointer(), cost + ibp.get_cost());
+                        recursionStack.push(params_t{nextPrefix, ibp.get_pointer(), cost + ibp.get_cost()});
                     }
                 }
                 else if (new_gb) {
@@ -675,12 +675,12 @@ namespace khs {
                     // operator that gets to it
                     if (closed[it].find_gb (cost - std::get<0>(successor))) {
                         if (firstChild) { // Continue with same suffix
-                            recursionStack.emplace(suffixIndex, it, cost - std::get<0>(successor));
+                            recursionStack.push(params_t{suffixIndex, it, cost - std::get<0>(successor)});
                             firstChild = false;
                         } else { // Continue with new suffix
                             int nextPrefix = suffixes.size();
                             suffixes.emplace_back(suffixes[suffixIndex]);
-                            recursionStack.emplace(nextPrefix, it, cost - std::get<0>(successor));
+                            recursionStack.push(params_t{nextPrefix, it, cost - std::get<0>(successor)});
                         }
                     }
                 }
