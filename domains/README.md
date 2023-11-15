@@ -30,18 +30,18 @@ Typically, the mandatory arguments are the following:
   - **K0**: Brute-force K* search algorithm
   - **K**: Informed K* search algorithm
 
-* `--file`: file with the description of the test set to solve. Details might be
+* `--file`: File with the description of the test set to solve. Details might be
   different among solvers but, in general, they consist of several lines with
   each line describing a different task with the format: `<id> <start state>`.
   The identifier is always given as a number, and the representation of the
   start state depends on the specific solver.
   
-* `--variant`: all domains provide, at least, two different variants. One
+* `--variant`: All domains provide, at least, two different variants. One
   considers all edge costs to be the same and always equal to one. Other
   variants might be given for implementing arbitrary cost domains with null-cost
   edges or not.
   
-* `--k`: basically, this flag expects the number of paths to compute, e.g., `--k
+* `--k`: Basically, this flag expects the number of paths to compute, e.g., `--k
   1000` would request the computation of one thousand shortest paths. However,
   it can be used also to automate experiments and thus, to provide an arbitrary
   collection of *k* values. A *full specification* consists of a semicolon
@@ -57,15 +57,19 @@ Typically, the mandatory arguments are the following:
 
 The typical optional arguments are shown next:
 
-* `--csv`: if given, a CSV file with the specified name is created which records
+* `--csv`: If given, a CSV file with the specified name is created which records
   all results as soon as the execution is over.
   
-* `--no-doctor`: once every optimization task is finished, the solver
+* `--summary`: Used in conjunction with `--csv`. If given, only the information
+  of the last solution path is written to the csv file; otherwise, information
+  about every solution path is stored, resulting in much larger csv files.
+  
+* `--no-doctor`: Once every optimization task is finished, the solver
   automatically check it for correctness ---see the following section.
   Sometimes, if the number of paths generated is too large, this might take a
   very long time. This directive suppress the automated verification.
 
-* `--verbose`: provides additional information, typically consisting of every
+* `--verbose`: Provides additional information, typically consisting of every
   single solution to every instance of the *k* shortest-path problem
   
 However, some specific solvers might have a different selection of directives.
