@@ -254,14 +254,15 @@ namespace khs {
             bsolver<T>::_tend = chrono::system_clock::now ();
             // return a solution with this information
             return solution_t<T, list> (bsolver<T>::_k,
-                                  path,
-                                  start,
-                                  goal,
-                                  bsolver<T>::_h0,
-                                  g,
-                                  bsolver<T>::_expansions,
-                                  bsolver<T>::get_cpu_time (),
-                                  signature);
+                                        path,
+                                        start,
+                                        goal,
+                                        0,
+                                        bsolver<T>::_h0,
+                                        g,
+                                        bsolver<T>::_expansions,
+                                        bsolver<T>::get_cpu_time (),
+                                        signature);
         }
 
     };

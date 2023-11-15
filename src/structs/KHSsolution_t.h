@@ -47,7 +47,8 @@ namespace khs {
         // INVARIANT: a single solution of an instance (identified by a
         // distinctive name) of the k shortest-path problem consists of a
         // concatenation of states that get to the goal from the start state,
-        // which is known to have a initial heuristic value. The solution has a
+        // which is known to have a initial heuristic value, and which are
+        // discovered by using a number of centroids. The solution has a
         // solution length (which is derived from the solution path) and a cost,
         // which are not necessarily the same. To compute the solution, a number
         // of nodes is expanded and a specific CPU running time is used, so that
@@ -57,6 +58,7 @@ namespace khs {
         T _start;                                                // start state
         T _goal;                                                  // goal state
         path_t<T> _solution;           // solution path as a sequence of states
+        int _nbcentroids;                           // number of centroids used
         int _h0;                       // heuristic distance of the start state
         int _length;                  // solution length, i.e., number of steps
         int _cost;           // solution cost, i.e., sum of the cost of all ops
@@ -78,18 +80,19 @@ namespace khs {
         // which is computed automatically from the solution path
         solution_t (const int k,
                     const path_t<T>& solution, const T& start, const T& goal,
-                    const int h0, const int cost, const size_t expansions,
-                    const double cpu_time, const string solver) :
-            _name       { ""         },
-            _k          { k },
-            _start      { start      },
-            _goal       { goal       },
-            _solution   { solution   },
-            _h0         { h0         },
-            _cost       { cost       },
-            _expansions { expansions },
-            _cpu_time   { cpu_time   },
-            _solver     { solver     }
+                    const int nbcentroids, const int h0, const int cost,
+                    const size_t expansions, const double cpu_time, const string solver) :
+            _name        { ""          },
+            _k           { k },
+            _start       { start       },
+            _goal        { goal        },
+            _nbcentroids { nbcentroids },
+            _solution    { solution    },
+            _h0          { h0          },
+            _cost        { cost        },
+            _expansions  { expansions  },
+            _cpu_time    { cpu_time    },
+            _solver      { solver      }
             {
 
                 // automatically compute the length of the solution path and the
@@ -115,6 +118,8 @@ namespace khs {
             { return _start; }
         const T& get_goal () const
             { return _goal; }
+        const int get_nbcentroids () const
+            { return _nbcentroids; }
         const path_t<T>& get_solution () const
             { return _solution; }
         const int get_h0 () const
@@ -152,6 +157,7 @@ namespace khs {
         bool operator==(const solution_t right) const {
             return _start == right.get_start () &&
                 _goal == right.get_goal () &&
+                _nbcentroids == right.get_nbcentroids () &&
                 _solution == right.get_solution () &&
                 _length == right.get_length () &&
                 _cost == right.get_cost () &&
@@ -166,7 +172,8 @@ namespace khs {
         // different container
         operator solution_t<T, std::vector>() {
             return solution_t<T, std::vector>(this->_k, std::vector<T>(_solution.begin(), _solution.end()),
-                                              this->_start, this->_goal, this->_h0, this->_cost, this->_expansions,
+                                              this->_start, this->_goal, this->_nbcentroids,
+                                              this->_h0, this->_cost, this->_expansions,
                                               this->_cpu_time, this->_solver);
         }
 
@@ -347,6 +354,7 @@ namespace khs {
             stream << solution.get_length () << ";";
             stream << solution.get_cost () << ";";
             stream << solution.get_expansions () << ";";
+            stream << solution.get_nbcentroids () << ";";
             stream << solution.get_cpu_time () << ";";
             stream << solution.get_expansions_per_second () << ";";
             stream << solution.get_solver () << ";";

@@ -119,15 +119,23 @@ of every task is automatically created. The following information is given:
 
 * *Domain*: Name of the domain, e.g., `n-pancake`
 * *Variant*: Name of the variant used, e.g., `unit`, `heavy-cost`, etc.
-* *Id*: every id consists of two identifiers separated by a slash. The first one is the task id, and the second one is the path id of the path solution found, e.g., `013/092` refers to the stats of the 92-th solution path found in task `013`.
-* *k*: requested number of paths to compute. This value serves as an upper bound in the second id given in the previous column.
+* *Id*: every id consists of two identifiers separated by a slash. The first one
+  is the task id, and the second one is the path id of the path solution found,
+  e.g., `013/092` refers to the stats of the 92-th solution path found in task
+  `013`.
+* *k*: requested number of paths to compute. This value serves as an upper bound
+  in the second id given in the previous column.
 * *start*: explicit representation of the start state
 * *goal*: explicit representation of the goal state
 * *h0*: heuristic value of the start state
 * *length*: number of transitions in the solution path
 * *cost*: cost of the solution path. Note that *length* and +cost* must be equal
   in unit cost domains, but maybe different in arbitrary cost domains.
-* *expansions*: number of expanded nodes for finding one specific solution path. One solving a *k* shortest-path problem, this value might be increasing between successive solution paths, but this is not necessarily true always.
+* *expansions*: number of expanded nodes for finding one specific solution path.
+  One solving a *k* shortest-path problem, this value might be increasing
+  between successive solution paths, but this is not necessarily true always.
+* *nbcentroids*: number of centroids used for computing the *k* shortest paths
+  when using an algorithm from the BELA* family
 * *runtime*: CPU runtime until this solution path is found. Also, this value
   might be monotonically increasing between successive solutions of the same *k*
   shortest-path problem, but it is not necessarily true.  

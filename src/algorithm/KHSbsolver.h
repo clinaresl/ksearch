@@ -37,10 +37,12 @@ namespace khs {
 
         // INVARIANT: Any solver of the k shortest-path problem must be able to
         // find k solution paths from a start state with a given heuristic value
-        // after expanding a number of nodes
-        int _k;                                     // number of paths to find
+        // after expanding a number of nodes and, in case BELA* is used,
+        // considering a number of centroids
+        int _k;                                      // number of paths to find
         int _h0;                       // heuristic distance of the start state
         std::size_t _expansions;                        // number of expansions
+        int _nbcentroids;                           // number of centroids used
 
         // high-precision measuring time
         std::chrono::time_point<std::chrono::system_clock> _tstart, _tend;
@@ -54,7 +56,8 @@ namespace khs {
         bsolver (const int k) :
             _k { k },
             _h0 { 0 },
-            _expansions { 0 }
+            _expansions { 0 },
+            _nbcentroids { 0 }
             {}
 
         // Destructor
@@ -67,6 +70,8 @@ namespace khs {
             { return _h0; }
         const size_t get_expansions () const
             { return _expansions; }
+        const int nb_centroids () const
+            { return _nbcentroids; }
         const double get_cpu_time () const
             { return 1e-9*chrono::duration_cast<chrono::nanoseconds>(_tend - _tstart).count(); }
 

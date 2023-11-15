@@ -27,8 +27,7 @@ namespace khs {
     class ksolution_t {
 
         // INVARIANT: the solution of a k-shortest path problem (identified with
-        // a name) consists of k solution paths (that might be less, in the case
-        // of loopless paths) with the same start and goal
+        // a name) consists of k solution paths with the same start and goal
         string _name;                                          // instance name
         int _k;                                                   // value of k
         T _start;                               // start state of all solutions
@@ -38,6 +37,7 @@ namespace khs {
         // In addition, a number of statistics are reported. Note that these are
         // equal to the same statistics of the last single solution reported in
         // this container
+        int _nbcentroids;       // # centroids used in the last single solution
         int _h0;                       // heuristic distance of the start state
         size_t _expansions;                       // total number of expansions
         double _cpu_time;                                   // elapsed CPU time
@@ -61,6 +61,7 @@ namespace khs {
             _k { k },
             _start { start },
             _goal { goal },
+            _nbcentroids { 0 },
             _solutions { std::vector<solution_t<T, path_t>>() },
             _h0 { 0 },
             _expansions { 0 },
@@ -84,6 +85,9 @@ namespace khs {
         }
         const T& get_goal () const {
             return _goal;
+        }
+        const int get_nbcentroids () const {
+            return _nbcentroids;
         }
         const std::vector<solution_t<T, path_t>>& get_solutions () const {
             return _solutions;
@@ -135,6 +139,7 @@ namespace khs {
             _solutions.push_back (right);
 
             // and update the statistics of the container of solutions
+            _nbcentroids = right.get_nbcentroids ();
             _h0 = right.get_h0 ();
             _expansions = right.get_expansions ();
             _cpu_time = right.get_cpu_time ();
@@ -152,6 +157,7 @@ namespace khs {
 
             // and update the statistics of the container of solutions copying
             // those from the last single solution given in right
+            _nbcentroids = right[right.size ()-1].get_nbcentroids ();
             _h0 = right[right.size ()-1].get_h0 ();
             _expansions = right[right.size ()-1].get_expansions ();
             _cpu_time = right[right.size ()-1].get_cpu_time ();
@@ -249,9 +255,6 @@ namespace khs {
             // first to a string stream and then copy its output to the given
             // stream
             std::stringstream ss;
-            // for (const auto& s : solutions.get_solutions ()) {
-            //     ss << s << std::endl;
-            // }
 
             ss << solutions.get_name () << ";";
             ss << solutions.get_k () << ";";
@@ -259,6 +262,7 @@ namespace khs {
             ss << solutions.get_goal () << ";";
             ss << solutions.get_h0 () << ";";
             ss << solutions.get_expansions() << ";";
+            ss << solutions.get_nbcentroids () << ";";
             ss << solutions.get_cpu_time() << ";";
             ss << solutions.get_solver () << ";";
             ss << solution_t<T, path_t>::get_error_msg (solutions.get_error_code ());

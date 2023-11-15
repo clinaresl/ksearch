@@ -59,7 +59,8 @@ namespace khs {
         // INVARIANT: a solver of the k-shortest path problem computes k paths
         // from a start to a goal. As a result, a number of stats such as the
         // heuristic estimate of the start state, the number of expanded nodes
-        // the and CPU running time are reported for every single solution found
+        // the CPU and running time are reported for every single solution found
+        // along with the number of centroids used
         labelednode_t<T> _start;                                  // start node
         labelednode_t<T> _goal;                                    // goal node
 
@@ -313,6 +314,7 @@ namespace khs {
                                           path,
                                           _start.get_state (),
                                           _goal.get_state (),
+                                          bsolver<T>::_nbcentroids,
                                           bsolver<T>::_h0,
                                           g,
                                           bsolver<T>::_expansions,
@@ -490,6 +492,10 @@ namespace khs {
                                                closed_t<labelednode_t<T>>& closed,
                                                bucket_t<centroid_t>& centroids,
                                                size_t bound) {
+
+        // Update the number of centroids that are used to compute solution
+        // paths
+        bsolver<T>::_nbcentroids++;
 
         // Every centroid is the representative of a class of paths that get
         // from s to t through it. Their computation is just the cross product

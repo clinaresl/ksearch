@@ -119,7 +119,7 @@ namespace khs {
             // first to a string stream and then copy its output to the given
             // stream
             std::stringstream ss;
-            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;runtime;expansions/sec;solver;doctor" << endl;
+            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;nbcentroids;runtime;expansions/sec;solver;doctor" << endl;
             for (auto& ksolution : ksolutions.get_ksolutions ()) {
 
                 // in case only a summary report has been requested, provide

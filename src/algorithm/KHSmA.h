@@ -106,6 +106,7 @@ namespace khs {
                                           path,
                                           _start.get_state (),
                                           _goal.get_state (),
+                                          bsolver<T>::_nbcentroids,
                                           bsolver<T>::_h0,
                                           g,
                                           bsolver<T>::_expansions,
