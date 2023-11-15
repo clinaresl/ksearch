@@ -150,16 +150,25 @@ private:
 
     // the following service automates the execution of the given solver over
     // all instances found in the test file with all values obtained from the
-    // specification of the k values, and stores the results internally. Unless
-    // no_doctor takes the value true, all single solution paths and also the
-    // solutions to every instance of the k shortest-path problem are checked
-    // for correctness. In case want_verbose takes the value true additional
-    // information is shown on the standard output
-    void run (std::string solver_name, bool no_doctor, bool want_verbose) {
+    // specification of the k values, and stores the results internally.
+    //
+    // Unless no_doctor takes the value true, all single solution paths and also
+    // the solutions to every instance of the k shortest-path problem are
+    // checked for correctness.
+    //
+    // summary determines whether only the results of the last solution path
+    // found for every instance, or the results of every single solution path,
+    // are shown.
+    //
+    // In case want_verbose takes the value true additional information is shown
+    // on the standard output
+    void run (std::string solver_name, bool no_doctor, bool want_summary, bool want_verbose) {
 
-        // set the domain and variant in the container of ksolutions
+        // set the domain and variant in the container of ksolutions, and also
+        // the summary flag
         _results.set_domain (_domain);
         _results.set_variant (_variant);
+        _results.set_summary (want_summary);
 
         // for all values of k selected by the user
         for (auto ispec: _ks) {

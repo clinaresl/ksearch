@@ -30,9 +30,15 @@ namespace khs {
         // INVARIANT: a sequential container of solutions of the k-shortest path
         // problem consist just of a vector of them that refers to the same
         // domain/variant
-        std::vector<ksolution_t<T, vector>> _ksolutions;      // container of solutions
+        std::vector<ksolution_t<T, vector>> _ksolutions;   // container of sols
         std::string _domain;
         std::string _variant;
+
+        // A dedicated flag is used to determine whether to report the
+        // information of every single solution path within every solution to a
+        // k shortest-path problem, or only the last one. By default,
+        // information about all solution paths is reported
+        bool _summary;  // whether to report only the last solution path or not
 
     public:
 
@@ -40,7 +46,8 @@ namespace khs {
         ksolutions_t () :
             _ksolutions { std::vector<ksolution_t<T, vector>>() },
             _domain    { "" },
-            _variant { "" }
+            _variant { "" },
+            _summary {false}
             {}
 
         // copy and move constructors are forbidden
@@ -48,7 +55,7 @@ namespace khs {
         ksolutions_t (ksolutions_t&&) = delete;
 
         // getters
-        const std::vector<ksolution_t<T, vector>>& get_ksolutions () const {
+        std::vector<ksolution_t<T, vector>>& get_ksolutions () {
             return _ksolutions;
         }
         const std::string get_domain () const {
@@ -57,6 +64,9 @@ namespace khs {
         const std::string get_variant () const {
             return _variant;
         }
+        bool get_summary () const {
+            return _summary;
+        }
 
         // setters
         void set_domain (const std::string domain) {
@@ -64,6 +74,9 @@ namespace khs {
         }
         void set_variant (const std::string variant) {
             _variant = variant;
+        }
+        void set_summary (const bool value) {
+            _summary = value;
         }
 
         // operator overloading
@@ -98,7 +111,7 @@ namespace khs {
         }
 
         // stream out
-        friend ostream& operator<< (std::ostream& stream, const ksolutions_t& ksolutions) {
+        friend ostream& operator<< (std::ostream& stream, ksolutions_t& ksolutions) {
 
             // data is written in the csv format using the semicolon as
             // separator. Because each line results of the concatenation of data
@@ -107,12 +120,25 @@ namespace khs {
             // stream
             std::stringstream ss;
             ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;runtime;expansions/sec;solver;doctor" << endl;
-            for (const auto& ksolution : ksolutions.get_ksolutions ()) {
-                for (const auto& solution : ksolution.get_solutions ()) {
+            for (auto& ksolution : ksolutions.get_ksolutions ()) {
 
+                // in case only a summary report has been requested, provide
+                // then only information about the last solution
+                if (ksolutions.get_summary ()) {
                     ss << ksolutions.get_domain () << ";";
                     ss << ksolutions.get_variant () << ";";
-                    ss << solution << std::endl;
+                    ss << ksolution[ksolution.size ()-1] << endl;
+                } else {
+
+                    // otherwise, provide information about all the solution
+                    // paths found for this specific instance of the k shortest
+                    // path problem
+                    for (const auto& solution : ksolution.get_solutions ()) {
+
+                        ss << ksolutions.get_domain () << ";";
+                        ss << ksolutions.get_variant () << ";";
+                        ss << solution << std::endl;
+                    }
                 }
             }
 
