@@ -48,7 +48,7 @@ def createPrgArgParser():
                                 required=True,
                                 nargs="+",
                                 type=str,
-                                help="name of the file(s) containing the .xlsx spreadsheet. It is possible to provide an arbitrary number of them to generate a single plot with all data")
+                                help="name of the file(s) containing the spreadsheet(s) to process. It is possible to provide an arbitrary number of them to generate a single plot with all data")
     plot_mandatory.add_argument('-x', '--x',
                                 required=True,
                                 type=str,
@@ -60,6 +60,10 @@ def createPrgArgParser():
 
     # Group of optional arguments
     plot_optional = plot.add_argument_group('Optional', 'The following arguments are optional')
+    plot_optional.add_argument('-d', '--delimiter',
+                               type=str,
+                               default=';',
+                               help="in case a csv file is given, this argument specifies the delimiter used to separate columns. By default ';'")
     plot_optional.add_argument('-s', '--series',
                                type=str,
                                nargs='*',
@@ -76,14 +80,8 @@ def createPrgArgParser():
                                type=str,
                                default=None,
                                help="Name of the png file to be generated. If none is given, no png file is generated")
-    # Group of flags
-    plot_flag = plot.add_argument_group('Flags', 'The following are optional flags which enable different behaviours')
-    plot_flag.add_argument('-c', '--csv',
-                           action='store_true',
-                           help="Tells plotter to expect csv files as opposed to xlsx files")
 
-
-# ky
+    # ky
     # -------------------------------------------------------------------------
     # Group of mandatory arguments
     ky_mandatory = ky.add_argument_group("Mandatory arguments", "The following arguments are required")
@@ -91,7 +89,7 @@ def createPrgArgParser():
                               required=True,
                               nargs="+",
                               type=str,
-                              help="name of the file(s) containing the .xlsx spreadsheet. It is possible to provide an arbitrary number of them to generate a single plot with all data")
+                              help="name of the file(s) containing the spreadsheet(s) to process. It is possible to provide an arbitrary number of them to generate a single plot with all data")
     ky_mandatory.add_argument('-y', '--y',
                               required=True,
                               type=str,
@@ -99,6 +97,10 @@ def createPrgArgParser():
 
     # Group of optional arguments
     ky_optional = ky.add_argument_group('Optional', 'The following arguments are optional')
+    ky_optional.add_argument('-d', '--delimiter',
+                               type=str,
+                               default=';',
+                               help="in case a csv file is given, this argument specifies the delimiter used to separate columns. By default ';'")
     ky_optional.add_argument('-s', '--series',
                              type=str,
                              nargs='*',
@@ -115,11 +117,6 @@ def createPrgArgParser():
                              type=str,
                              default=None,
                              help="Name of the png file to be generated. If none is given, no png file is generated")
-    # Group of flags
-    ky_flag = ky.add_argument_group('Flags', 'The following are optional flags which enable different behaviours')
-    ky_flag.add_argument('-c', '--csv',
-                           action='store_true',
-                           help="Tells plotter to expect csv files as opposed to xlsx files")
 
     # Parser
     # -------------------------------------------------------------------------

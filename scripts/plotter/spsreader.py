@@ -43,13 +43,16 @@ class SPSReader():
        arranged vertically. It skips all lines and columns which are empty
     """
 
-    def __init__(self, spsfilename, spssheet=None):
-        """the only information required to create a generic reader is the filename. In
-           case the spreadsheet contains more than one sheet, then a second
+    def __init__(self, spsfilename, spssheet=None, delimiter=None):
+        """the only information required to create a generic reader is the
+           filename, which can be given with a path either absolute or relative
+           to the current directory
+
+           In case the spreadsheet contains more than one sheet, then a second
            argument can be provided to access them individually. Otherwise, it
            processes only the first one
 
-           the filename can be given with a path either relative or absolute
+           In case csv files are given, a delimiter can be optionally specified
 
         """
 
@@ -64,9 +67,12 @@ class SPSReader():
         # access the only sheet in the spreadsheet
         self._spssheet = spssheet
         if self._spssheet:
-            self._sheet = pyexcel.get_sheet(file_name=self._spsfilename, sheet_name=self._spssheet)
+            self._sheet = pyexcel.get_sheet(file_name=self._spsfilename,
+                                            sheet_name=self._spssheet,
+                                            delimiter=delimiter)
         else:
-            self._sheet = pyexcel.get_sheet(file_name=self._spsfilename)
+            self._sheet = pyexcel.get_sheet(file_name=self._spsfilename,
+                                            delimiter=delimiter)
 
         # look for the first non-empty row, which is assumed to contain the
         # headers

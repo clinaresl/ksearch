@@ -21,7 +21,6 @@ import time
 
 import numpy
 import pyexcel
-import csv
 import argparser
 import pltchecker
 import pltGNUfile
@@ -29,7 +28,6 @@ import pltkserie
 import pltserie
 import spsreader
 import utils
-import version
 
 # globals
 # -----------------------------------------------------------------------------
@@ -131,8 +129,8 @@ def filter_data(data: list, line: dict,
 # Every datapoint of each serie consists of a tuple (x, y) whose values are
 # given by the contents of the headers xname and yname respectively.
 # -----------------------------------------------------------------------------
-def get_data(spreadsheets: list,
-             series: list, xname: str, yname: str, isCsv: bool) -> list:
+def get_data(spreadsheets: list, delimiter: str,
+             series: list, xname: str, yname: str) -> list:
     """return a list with all series of data accepted from a list of
        spreadsheets, each represented as an intance of PLTSerie
 
@@ -177,7 +175,8 @@ def get_data(spreadsheets: list,
         nblines = 0
 
         # process all records to get a list of ordinary dictionaries
-        for irecord in (csv.DictReader(spreadsheet, delimiter=";") if isCsv else pyexcel.get_records(file_name=spreadsheet)):
+        reader = spsreader.SPSReader(spreadsheet, delimiter=";")
+        for irecord in reader:
 
             # create an ordinary dictionary to represent the information of this line
             line = {}
@@ -188,13 +187,7 @@ def get_data(spreadsheets: list,
                     LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
 
                 # add this key to the dictionary
-                try:
-                    a = int(irecord[ikey])
-                except (TypeError, ValueError):
-                    try:
-                        line[ikey] = float(irecord[ikey])
-                    except (TypeError, ValueError):
-                        line[ikey] = irecord[ikey]
+                line[ikey] = irecord[ikey]
 
             # once the entire line has been retrieved, ensure that there are headers
             # named after the x and y names. If not, skip this line
@@ -240,8 +233,8 @@ def get_data(spreadsheets: list,
 # Every datapoint of each serie consists of a tuple (x, y) whose values are
 # given by the contents of the headers xname and yname respectively.
 # -----------------------------------------------------------------------------
-def get_k_data(spreadsheets: list,
-               series: list, xname: str, yname: str, isCsv: bool) -> list:
+def get_k_data(spreadsheets: list, delimiter,
+               series: list, xname: str, yname: str) -> list:
     """return a list with all series of data accepted from a list of
        spreadsheets, each represented as an instance of PLTKSerie.
 
@@ -286,82 +279,41 @@ def get_k_data(spreadsheets: list,
         nblines = 0
 
         # process all records to get a list of ordinary dictionaries
-        if isCsv:
-            with open(spreadsheet, "r") as f:
-                for irecord in csv.DictReader(f, delimiter=";", quoting=csv.QUOTE_NONE):
-                    # create an ordinary dictionary to represent the information of this line
-                    line = {}
-                    for ikey in irecord:
+        reader = spsreader.SPSReader(spreadsheet, delimiter=";")
+        for irecord in reader:
 
-                        # check this header is not duplicated
-                        if ikey in line:
-                            LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
+            # create an ordinary dictionary to represent the information of this line
+            line = {}
+            for ikey in irecord:
 
-                        # add this key to the dictionary
-                        try:
-                            line[ikey] = int(irecord[ikey])
-                        except (TypeError, ValueError):
-                            try:
-                                line[ikey] = float(irecord[ikey])
-                            except (TypeError, ValueError):
-                                line[ikey] = irecord[ikey]
+                # check this header is not duplicated
+                if ikey in line:
+                    LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
 
+                # add this key to the dictionary
+                line[ikey] = irecord[ikey]
 
-                    # verify whether this is the case where the number of paths found equals
-                    # the number of paths requested. If not, skip it
-                    m = re.match(RE_PROBLEM_ID, line["id"])
-                    if int(m.group("k")) != int(line["k"]):
-                        continue
+            # verify whether this is the case where the number of paths found equals
+            # the number of paths requested. If not, skip it
+            m = re.match(RE_PROBLEM_ID, line["id"])
+            if int(m.group("k")) != int(line["k"]):
+                continue
 
-                    # once the entire line has been retrieved, ensure that there are headers
-                    # named after the x and y names. If not, skip this line
-                    if xname not in line:
-                        LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
-                        continue
-                    if yname not in line:
-                        LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
-                        continue
+            # once the entire line has been retrieved, ensure that there are headers
+            # named after the x and y names. If not, skip this line
+            if xname not in line:
+                LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
+                continue
+            if yname not in line:
+                LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
+                continue
 
-                    # once the entire line has been retrieved in an ordinary dictionary,
-                    # check what series are verified, in case any has been given
-                    filter_data(data, line, conditions, xname, yname)
+            # once the entire line has been retrieved in an ordinary dictionary,
+            # check what series are verified, in case any has been given
+            filter_data(data, line, conditions, xname, yname)
 
-                    # and increment the number of processed lines
-                    nblines += 1
-        else:
-            for irecord in (csv.DictReader(spreadsheet, delimiter=";") if isCsv else pyexcel.get_records(file_name=spreadsheet)):
-                # create an ordinary dictionary to represent the information of this line
-                line = {}
-                for ikey in irecord:
-
-                    # check this header is not duplicated
-                    if ikey in line:
-                        LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
-
-                    # add this key to the dictionary
-                    line[ikey] = irecord[ikey]
-
-                # verify whether this is the case where the number of paths found equals
-                # the number of paths requested. If not, skip it
-                m = re.match(RE_PROBLEM_ID, line["id"])
-                if int(m.group("k")) != int(line["k"]):
-                    continue
-
-                # once the entire line has been retrieved, ensure that there are headers
-                # named after the x and y names. If not, skip this line
-                if xname not in line:
-                    LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
-                    continue
-                if yname not in line:
-                    LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
-                    continue
-
-                # once the entire line has been retrieved in an ordinary dictionary,
-                # check what series are verified, in case any has been given
-                filter_data(data, line, conditions, xname, yname)
-
-                # and increment the number of processed lines
-                nblines += 1
+            # and increment the number of processed lines
+            nblines += 1
 
         # show the number of lines processed
         LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
@@ -442,22 +394,19 @@ def create_gnuplotfile(series: list, gnufilename: str, title: str, png: str) -> 
 def do_plot(params: argparse.Namespace):
     """Execute the plot command with the given parameters"""
 
-    # spreadsheets have to be given as .xlsx files
+    # get the full list of spreadsheets to process ---which can be of different
+    # types
     spreadsheets = []
     for ifile in params.file:
-        if params.csv:
-            spreadsheet = utils.get_filename(ifile, ".csv")
-        else:
-            spreadsheet = utils.get_filename(ifile, ".xlsx")
 
         # ensure each spreadsheet is readable
-        readable, err = utils.check_file_readable(spreadsheet)
+        readable, err = utils.check_file_readable(ifile)
         if not readable:
             LOGGER.critical(err)
             raise ValueError(err)
 
         # finally, add it to the list of spreadsheets to process
-        spreadsheets.append(spreadsheet)
+        spreadsheets.append(ifile)
 
     # importantly, the series requested by the user have to be provided always
     # as a list. Moreover, if no serie is requested, then one accepting all data
@@ -467,7 +416,7 @@ def do_plot(params: argparse.Namespace):
 
     # in case any serie is produced from the given spreadsheet using the
     # variables x and y
-    series = get_data(spreadsheets, user_series, params.x, params.y, params.csv)
+    series = get_data(spreadsheets, params.delimiter, user_series, params.x, params.y)
     if series is not None and len(series) > 0:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in series:
@@ -496,22 +445,19 @@ def do_plot(params: argparse.Namespace):
 def do_ky(params: argparse.Namespace):
     """Execute the ktime command with the given parameters"""
 
-    # spreadsheets have to be given as .xlsx files
+    # get the full list of spreadsheets to process ---which can be of different
+    # types
     spreadsheets = []
     for ifile in params.file:
-        if params.csv:
-            spreadsheet = utils.get_filename(ifile, ".csv")
-        else:
-            spreadsheet = utils.get_filename(ifile, ".xlsx")
 
         # ensure each spreadsheet is readable
-        readable, err = utils.check_file_readable(spreadsheet)
+        readable, err = utils.check_file_readable(ifile)
         if not readable:
             LOGGER.critical(err)
             raise ValueError(err)
 
         # finally, add it to the list of spreadsheets to process
-        spreadsheets.append(spreadsheet)
+        spreadsheets.append(ifile)
 
     # importantly, the series requested by the user have to be provided always
     # as a list. Moreover, if no serie is requested then one accepting all data
@@ -521,7 +467,7 @@ def do_ky(params: argparse.Namespace):
 
     # in case any serie si produced from the given spreadsheet using the
     # variables k and the given y
-    series = get_k_data(spreadsheets, user_series, "k", params.y, params.csv)
+    series = get_k_data(spreadsheets, params.delimiter, user_series, "k", params.y)
     if series is not None and len(series) > 0:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in series:
