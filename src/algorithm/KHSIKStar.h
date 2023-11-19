@@ -1,4 +1,4 @@
-// Ported from GitHub I-Herman/bela by the author of that repo
+edge// Ported from GitHub I-Herman/bela by the author of that repo
 // created on 28/10/23
 
 #ifndef LIBKSEARCH_KHSIKStar_H
@@ -8,7 +8,7 @@
 #include <list>
 #include "KHSbsolver.h"
 #include "../structs/KHSnode_t.h"
-#include "../structs/IBaseNode.h"
+#include "../structs/KHSIBaseNode.h"
 
 typedef const int solutions_t;
 typedef int cost_t;
@@ -26,7 +26,7 @@ namespace khs {
         /// \param k k solutions to find
         /// \param start start state
         /// \param goals goal states (may have undefined behavior for multi-goal problems)
-        // \param h heuristic to be used
+        //  \param h heuristic to be used
         /// \param sog flag which decides whether we should switch to EA on goal expansion
         /// \param alb lower bound on number of A* iterations to run before switching
         /// \param aub upper bound on number of A* iterations to run before switching
@@ -50,9 +50,6 @@ namespace khs {
 
         kStar(const kStar &); // This class should never be copied, it makes no sense.
         kStar &operator=(const kStar &);
-
-        // Graph<T> *graph;
-        // Heuristic<T> *h;
 
         T start;
         T goal;
@@ -86,19 +83,6 @@ namespace khs {
             T e1;
             T e2;
             cost_t detourCost;
-            /*
-            /// Comparison class for use with stl containers
-            class Compare {
-            public:
-                bool operator() (const SideTrackedEdge& a, const SideTrackedEdge& b) {
-                    return a.detourCost > b.detourCost;
-                }
-
-                bool operator() (SideTrackedEdge * a, SideTrackedEdge * b) {
-                    return a->detourCost > b->detourCost;
-                }
-            };
-             */
         };
 
         std::unordered_set<SideTrackedEdge *> STEList;
@@ -366,8 +350,6 @@ namespace khs {
             };
         if (!insertionDone)
             incomingHeap[e2].push_back(newSte);
-
-        // newTreeNode(newSte, e2, std::unordered_map<T, bool>());
     }
 
     template<class T>
@@ -404,22 +386,6 @@ namespace khs {
     typename kStar<T>::SideTrackedEdge *kStar<T>::PathGraphNode::getSte() const {
         return ste;
     }
-
-    /*
-    template<class T>
-    kStar<T>::PathGraphState &kStar<T>::PathGraphState::operator=(kStar::PathGraphState p) {
-        this->ste = p.ste;
-        this->tree = p.tree;
-        this->incoming = p.incoming;
-    }
-
-    template<class T>
-    kStar<T>::PathGraphState::PathGraphState(kStar::PathGraphState &p) {
-        this->ste = p.ste;
-        this->tree = p.tree;
-        this->incoming = p.incoming;
-    }
-    */
 
     template<class T>
     void kStar<T>::reconstructPath(kStar::PathGraphNode *n, ksolution_t<T, list> &sol) {
@@ -485,34 +451,6 @@ namespace khs {
 
     template<class T>
     void kStar<T>::prepareEA(bool reopen, bool goalGen, cost_t goalCost) {
-        // if (rsEA) clear tree heap and openEA (unimplemented)
-        // if (reopen) rebuild incoming heap and recompute sidetrackedge distances (unimplemented)
-
-
-        // Ensures correctness of open nodes
-        /*
-        if (!openEA.empty()) {
-            cost_t minCost = openEA.begin()->first;
-            std::vector<std::pair<cost_t, PathGraphNode*>> oldOpen(openEA.begin(), openEA.end());
-            std::set<PathGraphNode *> parents;
-            openEA.clear();
-            for (auto i : oldOpen) {
-                if (i.second->getBack() == nullptr) {
-                    openEA.insert(i);
-                    continue;
-                }
-                parents.insert(i.second->getBack());
-            }
-
-            for (auto i : parents)
-                for (auto j: getPathGraphSuccessors(i))
-                    if (j->getCost() >= minCost)
-                        openEA.insert(std::make_pair(j->getCost(), j));
-
-            bool flag = openEA.size() == oldOpen.size();
-
-        }
-         */
 
         if (openEA.empty() && goalGen /*(open.empty() || goalCost <= open.top()->getFCost()) */) {
             auto *newNode = new PathGraphNode(goalCost, nullptr, treeHeap[goal].end(), true, nullptr, false, goal);
@@ -655,7 +593,6 @@ namespace khs {
     {
         this->start = start;
         this->goal = goal;
-        // this->h = h;
         bsolver<T>::_h0 = start.h(goal);
         this->switchOnGoal = sog;
         this->aStarLowerB = alb;

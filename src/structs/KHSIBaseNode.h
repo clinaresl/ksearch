@@ -11,12 +11,12 @@ typedef const int solutions_t;
 typedef int cost_t;
 
 namespace khs {
-    /// Class which represents a generic search node in A*-like algorithms
-/// \tparam T state type
+    // Class which represents a generic search node in A*-like algorithms
+    // \tparam T state type
     template<class T, class Hash = std::hash<T>>
     class BaseNode {
     public:
-/// Allows hashing for nodes, needed for some stl containers
+        // Allows hashing for nodes, needed for some stl containers
         struct hash {
             std::size_t operator()(BaseNode n) const {
                 return std::hash<T>()(n.state);
@@ -29,41 +29,41 @@ namespace khs {
             this->expanded = false;
         };
 
-        /// Sets the adjacency list of the node
-        /// \param adjacent adjacency list, presumably given from graph
+        // Sets the adjacency list of the node
+        // \param adjacent adjacency list, presumably given from graph
         virtual void expand(std::unordered_map<T, cost_t, Hash> adjacent);
 
-        /// Checks if the node has been expanded (in closed)\
-    /// \return expanded or not
+        // Checks if the node has been expanded (in closed)\
+        // \return expanded or not
         virtual bool isExpanded() const;
 
-        /// adjacency list getter
-        /// \return adjacency list of this node
+        // adjacency list getter
+        // \return adjacency list of this node
         virtual const std::unordered_map<T, cost_t, Hash> &getAdjacent() const;
 
-        /// gcost getter
-        /// \return gcost of this nodeur
+        // gcost getter
+        // \return gcost of this nodeur
         cost_t getGCost() const;
 
-        /// gcost setter
-        /// \param c gcost of this node
+        // gcost setter
+        // \param c gcost of this node
         void setGCost(cost_t c);
 
-        /// fcost getter
-        /// \return fcost of this node
+        // fcost getter
+        // \return fcost of this node
         cost_t getFCost() const;
 
-        /// fcost setter
-        /// \param c fcost of this node
+        // fcost setter
+        // \param c fcost of this node
         void setFCost(cost_t c);
 
-        /// state getter
-        /// \return state of this node
+        // state getter
+        // \return state of this node
         virtual T &getState();
 
         virtual T const &getState() const;
 
-        /// Comparison class to be passed to stl structures
+        // Comparison class to be passed to stl structures
         class Compare {
         public:
             bool operator()(BaseNode *a, BaseNode *b) {
