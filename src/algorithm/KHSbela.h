@@ -14,6 +14,7 @@
 #define _KHSBELA_H_
 
 #include<cmath>
+#include<stack>
 
 #include "KHSbsolver.h"
 #include "../structs/IBaseNode.h"
@@ -338,10 +339,25 @@ namespace khs {
         //
         // The result is given as a vector of paths which, in turn, are defined
         // as a vector of pointers to CLOSED
-        std::vector<std::vector<size_t>> get_prefixes (closed_t<labelednode_t<T>>& closed,
-                                                       const centroid_t& centroid,
-                                                       bucket_t<centroid_t>& centroids,
-                                                       const size_t bound = std::numeric_limits<size_t>::max ());
+        void
+        get_prefixes(closed_t<labelednode_t<T>> &closed, const centroid_t &centroid, bucket_t<centroid_t> &centroids,
+                     std::vector<std::vector<size_t>> &prefixes, std::vector<int> &finishedMask,
+                     const size_t bound = std::numeric_limits<size_t>::max());
+
+        // The following service computes all prefixes of a given centroid. In
+        // case a bound is given, no more than bound prefixes are returned.
+        //
+        // Because all the necessary information is in CLOSED, it has to be
+        // passed as an argument also. Note that the CLOSED list might be
+        // updated during the process and thus it is not passed as a const
+        // reference. In the process, new centroids might be discovered and
+        // added to the centroids bucket.
+        //
+        // The result is given as a vector of paths which, in turn, are defined
+        // as a vector of pointers to CLOSED
+        std::vector<std::vector<size_t>>
+        get_prefixes(closed_t<labelednode_t<T>> &closed, const centroid_t &centroid, bucket_t<centroid_t> &centroids,
+                     const size_t bound = std::numeric_limits<size_t>::max ());
 
         // The following service computes all suffixes of the given centroid. In
         // case a bound is given, no more than bound suffixes are returned
@@ -350,9 +366,14 @@ namespace khs {
         // passed as an argument also
         //
         // Each suffix is represented as a vector of pointers to CLOSED
-        std::vector<std::vector<size_t>> get_suffixes (closed_t<labelednode_t<T>>& closed,
-                                                       const centroid_t& centroid,
-                                                       const size_t bound = std::numeric_limits<size_t>::max ());
+        void
+        get_suffixes(closed_t<labelednode_t<T>> &closed, const centroid_t &centroid,
+                     std::vector<std::vector<size_t>> &suffixes, std::vector<int> &finishedMask,
+                     const size_t bound = std::numeric_limits<size_t>::max ());
+
+        std::vector<std::vector<size_t>>
+        get_suffixes(closed_t<labelednode_t<T>> &closed, const centroid_t &centroid,
+                     const size_t bound = std::numeric_limits<size_t>::max ());
 
         // Given a centroid, return all paths it represents as a solution of
         // the k-shortest path problem. In case a bound is given, no more than
@@ -388,6 +409,19 @@ namespace khs {
     // The result is given as a vector of paths which, in turn, are defined as a
     // vector of pointers to CLOSED
 
+    template <typename T>
+    std::vector<std::vector<size_t>>
+    bela<T>::get_prefixes(closed_t<labelednode_t<T>> &closed, const centroid_t &centroid, bucket_t<centroid_t> &centroids,
+                 const size_t bound) {
+        std::vector<std::vector<size_t>> prefixes;
+        std::vector<std::vector<size_t>> validPrefixes;
+        std::vector<int> mask;
+        get_prefixes(closed, centroid, centroids, prefixes, mask, bound);
+        for (auto i : mask)
+            validPrefixes.push_back(prefixes[i]);
+
+        return validPrefixes;
+    }
 
     // The following service computes all prefixes of a given centroid. In
     // case a bound is given, no more than bound prefixes are returned.
@@ -401,22 +435,137 @@ namespace khs {
     // The result is given as a vector of paths which, in turn, are defined
     // as a vector of pointers to CLOSED
     template <typename T>
-    std::vector<std::vector<size_t>> bela<T>::get_prefixes (closed_t<labelednode_t<T>>& closed,
-                                                            const centroid_t& centroid,
-                                                            bucket_t<centroid_t>& centroids,
-                                                            const size_t bound) {
+    void
+    bela<T>::get_prefixes(closed_t<labelednode_t<T>> &closed, const centroid_t &centroid,
+                          bucket_t<centroid_t> &centroids,
+                          std::vector<std::vector<size_t>> &prefixes, std::vector<int> &finishedMask,
+                          const size_t bound) {
 
         // Prefixes are defined as all *optimal* paths getting to the start
         // vertex of the centroid. The backward g-values of all nodes in the
         // prefix, including the start vertex of the centroid are updated
         // starting with a cost derived from the cost of the edge of the
         // centroid and the overall cost the centroid refers to
+
+
+        struct params_t {
+            int prefixIndex;
+            size_t ptr;
+            int cost;
+        }; typedef struct params_t params_t;
+
+
         int gstart = closed[centroid.get_start ()].get_g ();
-        return _get_prefixes (centroid.get_start(),
-                              closed,
-                              centroid.get_cost () - gstart,
-                              centroids, {},
-                              bound);
+        std::stack<params_t> recursionStack;
+        int numFinishedPrefixes = 0;
+        recursionStack.push({0, centroid.get_start(), centroid.get_cost() - gstart});
+        prefixes.emplace_back();
+
+        while (!recursionStack.empty()) {
+            int prefixIndex = recursionStack.top().prefixIndex;
+            size_t ptr = recursionStack.top().ptr;
+            int cost = recursionStack.top().cost;
+            recursionStack.pop();
+
+            prefixes[prefixIndex].push_back (ptr);
+
+            auto bps = closed[ptr].get_backpointers ();
+            if (closed[ptr] == _start) {
+
+                // in case the start has not this backward g-value, then add it
+                if (!closed[ptr].find_gb (cost)) {
+                    closed[ptr] += cost;
+
+                    // In case it is necessary, add new centroids. Note that any
+                    // edge getting to the start state is a centroid because the
+                    // optimal cost of the start state is 0. All true edges
+                    // start at location 1 because location 0 contains a null
+                    // labeled backpointer
+                    for (auto i = 1 ; i < bps.size () ; i++) {
+                        centroid_t z { bps[i].get_pointer (),
+                                       ptr,
+                                       closed[bps[i].get_pointer ()].get_g () + bps[i].get_cost () + cost };
+                        centroids.insert (z,
+                                          closed[bps[i].get_pointer ()].get_g () + bps[i].get_cost () + cost );
+                    }
+                }
+
+                // add this node to the path and reverse it so that it correctly
+                // starts from the start state
+                std::reverse (prefixes[prefixIndex].begin (), prefixes[prefixIndex].end());
+                finishedMask.push_back(prefixIndex);
+                numFinishedPrefixes++;
+                if (numFinishedPrefixes >= bound)
+                    break;
+                continue;
+            }
+
+            // general case - this node is not the start state, then follow only
+            // the backpointers that lead to optimal paths
+            // in case this node has not this backward g-value, then add it, and
+            // remember you did because there is an opportunity then to discover
+            // new centroids. Note we are sure that the closed list has to be
+            // updated because there should be at least one optimal path to this
+            // node so that a backward g-value has to be added
+            bool new_gb = false;
+            if (!closed[ptr].find_gb (cost)) {
+
+                // A very important property is that ptr is never the goal
+                // state. Otherwise, a centroid arising from the goal state
+                // might be created at this point. This *can not* happen anyway,
+                // because the goal state should never be expanded
+                closed[ptr] += cost;
+                new_gb = true;
+            }
+
+            // and consider all labeled backpointers
+            bool firstChild = true;
+            for (auto& ibp: bps) {
+                // if this backpointer leads to a parent on the optimal path
+                labelednode_t<T> parent = closed[ibp.get_pointer ()];
+                if (parent.get_g () + ibp.get_cost () == closed[ptr].get_g ()) {
+                    if (firstChild) { // Continue with same prefix
+                        recursionStack.push(params_t{prefixIndex, ibp.get_pointer(), cost + ibp.get_cost()});
+                        firstChild = false;
+                    } else { // Continue with new prefix
+                        int nextPrefix = prefixes.size();
+                        prefixes.emplace_back(prefixes[prefixIndex]);
+                        recursionStack.push(params_t{nextPrefix, ibp.get_pointer(), cost + ibp.get_cost()});
+                    }
+                }
+                else if (new_gb) {
+
+                    // in case this backpointer does not lead to a parent on the
+                    // optimal path, then a bridge has been discovered.
+                    // Moreover, this bridge becomes a centroid if and only if a
+                    // new backward g-value was added, which represents all
+                    // paths with a cost equal to the g*-value of the parent,
+                    // plus the cost of this operator and the backward g-value
+                    // we just set in this node
+                    centroid_t z { ibp.get_pointer (), ptr,
+                                   parent.get_g () + ibp.get_cost () + cost};
+
+                    // and add it to the collection of centroids to process in
+                    // case it is necessary to discover new paths
+                    centroids.insert (z, parent.get_g () + ibp.get_cost () + cost);
+                }
+            }
+        }
+    }
+
+
+    template <typename T>
+    std::vector<std::vector<size_t>>
+    bela<T>::get_suffixes(closed_t<labelednode_t<T>> &closed, const centroid_t &centroid,
+                          const size_t bound) {
+        std::vector<std::vector<size_t>> suffixes;
+        std::vector<std::vector<size_t>> validSuffixes;
+        std::vector<int> mask;
+        get_suffixes(closed, centroid, suffixes, mask, bound);
+        for (auto i : mask)
+            validSuffixes.push_back(suffixes[i]);
+
+        return validSuffixes;
     }
 
     // The following service computes all suffixes of the given centroid. In
@@ -427,9 +576,16 @@ namespace khs {
     //
     // Each suffix is represented as a vector of pointers to CLOSED
     template <typename T>
-    std::vector<std::vector<size_t>> bela<T>::get_suffixes (closed_t<labelednode_t<T>>& closed,
-                                                            const centroid_t& centroid,
-                                                            const size_t bound) {
+    void
+    bela<T>::get_suffixes(closed_t<labelednode_t<T>> &closed, const centroid_t &centroid,
+                          std::vector<std::vector<size_t>> &suffixes, std::vector<int> &finishedMask,
+                          const size_t bound) {
+
+        struct params_t {
+            int suffixIndex;
+            size_t ptr;
+            int cost;
+        }; typedef struct params_t params_t;
 
         // Suffixes are defined as any path (non necessarily optimal) getting to
         // the goal from the end vertex of the centroid. To generate them, the
@@ -446,14 +602,14 @@ namespace khs {
         // to get the one leading to the start vertex of the centroid. It is
         // assumed that multi-graphs are not in use and thus, there is only one
         // such backpointer
-        int cost = 0;
+        int edgeCost = 0;
         for (auto& bp : closed[ptr].get_backpointers ()) {
 
             // both, the backpointers and the centroid use pointers to the
             // closed list. Thus, two nodes are equal if they have the same
             // location
             if (bp.get_pointer () == centroid.get_start ()) {
-                cost = bp.get_cost ();
+                edgeCost = bp.get_cost ();
                 break;
             }
         }
@@ -471,13 +627,68 @@ namespace khs {
         // once. However, the same vertex might be the end vertex of several
         // centroids with the same overall cost! Thus, it is necessary to check
         // that this backward g-value has not been set previously
-        int bg = centroid.get_cost () - gstart - cost;
+        int bg = centroid.get_cost () - gstart - edgeCost;
         if (!closed[ptr].find_gb (bg)) {
             closed[ptr] += bg;
         }
 
-        // return all suffixes.
-        return _get_suffixes (ptr, closed, bg, {}, bound);
+        std::stack<params_t> recursionStack;
+        int numFinishedSuffixes = 0;
+        recursionStack.push({0, ptr, bg});
+        suffixes.emplace_back();
+
+        while (!recursionStack.empty()) {
+            int suffixIndex = recursionStack.top().suffixIndex;
+            ptr = recursionStack.top().ptr;
+            int cost = recursionStack.top().cost;
+            recursionStack.pop();
+
+            suffixes[suffixIndex].push_back(ptr);
+
+            // base case - node is the goal state
+            if (closed[ptr] == _goal) {
+                finishedMask.push_back(suffixIndex);
+                numFinishedSuffixes++;
+                if (numFinishedSuffixes >= bound)
+                    break;
+                continue;
+            }
+
+            // general case - this node is not the goal state, then expand this
+            // node and select only those children with backward g-values that
+            // decrease accordingly. When expanding this node, both the
+            // heuristic value and the true goal are dismished. We are
+            // interested only in the true descendants.
+            T state = closed[ptr].get_state ();
+            vector<tuple<int, int, T>> successors;
+            state.children (0, state, successors);
+
+            // and consider all successors from this node
+            bool firstChild = true;
+            for (auto& successor: successors) {
+
+                // look for this node in CLOSED
+                auto it = closed.find (std::get<2>(successor));
+                if (it != std::string::npos) {
+
+                    // then verify whether this node has a backward g-value
+                    // which decreases accordingly, i.e, that it has a
+                    // g-backward value equal to cost minus the cost of the
+                    // operator that gets to it
+                    if (closed[it].find_gb (cost - std::get<0>(successor))) {
+                        if (firstChild) { // Continue with same suffix
+                            recursionStack.push(params_t{suffixIndex, it, cost - std::get<0>(successor)});
+                            firstChild = false;
+                        } else { // Continue with new suffix
+                            int nextPrefix = suffixes.size();
+                            suffixes.emplace_back(suffixes[suffixIndex]);
+                            recursionStack.push(params_t{nextPrefix, it, cost - std::get<0>(successor)});
+                        }
+                    }
+                }
+            }
+
+        }
     }
 
     // Given a centroid, return all paths it represeents as a solution of the
@@ -500,11 +711,16 @@ namespace khs {
         // Every centroid is the representative of a class of paths that get
         // from s to t through it. Their computation is just the cross product
         // of all its prefixes with all its suffixes
-        auto prefixes = get_prefixes (closed, centroid, centroids, bound);
-        auto suffixes = get_suffixes (closed, centroid, size_t (ceil (double (bound)/double (prefixes.size ()))));
+        std::vector<std::vector<size_t>> prefixes;
+        std::vector<int> prefixMask;
+        get_prefixes(closed, centroid, centroids, prefixes, prefixMask, bound);
+
+        std::vector<std::vector<size_t>> suffixes;
+        std::vector<int> suffixMask;
+        get_suffixes(closed, centroid, suffixes, suffixMask, size_t(ceil(double(bound) / double(prefixes.size()))));
         ksolution_t<T, vector> solutions { bsolver<T>::_k, _start.get_state (), _goal.get_state () };
-        for (auto& prefix : prefixes) {
-            for (auto& suffix: suffixes) {
+        for (auto i : prefixMask) {
+            for (auto j : suffixMask) {
 
                 // compute the concatenation of this prefix and suffix. Note
                 // that the starting vertex of the centroid is included in the
@@ -515,10 +731,10 @@ namespace khs {
                 // both the prefix and the suffix are given as pointers to
                 // CLOSED, so that the states are retrieved now, while
                 // generating each solution path
-                for (auto& iprefix : prefix) {
+                for (auto& iprefix : prefixes[i]) {
                     path.push_back (closed[iprefix].get_state ());
                 }
-                for (auto& jsuffix : suffix) {
+                for (auto& jsuffix : suffixes[j]) {
                     path.push_back (closed[jsuffix].get_state ());
                 }
 
