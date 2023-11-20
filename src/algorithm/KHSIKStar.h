@@ -1,4 +1,4 @@
-edge// Ported from GitHub I-Herman/bela by the author of that repo
+// Ported from GitHub I-Herman/bela by the author of that repo
 // created on 28/10/23
 
 #ifndef LIBKSEARCH_KHSIKStar_H

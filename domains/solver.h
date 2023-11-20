@@ -100,7 +100,7 @@ private:
 
         // and now choose according to the given name
         if (name == "mDijkstra") {
-            m = new khs::mA<D> (k, start, goal);
+            m = new khs::mA<D> (k, start, goal, true);
         } else if (name == "belA0") {
             m = new khs::bela<D> (k, start, goal, true);
         } else if (name == "K0") {
@@ -108,7 +108,7 @@ private:
         } else if (name == "K*") {
             m = new khs::kStar<D>(k, start, goal, true, 20, 20, false);
         } else if (name == "mA*") {
-            m = new khs::mA<D> (k, start, goal);
+            m = new khs::mA<D> (k, start, goal, false);
         } else if (name == "belA*") {
             m = new khs::bela<D> (k, start, goal, false);
         } else {

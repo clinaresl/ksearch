@@ -496,7 +496,6 @@ namespace khs {
                     }
                 }
             }
-
         }
     }
 

@@ -30,6 +30,10 @@ namespace khs {
         backnode_t<T> _start;                                     // start node
         backnode_t<T> _goal;                                       // goal node
 
+        // In addition, this solver can be executed as a brute-force search
+        // algorithm, or using heuristics
+        bool _brute_force;      // whether the brute-force variant is requested
+
     private:
 
         // return a path of states from the given pointer in closed until the
@@ -70,11 +74,13 @@ namespace khs {
         // Default constructors are forbidden
         mA () = delete;
 
-        // Explicit constructor.
-        mA (const int k, const T& start, const T& goal) :
+        // Explicit constructor. Note that the brute-force search variant is
+        // used by default. To enable heuristic search use brote_fofce=false
+        mA (const int k, const T& start, const T& goal, const bool brute_force = true) :
             bsolver<T>(k),
-            _start    {backnode_t<T> {start}},
-            _goal     {backnode_t<T> {goal }}
+            _start       { backnode_t<T> {start}},
+            _goal        { backnode_t<T> {goal }},
+            _brute_force { brute_force }
             {
 
                 // compute the heuristic distance of the start state to the goal
@@ -116,19 +122,33 @@ namespace khs {
 
         // every solver must be uniquely identified by a signature
         const string signature () const {
-            return "mA*";
+            return (_brute_force ? "mDijkstra" : "mA*");
         }
 
-        // the main service of this class computes a solution of the k-shortest
-        // path problem from the start to the goal. Importantly, the solutions
-        // shall be returned in the same order they are generated!
+        // the main service of this class computes a solution of the k-shortest path
+        // problem from the start to the goal using a variant of mA*:
+        //
+        //    * If brute_force is true, then mDijkstra, i.e., with no heuristics is
+        //      used
+        //
+        //    * If brute_force is false then mA* is employed
+        //
+        // Importantly, the solutions shall be returned in the same order they are
+        // generated!
         ksolution_t<T, vector> solve ();
 
     }; // class mA<T>
 
     // the main service of this class computes a solution of the k-shortest path
-    // problem from the start to the goal. Importantly, the solutions shall be
-    // returned in the same order they are generated!
+    // problem from the start to the goal using a variant of mA*:
+    //
+    //    * If brute_force is true, then mDijkstra, i.e., with no heuristics is
+    //      used
+    //
+    //    * If brute_force is false then mA* is employed
+    //
+    // Importantly, the solutions shall be returned in the same order they are
+    // generated!
     template<typename T>
     ksolution_t<T, vector> mA<T>::solve () {
 
@@ -156,11 +176,12 @@ namespace khs {
         }
 
         // if the start and goal nodes are different, then create an open list
-        // and add the start state to it with a f-value equal to its g-value, 0
+        // and add the start state to it with a f-value equal to its g-value,
         // and no backpointer
         _start += backpointer_t{string::npos, 0};
         bucket_t<backnode_t<T>> open;
-        open.insert (_start, 0);
+        _start.set_h ((_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
+        open.insert (_start, (_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
 
         // also create a closed list for storing expanded nodes
         closed_t<backnode_t<T>> closed;
@@ -223,22 +244,25 @@ namespace khs {
             // expand this node. Note that the heuristic value is dismissed
             bsolver<T>::_expansions++;
             vector<tuple<int, int, T>> successors;
-            const_cast<T&>(node.get_state ()).children (0, _goal.get_state (), successors);
+            const_cast<T&>(node.get_state ()).children ((_brute_force) ? 0 : node.get_h (),
+                                                        _goal.get_state (),
+                                                        successors);
 
             // and insert them all in OPEN adding the right backpointers
             for (auto& successor : successors) {
 
-                // create a backnode with this successor. Note that the h value
-                // is dismissed
-                backnode_t<T> onode{get<2>(successor), 0, node.get_g () + get<0>(successor)};
+                // create a backnode with this successor
+                backnode_t<T> onode{get<2>(successor),
+                    (_brute_force) ? 0 : get<1>(successor),
+                    node.get_g () + get<0>(successor)};
 
                 // set the backpointer to the location of its parent in CLOSED
                 // at the last index
                 auto bps = closed[ptr].get_backpointers ();
                 onode += backpointer_t{ptr, bps.size ()-1};
 
-                // and add it to OPEN using f=g
-                open.insert (onode, onode.get_g ());
+                // and add it to OPEN using the f-value as its index
+                open.insert (onode, onode.get_f ());
             }
         }
     }
