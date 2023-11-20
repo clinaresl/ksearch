@@ -46,13 +46,14 @@ algorithms:
 * Brute-force search algorithms:
 
 + `mDijkstra`: It consists of expanding every node up to *k* times
-+ `belA0`: it is the uninformed variant of BELA*
 + `K0`: Uninformed variant of K*
++ `belA0`: it is the uninformed variant of BELA*
 
 * Heuristic search algorithms:
 
-+ `belA*`: Informed variant of BELA*
-+ `K*`: Informed variant of K*
+* `mA*`: Informed variant of mDijkstra
++ `K*`: Original algorithm used for solving the K shortest-path problem with heuristics
++ `belA*`: Algorithm used for solving the K shortest-path problem which is guaranteed to expand nodes only once
 
 # Domain-dependent solvers #
 
