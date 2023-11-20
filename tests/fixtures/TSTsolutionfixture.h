@@ -4,7 +4,7 @@
 //
 // Started on <mié 09-08-2023 11:48:44.146700171 (1691574524)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Fixture for testing the solution_t class

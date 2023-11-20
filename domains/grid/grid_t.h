@@ -4,7 +4,7 @@
 //
 // Started on <mar 29-08-2023 18:52:30.996052108 (1693327950)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of a state of the grid domain (with no obstacles)

@@ -4,7 +4,7 @@
 //
 // Started on <jue 10-08-2023 16:59:29.570258624 (1691679569)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests of the mA search algorithm

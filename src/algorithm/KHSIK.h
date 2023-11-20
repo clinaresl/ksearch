@@ -1,4 +1,5 @@
 // Ported from GitHub I-Herman/bela by the author of that repo
+// Ian Herman <iankherman@gmail.com>
 // created on 28/10/23
 
 #ifndef LIBKSEARCH_KHSIK_H
@@ -41,7 +42,7 @@ namespace khs {
         ksolution_t<T, std::vector> solve();
 
         const string signature() const {
-            return "K*";
+            return "K0";
         }
 
         /// Destructor

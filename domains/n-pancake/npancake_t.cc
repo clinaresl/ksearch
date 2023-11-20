@@ -4,7 +4,7 @@
 //
 // Started on <sáb 26-02-2022 18:10:41.081648137 (1645895441)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of a state of the N-pancake

@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 19:51:04.521583125 (1691430664)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Fixture for testing the closed_t class

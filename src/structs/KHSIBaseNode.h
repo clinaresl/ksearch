@@ -1,9 +1,9 @@
-//
-// Created by iherman on 12/11/23.
-//
+// Ported from GitHub I-Herman/bela by the author of that repo
+// Ian Herman <iankherman@gmail.com>
+// created on 28/10/23
 
-#ifndef KSEARCH_IBASENODE_H
-#define KSEARCH_IBASENODE_H
+#ifndef KSEARCH_KHSIBASENODE_H
+#define KSEARCH_KHSIBASENODE_H
 
 #include <unordered_map>
 
@@ -132,4 +132,4 @@ namespace khs {
 
 
 
-#endif //KSEARCH_IBASENODE_H
+#endif //KSEARCH_KHSIBASENODE_H

@@ -4,7 +4,7 @@
 //
 // Started on <vie 11-08-2023 19:28:07.498167128 (1691774887)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Fixture used for testing the class labelednode_t

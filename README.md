@@ -69,7 +69,7 @@ For further details, check out the documentation under `domains/`
 
 MIT License
 
-Copyright (c) 2016, 2023, Carlos Linares López
+Copyright (c) 2016, 2023, Carlos Linares López, Ian Herman
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

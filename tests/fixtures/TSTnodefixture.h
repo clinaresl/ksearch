@@ -4,7 +4,7 @@
 //
 // Started on <mar 06-12-2022 14:41:23.389235885 (1670334083)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Test fixture for testing nodes

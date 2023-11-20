@@ -4,7 +4,7 @@
 //
 // Started on <vie 11-08-2023 19:11:53.773431333 (1691773913)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of nodes as used by BELA*

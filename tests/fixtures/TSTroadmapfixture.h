@@ -4,7 +4,7 @@
 //
 // Started on <vie 13-10-2023 13:46:35.758444242 (1697197595)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Fixture for testing the roadmap_t class

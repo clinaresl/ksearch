@@ -4,7 +4,7 @@
 //
 // Started on <lun 29-11-2021 18:48:45.490311369 (1638208125)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Implementation of a k-shortest path solver for the n-pancake

@@ -4,7 +4,7 @@
 //
 // Started on <mié 09-08-2023 11:51:51.275875892 (1691574711)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests of the solution_t class

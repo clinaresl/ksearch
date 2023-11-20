@@ -4,7 +4,7 @@
 //
 // Started on <mié 09-08-2023 14:06:30.837278054 (1691582790)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Fixture for testing the ksolution_t class

@@ -4,7 +4,7 @@
 //
 // Started on <dom 27-02-2022 23:42:57.992602429 (1646001777)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests of the N-Pancake

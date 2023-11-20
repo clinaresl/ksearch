@@ -4,7 +4,7 @@
 //
 // Started on <lun 28-08-2023 00:46:32.176420194 (1693176392)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Services of a domain-dependent solver for the k shortest-path problem

@@ -4,7 +4,7 @@
 //
 // Started on <jue 12-10-2023 21:18:45.416751021 (1697138325)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of a single state in the roadmap doamin

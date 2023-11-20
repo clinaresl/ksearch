@@ -4,7 +4,7 @@
 //
 // Started on <vie 11-08-2023 21:11:13.019734052 (1691781073)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests of the BELA* search algorithm

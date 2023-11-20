@@ -4,7 +4,7 @@
 //
 // Started on <jue 12-10-2023 20:26:06.709213043 (1697135166)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests of the graph_t class

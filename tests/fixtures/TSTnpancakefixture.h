@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 20:42:14.769600532 (1691433734)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Fixture for testing the npancake_t class

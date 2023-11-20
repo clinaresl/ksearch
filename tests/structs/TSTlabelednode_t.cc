@@ -4,7 +4,7 @@
 //
 // Started on <vie 11-08-2023 19:29:44.920451650 (1691774984)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests of the labelednode_t class

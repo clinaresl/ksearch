@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 15:25:29.491033546 (1691414729)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of a generic node as used by a search algorithm

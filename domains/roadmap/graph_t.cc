@@ -4,7 +4,7 @@
 //
 // Started on <jue 12-10-2023 18:34:16.501618311 (1697128456)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of weighted directed graphs using adjacency lists.

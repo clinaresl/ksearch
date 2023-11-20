@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 16:35:56.825833552 (1691418956)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests for the node_t class

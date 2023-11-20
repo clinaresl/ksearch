@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 16:45:08.285586486 (1691419508)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of nodes as used by m-Dijkstra/m-A*

@@ -4,7 +4,7 @@
 //
 // Started on <mié 09-08-2023 14:36:59.916187963 (1691584619)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of a container of solutions of various instances of the k-shortest

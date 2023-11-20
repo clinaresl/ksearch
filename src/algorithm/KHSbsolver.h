@@ -4,7 +4,7 @@
 //
 // Started on <mar 22-08-2023 21:37:32.746298308 (1692733052)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of a base solver

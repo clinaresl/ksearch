@@ -4,7 +4,7 @@
 //
 // Started on <mié 09-08-2023 13:40:09.043459139 (1691581209)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Representation of the k solution paths to a k-shortest path problem

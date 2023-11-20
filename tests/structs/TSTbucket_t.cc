@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 18:40:16.050953386 (1691426416)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests for the bucket_t class

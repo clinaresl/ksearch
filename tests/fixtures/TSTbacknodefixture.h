@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 17:14:38.798084455 (1691421278)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Test fixture for testing backnodes

@@ -4,7 +4,7 @@
 //
 // Started on <mar 29-08-2023 18:43:57.939251692 (1693327437)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Implementation of a k-shortest path solver for grids with no obstacles

@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 16:04:30.433788026 (1691417070)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Main entry point of Google Tests

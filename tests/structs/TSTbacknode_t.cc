@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 17:15:40.156611015 (1691421340)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests for the backnode_t class

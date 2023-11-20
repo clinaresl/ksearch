@@ -4,7 +4,7 @@
 //
 // Started on <mié 09-08-2023 14:07:52.747780772 (1691582872)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests of the ksolution_t class

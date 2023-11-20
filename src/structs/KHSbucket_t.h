@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 18:25:00.445545850 (1691425500)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
 
 //
 // Definition of an open list as a bucket of nodes

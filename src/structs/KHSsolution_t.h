@@ -4,7 +4,7 @@
 //
 // Started on <mié 09-08-2023 11:38:56.226565865 (1691573936)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Representation of a single solution to any instance

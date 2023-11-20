@@ -4,7 +4,7 @@
 //
 // Started on <lun 07-08-2023 19:53:36.099937775 (1691430816)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-//
+// Ian Herman <iankherman@gmail.com>
 
 //
 // Unit tests for testing the closed_t class
