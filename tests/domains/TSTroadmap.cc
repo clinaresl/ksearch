@@ -39,10 +39,11 @@ TEST_F (RoadmapFixture, GraphUnitDefinition) {
         // 10 and 50 with unit edge costs
         int length = 10 + (rand () % 40);
         string filename = "testgraph";
-        generate_graph (filename, length, true);
+        map<int, pair<double, double>> coordinates;
+        generate_graph (filename, coordinates, length, true);
 
         // next, load the graph definition under the unit variant
-        roadmap_t::init (filename, "unit");
+        roadmap_t::init (filename, coordinates, "unit");
 
         // verify the number of edges is correct: there are (length-2)^2 nodes with
         // four edges each; (length-2)*4 nodes with three edges each and, finally, 4
@@ -108,10 +109,11 @@ TEST_F (RoadmapFixture, GrapDimacsDefinition) {
         // 10 and 50 with unit edge costs
         int length = 10 + (rand () % 40);
         string filename = "testgraph";
-        generate_graph (filename, length, false);
+        map<int, pair<double, double>> coordinates;
+        generate_graph (filename, coordinates, length, false);
 
-        // next, load the graph definition under the unit variant
-        roadmap_t::init (filename, "dimacs");
+        // next, load the graph definition under the dimacs variant
+        roadmap_t::init (filename, coordinates, "dimacs");
 
         // verify the number of edges is correct: there are (length-2)^2 nodes with
         // four edges each; (length-2)*4 nodes with three edges each and, finally, 4

@@ -17,9 +17,44 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <regex>
 #include <string>
 #include <vector>
+
+// Definition of a vertex as a pair of longitude (x-value) and latitude
+// (y-value)
+struct vertex_t {
+
+    // every vertex contains information about its position in the plane
+    // measured in radians
+    double _longitude;
+    double _latitude;
+
+    // default constructor
+    vertex_t () :
+        _longitude { 0.0 },
+        _latitude  { 0.0 }
+        {}
+
+    // explicit constructor
+    vertex_t (double longitude, double latitude) :
+        _longitude { longitude },
+        _latitude  { latitude  }
+        {}
+
+    // accessors
+    const double get_longitude () const { return _longitude; }
+    const double get_latitude () const { return _latitude; }
+
+    // operators
+    bool operator== (const vertex_t& other) const {
+
+        // I know equality among doubles is hard ...
+        return _longitude == other.get_longitude () &&
+            _latitude == other.get_latitude (); }
+
+}; // struct vertex_t
 
 // Definition of an edge as the ending vertex of the edge and the cost weight
 struct edge_t {
@@ -57,11 +92,17 @@ class graph_t {
 
 private:
 
+    // INVARIANT: A graph consists of a container of vertices and an adjacency
+    // matrix. The definition also stores the total number of edges separately
+
     // store the number of edges in the graph
     size_t _nbedges;
 
     // the adjacency list is a vector of vectors of edges
     std::vector<std::vector<edge_t>> _edges;
+
+    // vertices are indexed in a vector by their id
+    std::vector<vertex_t> _vertices;
 
 public:
 
@@ -78,6 +119,7 @@ public:
     // getters
     const size_t get_nbedges () const { return _nbedges; }
     const std::vector<edge_t>& get_edges (size_t vertex) const { return _edges[vertex]; }
+    const vertex_t get_vertex (size_t vertex) const { return _vertices[vertex]; }
 
     // methods
 
@@ -96,9 +138,11 @@ public:
         _edges.clear ();
     }
 
-    // load a graph from a file with the format of the 9th DIMACS competition.
-    // It returns the number of edges processed
-    int load (const std::string& filename);
+    // load a graph from a file with the format of the 9th DIMACS competition,
+    // and stores the location of each vertex according to the given coordinates
+    // given in radians. It returns the number of edges processed
+    int load (const std::string& filename,
+              const std::map<int, std::pair<double, double>>& coordinates);
 
 }; // class graph_t
 

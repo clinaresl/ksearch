@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <map>
 #include <random>
 #include <string>
 #include <utility>
@@ -88,8 +89,10 @@ protected:
     // international competition that represents a square grid of size n. In
     // case "unit" is true, all edges have edge cost equal to 1; otherwise, they
     // take a value which is equal to the sum of the i and j coordinates of the
-    // starting vertex plus one
-    void generate_graph (const std::string& filename, const int n, bool unit=true) {
+    // starting vertex plus one. In addition, it populates a map of vertices to
+    // coordinats (longitude and latitude) given in radians
+    void generate_graph (const std::string& filename, std::map<int, std::pair<double, double>>& coordinates,
+                         const int n, bool unit=true) {
 
             // open the file
             std::ofstream file (filename);
@@ -105,8 +108,14 @@ protected:
 
                 // for every neighbour
                 for (const auto& neighbour : get_neighbours(index, n, unit)) {
+
+                    // add the information of this edge
                     file << "a " << index << " " << neighbour.first << " " << neighbour.second << std::endl;
                 }
+
+                // and also add its coordinates. The longitude and latitude are
+                // divided by a huge number to avoid inconsistencies
+                coordinates[index] = std::make_pair(double (index%n)/100'000'000, double (index/n)/100'000'000);
             }
 
             // close the file

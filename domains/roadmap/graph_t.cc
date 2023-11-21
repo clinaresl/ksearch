@@ -10,6 +10,8 @@
 // Definition of weighted directed graphs using adjacency lists.
 //
 
+#include <cmath>
+
 #include "graph_t.h"
 
 using namespace std;
@@ -19,16 +21,23 @@ using namespace std;
 // the graph)
 bool graph_t::add_vertex (size_t vertex) {
 
-    // first, ensure the vertex can be allocated. If not, return false right
-    // away
-    if (vertex > _edges.max_size()) {
+    // first, ensure the vertex can be allocated both in the container of
+    // vertices and the adjacency matrix. If not, return false right away
+    if (vertex > _vertices.max_size () ||
+        vertex > _edges.max_size()) {
         return false;
     }
 
-    // otherwise, just ensure the current vector has space enough to store the
-    // new vertex. The reason why we proceed this way is because instead of
-    // populating the vector pushing back, we need random access to positions
-    // which are available in memory
+    // otherwise, ensure there is space enough to store the new vertex both in
+    // the container of vertices and also the adjacency matrix.
+    if (vertex >= _vertices.size ()) {
+        _vertices.resize (1+vertex);
+    }
+
+    // When resizing the adjacency matrix, make sure that the vector stored at
+    // this location has space enough to store all neighbours. The reason why we
+    // proceed this way is because instead of populating the vector pushing
+    // back, we need random access to positions which are available in memory
     if (vertex >= _edges.size ()) {
         _edges.resize (1+vertex, vector<edge_t>());
     }
@@ -65,9 +74,11 @@ void graph_t::add_edge (size_t from, size_t to, int weight) {
     _nbedges++;
 }
 
-// load a graph from a file with the format of the 9th DIMACS competition. It
-// returns the number of edges processed
-int graph_t::load (const std::string& filename) {
+// load a graph from a file with the format of the 9th DIMACS competition, and
+// stores the location of each vertex according to the given coordinates given
+// in radians. It returns the number of edges processed
+int graph_t::load (const std::string& filename,
+                   const std::map<int, std::pair<double, double>>& coordinates) {
 
     // First of all, ensure the graph is void
     clear ();
@@ -80,7 +91,7 @@ int graph_t::load (const std::string& filename) {
     // the following, both 'c' and 'p' are ignored
     regex comment ("^[cp].*");
 
-    // Lines starting with 'a' add a new edge, and other than the prefix, the
+    // Lines starting with 'a' add a new edge, and other than the prefix, they
     // come with three numbers: the vertex from, to and the edge weight. The
     // following regexp is used for processing those lines and, in particular,
     // for extracting its components
@@ -106,8 +117,41 @@ int graph_t::load (const std::string& filename) {
             size_t to = stoi (m[2].str ());
             int cost = stoi (m[3].str ());
 
-            // and add this edge to the graph
+            // add this edge to the graph
             add_edge (from, to, cost);
+
+            // and store the coordinates of both vertices ---does not matter
+            // whether we are overriding or not. In doing so, ensure that the
+            // coordinates of all the processed vertices are found
+            auto ifrom = coordinates.find (from);
+            auto ito = coordinates.find (to);
+            if ( ifrom == coordinates.end () ) {
+                throw std::range_error ("[graph_t::load] Missing coordinates in 'from' vertex");
+            }
+            _vertices[from] = vertex_t{ifrom->second.first, ifrom->second.second};
+
+            if ( ito == coordinates.end () ) {
+                throw std::range_error ("[graph_t::load] Missing coordinates in 'to' vertex");
+            }
+            _vertices[to] = vertex_t{ifrom->second.first, ifrom->second.second};
+
+            // ----------------------------------------------------------------
+            double lat1 = ifrom->second.second;
+            double lat2 = ito->second.second;
+            double long1 = ifrom->second.first;
+            double long2 = ito->second.first;
+
+            int h = int (acos (sin (lat1) * sin (lat2) + cos (lat1) * cos (lat2) * cos (long2 - long1)) * 6'530'000);
+
+            // check inconsistencies
+            if (h > cost) {
+
+                // abort if any is found!
+                cout << " cost (" << from << ", " << to << "): " << cost << endl;
+                cout << " h (" << from << ", " << to << "): " << h << endl; cout.flush ();
+                throw std::runtime_error ("[graph_t::load] Inconsistency found! Aborting ...");
+            }
+            // ----------------------------------------------------------------
 
             // and add the number of edges processed
             lineno++;

@@ -13,12 +13,16 @@
 #ifndef _ROADMAP_T_H_
 #define _ROADMAP_T_H_
 
+#include <cmath>
 #include <cstdlib>
+#include <map>
 #include <string>
 #include <tuple>
 #include <vector>
 
 #include "graph_t.h"
+
+constexpr int EARTH_RADIUS = 6'530'000;
 
 // Class definition
 //
@@ -85,17 +89,19 @@ public:
 
     // methods
 
-    // load the roadmap graph given in the specified file using the given
-    // variant. The file should define a graph in the format of the 9th DIMACS
-    // competition.
+    // load the roadmap graph given in the specified file qualifying every
+    // vertex with the coordinates (in radians) given in the second argument
+    // using the given variant. The file should define a graph in the format of
+    // the 9th DIMACS competition.
     static void init (const std::string& filename,
+                      const std::map<int, std::pair<double, double>>& coordinates,
                       const std::string& variant = "unit") {
 
         // set the given variant
         roadmap_t::_variant = variant;
 
         // next, load the roadmap graph
-        roadmap_t::_graph.load (filename);
+        roadmap_t::_graph.load (filename, coordinates);
     }
 
    // return the children of this state as a vector of tuples, each containing:
@@ -106,9 +112,9 @@ public:
     void children (int h, const roadmap_t& goal,
         std::vector<std::tuple<int, int, roadmap_t>>& successors);
 
-    // return the heuristic distance to get from this state to the given goal
-    // state. Because heuristics are not used (at least initially) it always
-    // returns zero
+   // return the heuristic distance to get from this state to the given goal state.
+   // The heuristic function implemented is the air distance according to the
+   // cosine law using a value for the earth radius equal to 6530 kms
     int h (const roadmap_t& goal) const;
 
 }; // class roadmap_t

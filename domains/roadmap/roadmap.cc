@@ -12,9 +12,11 @@
 //
 
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -31,6 +33,8 @@
 
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
+
+constexpr double PI = 3.141592653589793238462643383279502884197;
 
 using namespace std;
 
@@ -60,6 +64,9 @@ static struct option const long_options[] =
 const string get_domain ();
 const string get_variant ();
 void get_testcases (const string& filename, vector<instance_t<roadmap_t>>& instances);
+bool get_coordinates_filename (const string& filename, string& coordinates_filename);
+bool get_coordinates (const string& coordinates_filename,
+                      map<int, pair<double, double>>& coordinates);
 static int decode_switches (int argc, char **argv,
                             string& graph_name, string& solver_name, string& filename, string& variant,
                             string& k_params, string& csvname, bool& no_doctor, bool& want_summary,
@@ -70,6 +77,8 @@ static void usage (int status);
 int main (int argc, char** argv) {
 
     string graph_name;                        // file with the graph definition
+    string coordinates_name;   // filename with the coordinates of all vertices
+    map<int, pair<double, double>> coordinates;  // coordinates of all vertices
     string solver_name;                            // user selection of solvers
     string filename;                            // file with all cases to solve
     string variant;                                    // variant of the domain
@@ -86,6 +95,17 @@ int main (int argc, char** argv) {
 
     // arg parse
     decode_switches (argc, argv, graph_name, solver_name, filename, variant, k_params, csvname, no_doctor, want_summary, want_verbose);
+
+    // for the name of the graph get the coordinates filename and process it
+    if (!get_coordinates_filename (graph_name, coordinates_name)) {
+        cerr << " Warning: no coordinates file found!" << endl;
+        cerr << "          it will not be possible to apply any heuristics" << endl << endl;
+    }
+
+    if (!get_coordinates (coordinates_name, coordinates)) {
+        cerr << " Error: the coordinates file '" << coordinates_name << "' could not be processed" << endl << endl;
+        exit (EXIT_FAILURE);
+    }
 
     // process the solver names and get a vector with the signatures of all
     // solvers to execute
@@ -117,12 +137,20 @@ int main (int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
+    // --variant
+    // In case the variant used is the "unit" then no heuristics are used even
+    // if a coordinates file is found
+    if (variant == "unit") {
+        cerr << endl;
+        cerr << " Warning: No heuristics are used in the 'unit' variant of this domain" << endl;
+    }
+
     /* do the work */
 
     /* !------------------------- INITIALIZATION --------------------------! */
 
     // initialize the static data members of the definition of a roadmap
-    roadmap_t::init (graph_name, variant);
+    roadmap_t::init (graph_name, coordinates, variant);
     auto nbedges = roadmap_t::get_graph ().get_nbedges ();
 
     // open the given file and retrieve all cases from it
@@ -241,6 +269,100 @@ void get_testcases (const string& filename, vector<instance_t<roadmap_t>>& insta
    }
 }
 
+// return true if the coordinates file of the given graph exists and is
+// readable. If true, the name of the coordinates file is returned in the second
+// argument; otherwise, its contents are undefined
+bool get_coordinates_filename (const string& filename, string& coordinates_filename) {
+
+    // replace the extension of the graph name by "co"
+    auto path = filesystem::path (filename);
+    auto cofile = path.replace_extension("co");
+
+    // verify the file exists and it is an ordinary file
+    if (filesystem::exists (cofile) &&
+        filesystem::is_regular_file (cofile)) {
+
+        // check the permissions of the coordinates file
+        std::error_code ec;
+        auto perms = filesystem::status(cofile, ec).permissions();
+        if ((perms & filesystem::perms::owner_read) != filesystem::perms::none &&
+            (perms & filesystem::perms::group_read) != filesystem::perms::none &&
+            (perms & filesystem::perms::others_read) != filesystem::perms::none) {
+
+            coordinates_filename = cofile.c_str ();
+            return true;
+        }
+    }
+
+    // at this point, the file either does not exist or can not be read, so
+    // return false
+    return false;
+}
+
+// Return true if all data could be properly processed and false otherwise. It
+// retrieves all coordinates of all vertices given in the coordinates_filename
+// and stores them in a map indexed by the vertex id that stores the longitude
+// (x-value) and latitude (y-value). The coordinates are given in radians.
+bool get_coordinates (const string& coordinates_filename,
+                      map<int, pair<double, double>>& coordinates) {
+
+    ifstream stream (coordinates_filename);
+
+    // create regex to process each line separately. Lines in the DIMACS
+    // competition format start with a character: 'c' is used for comments; 'p'
+    // is used for providing properties; 'v' adds a new vertex. In the
+    // following, both 'c' and 'p' are ignored
+    regex comment ("^[cp].*");
+
+    // Lines starting with 'v' add a new vertex, and other than the prefix, they
+    // come with three integers: the vertex id, the longitude (x-value) and the
+    // latitude (y-value). Note the longitude and latitude might come with a
+    // sign, or not
+    regex newedge (R"(^v\s+(\d+)\s+([+-]?\d+)\s+([+-]?\d+)\s*$)");
+
+    // parse the contents of the file
+    string line;
+    int lineno = 0;
+    while (getline (stream, line)) {
+
+        // skip this line in case it should be ignored
+        if (regex_match (line, comment)) {
+
+            // increment the line counter and skip it
+            lineno++;
+            continue;
+        }
+
+        // at this point, lines must match the vertex command 'v'
+        smatch m;
+        if (regex_match (line, m, newedge)) {
+
+            // add a new vertex to the map using the vertex id as the key and
+            // storing a pair with the longitude and latitude. Note that
+            // longitude and latitude are given as integers with six digits of
+            // precision
+            size_t id = stoi (m[1].str ());
+            double lon = stoi (m[2].str ()) / 1'000'000.0;
+            double lat = stoi (m[3].str ()) / 1'000'000.0;
+
+            // and add these coordinates to the vertex with identifier id as
+            // radians
+            coordinates[id] = make_pair (lon*PI/180.0, lat*PI/180.0);
+
+            // and add the number of edges processed
+            lineno++;
+
+        } else {
+
+            // otherwise, a syntax error has been found
+            cerr << " Syntax error in '" << coordinates_filename << "'::" << lineno << endl;
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // Set all the option flags according to the switches specified. Return the
 // index of the first non-option argument
 static int
@@ -264,7 +386,6 @@ decode_switches (int argc, char **argv,
 
     while ((c = getopt_long (argc, argv,
                              "g"  /* graph */
-                             "n"  /* solver */
                              "s"  /* solver */
                              "f"  /* file */
                              "r"  /* variant */
@@ -328,9 +449,6 @@ usage (int status)
  Mandatory arguments:\n\
       -g, --graph [STRING]       filename with the graph to load. The file contents should be arranged according to the 9th DIMACS\n\
                                  Implementation Challenge: Shortest Paths. See the documentation for additional help\n\
-      -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are: 'mDijkstra', 'belA0' and 'K0'. It is possible\n\
-                                 to provide as many as desired in a blank separated list between double quotes, e.g.\n\
-                                  \"mDijkstra belA0\"\n\
       -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are:\n\
                                     + Brute-force search algorithms:\n\
                                        > 'mDijkstra': brute-force variant of mA*\n\
