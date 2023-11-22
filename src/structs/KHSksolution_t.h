@@ -41,6 +41,7 @@ namespace khs {
         int _h0;                       // heuristic distance of the start state
         size_t _expansions;                       // total number of expansions
         double _cpu_time;                                   // elapsed CPU time
+        size_t _mem_usage;                                // memory usage in MB
 
         // all the work being carried out by a specific solver whose signature
         // is stored also in this container
@@ -66,6 +67,7 @@ namespace khs {
             _h0 { 0 },
             _expansions { 0 },
             _cpu_time { 0.0 },
+            _mem_usage { 0 },
             _solver { "" }
             {
                 // Initially solutions are not checked unless the doctor service
@@ -101,6 +103,9 @@ namespace khs {
         const double get_cpu_time () const {
             return _cpu_time;
         }
+        const double get_mem_usage () const {
+            return _mem_usage;
+        }
         const string& get_solver () const {
             return _solver;
         }
@@ -114,6 +119,16 @@ namespace khs {
         }
         void set_solver (const string& solver) {
             _solver = solver;
+        }
+        void set_mem_usage (const size_t mem_usage) {
+            _mem_usage = mem_usage;
+
+            // And here comes the trick. Memory usage is measured only when the
+            // k shortest paths have been computed, i.e., we do not want to slow
+            // down the algorithm by measuring memory usage for every single
+            // solution. This means that memory usage has to be stored in the
+            // last solution in this container
+            _solutions[_solutions.size ()-1].set_mem_usage (mem_usage);
         }
 
         // operator overloading
@@ -263,6 +278,7 @@ namespace khs {
             ss << solutions.get_h0 () << ";";
             ss << solutions.get_expansions() << ";";
             ss << solutions.get_nbcentroids () << ";";
+            ss << solutions.get_mem_usage () << ";";
             ss << solutions.get_cpu_time() << ";";
             ss << solutions.get_solver () << ";";
             ss << solution_t<T, path_t>::get_error_msg (solutions.get_error_code ());

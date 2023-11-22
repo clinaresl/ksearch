@@ -13,14 +13,39 @@
 #ifndef _SOLVER_H_
 #define _SOLVER_H_
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <tuple>
+#include <unistd.h>
 #include <vector>
 
 #include "helpers.h"
 #include "../src/ksearch.h"
+
+// the following function provides a report on the memory usage in Kbytes
+// Literally taken from the gist thirdwing/memory_check.cpp
+void process_mem_usage(double& vm_usage, double& resident_set)
+{
+    vm_usage     = 0.0;
+    resident_set = 0.0;
+
+    // the two fields we want
+    unsigned long vsize;
+    long rss;
+    {
+        std::string ignore;
+        std::ifstream ifs("/proc/self/stat", std::ios_base::in);
+        ifs >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore >> ignore
+                >> ignore >> ignore >> vsize >> rss;
+    }
+
+    long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+    vm_usage = vsize / 1024.0;
+    resident_set = rss * page_size_kb;
+}
 
 // Definition of an instance
 template <typename T>
@@ -179,6 +204,9 @@ private:
             bag.set_domain (_domain);
             bag.set_variant (_variant);
 
+            // Measure the time taken by this solver for solving all its instances
+            auto tstart = std::chrono::system_clock::now ();
+
             // consider this single specification of k values
             for (auto k = std::get<0>(ispec) ; k <= std::get<1>(ispec) ; k+= std::get<2>(ispec)) {
 
@@ -196,6 +224,12 @@ private:
 
                     std::cout << " ⏵ "; std::cout.flush ();
                     auto ksolution = m->solve ();
+
+                    // and while the solver is still alive (and all its data in
+                    // main memory) measure memory usage again in Mbytes
+                    double vm, rss;
+                    process_mem_usage(vm, rss);
+                    ksolution.set_mem_usage((vm + rss)/1024.0);
 
                     // give a name to every individual solution
                     for (auto j = 0 ; j < ksolution.size () ; j++) {
@@ -228,6 +262,10 @@ private:
                     delete m;
                 }
             }
+
+            // Stop the chronometer and show the time taken by this solver
+            auto tend = std::chrono::system_clock::now ();
+            std::cout << std::endl << "   🕒 CPU time: " << 1e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(tend - tstart).count() << " seconds" << std::endl;
 
             // add all solutions generated to the results to report
             _results += bag;

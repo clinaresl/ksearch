@@ -51,8 +51,9 @@ namespace khs {
         // discovered by using a number of centroids. The solution has a
         // solution length (which is derived from the solution path) and a cost,
         // which are not necessarily the same. To compute the solution, a number
-        // of nodes is expanded and a specific CPU running time is used, so that
-        // the number of nodes expanded per second is automatically computed.
+        // of nodes is expanded and a specific CPU running time and memory are
+        // used, so that the number of nodes expanded per second is
+        // automatically computed.
         string _name;                                          // instance name
         int _k;    // number of paths to compute in the k-shortest path problem
         T _start;                                                // start state
@@ -65,6 +66,7 @@ namespace khs {
         size_t _expansions;                       // total number of expansions
         double _cpu_time;                                   // elapsed CPU time
         double _expansions_per_second;       // number of expansions per second
+        size_t _mem_usage;                                // Memory usage in MB
         string _solver;
 
         // Finally, when verifying a solution, an error code shall be given
@@ -77,7 +79,9 @@ namespace khs {
 
         // Explicit constructor - all data has to be provided but: the name
         // which is empty by default; the solution path, and the solution length
-        // which is computed automatically from the solution path
+        // which is computed automatically from the solution path. Memory usage
+        // is always zero for every single solution, but the last one, i.e.,
+        // memory usage is measured only when the k shortest paths have been found
         solution_t (const int k,
                     const path_t<T>& solution, const T& start, const T& goal,
                     const int nbcentroids, const int h0, const int cost,
@@ -92,6 +96,7 @@ namespace khs {
             _cost        { cost        },
             _expansions  { expansions  },
             _cpu_time    { cpu_time    },
+            _mem_usage   { 0           },
             _solver      { solver      }
             {
 
@@ -132,6 +137,8 @@ namespace khs {
             { return _expansions; }
         const double get_cpu_time () const
             { return _cpu_time; }
+        const size_t get_mem_usage () const
+            { return _mem_usage; }
         const double get_expansions_per_second () const
             { return _expansions_per_second; }
         const string& get_solver () const
@@ -142,13 +149,16 @@ namespace khs {
         // setters
         void set_name (const string value)
             { _name = value;}
-        void set_cpu_time (const double value)
-            {
-                // update the CPU time and in passing the number of expansions
-                // per second
-                _cpu_time = value;
-                _expansions_per_second = double(_expansions) / _cpu_time;
-            }
+        void set_cpu_time (const double value) {
+
+            // update the CPU time and in passing the number of expansions
+            // per second
+            _cpu_time = value;
+            _expansions_per_second = double(_expansions) / _cpu_time;
+        }
+        // memory usage has to be explicitly given
+        void set_mem_usage (const size_t value)
+            { _mem_usage = value; }
 
         // operator overloading
         solution_t& operator=(const solution_t&) = default;
@@ -355,6 +365,7 @@ namespace khs {
             stream << solution.get_cost () << ";";
             stream << solution.get_expansions () << ";";
             stream << solution.get_nbcentroids () << ";";
+            stream << solution.get_mem_usage () << ";";
             stream << solution.get_cpu_time () << ";";
             stream << solution.get_expansions_per_second () << ";";
             stream << solution.get_solver () << ";";
