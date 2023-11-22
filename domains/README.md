@@ -136,6 +136,12 @@ of every task is automatically created. The following information is given:
   between successive solution paths, but this is not necessarily true always.
 * *nbcentroids*: number of centroids used for computing the *k* shortest paths
   when using an algorithm from the BELA* family
+* *mem*: memory usage in Megabytes. The measurement combines both the virtual
+  memory and resident set size. The first should not be very relevant, whereas
+  the second might include some values which are not directly related to the
+  memory usage of the search algorithms such as dynamic libraries. Still, it is
+  considered to serve as a good measure of the performance of each algorithm wrt
+  memory usage.
 * *runtime*: CPU runtime until this solution path is found. Also, this value
   might be monotonically increasing between successive solutions of the same *k*
   shortest-path problem, but it is not necessarily true.  
