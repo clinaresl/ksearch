@@ -45,15 +45,15 @@ algorithms:
 
 * Brute-force search algorithms:
 
-+ `mDijkstra`: It consists of expanding every node up to *k* times
-+ `K0`: Uninformed variant of K*
-+ `belA0`: it is the uninformed variant of BELA*
+  + `mDijkstra`: It consists of expanding every node up to *k* times
+  + `K0`: Uninformed variant of K*
+  + `belA0`: it is the uninformed variant of BELA*
 
 * Heuristic search algorithms:
 
-* `mA*`: Informed variant of mDijkstra
-+ `K*`: Original algorithm used for solving the K shortest-path problem with heuristics
-+ `belA*`: Algorithm used for solving the K shortest-path problem which is guaranteed to expand nodes only once
+  * `mA*`: Informed variant of mDijkstra
+  + `K*`: Original algorithm used for solving the K shortest-path problem with heuristics
+  + `belA*`: Algorithm used for solving the K shortest-path problem which is guaranteed to expand nodes only once
 
 # Domain-dependent solvers #
 
@@ -64,7 +64,8 @@ This package comes with a number of domain-dependent solvers under `domains/`:
 * *N-Pancake*
 * *Roadmap* 
 
-For further details, check out the documentation under `domains/`
+Every domain-dependent solver provides all the search algorithms described
+above. For further details, check out the documentation under `domains/`
 
 # License #
 
