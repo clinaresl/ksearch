@@ -60,6 +60,7 @@ algorithms:
 This package comes with a number of domain-dependent solvers under `domains/`:
 
 * *Grid*
+* *2D Pathfinding*
 * *N-Pancake*
 * *Roadmap* 
 
