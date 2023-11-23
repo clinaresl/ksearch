@@ -58,7 +58,7 @@ public:
 
     // setters
     static void set_variant (std::string variant) {
-        if (variant != "unit" and variant != "dimacs") {
+        if (variant != "unit" && variant != "dimacs") {
             throw std::invalid_argument ("[roadmap_t::set_variant] Invalid variant");
         }
         _variant = variant;
@@ -105,10 +105,8 @@ public:
     }
 
    // return the children of this state as a vector of tuples, each containing:
-   // firest, the cost of the operator, secondly, tis heuristic value; thirdly,
-   // the successor state. No heuristics are used (at least initially) in this
-   // domain, so that the following signature is used only for compatibility
-   // with the ksearch library
+   // first, the cost of the operator, secondly, its heuristic value; thirdly,
+   // the successor state.
     void children (int h, const roadmap_t& goal,
         std::vector<std::tuple<int, int, roadmap_t>>& successors);
 

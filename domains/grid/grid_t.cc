@@ -106,7 +106,6 @@ void grid_t::children (int h, const grid_t& goal,
     }
 }
 
-
 // return the heuristic distance to get from this state to the given goal state
 int grid_t::h (const grid_t& goal) const
 {

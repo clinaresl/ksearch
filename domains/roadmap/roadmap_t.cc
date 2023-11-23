@@ -19,10 +19,8 @@ graph_t roadmap_t::_graph;
 string roadmap_t::_variant = "unit";
 
 // return the children of this state as a vector of tuples, each containing:
-// firest, the cost of the operator, secondly, tis heuristic value; thirdly, the
-// successor state. No heuristics are used (at least initially) in this domain,
-// so that the following signature is used only for compatibility with the
-// ksearch library
+// first, the cost of the operator, secondly, its heuristic value; thirdly, the
+// successor state.
 void roadmap_t::children (int h, const roadmap_t& goal,
                           vector<tuple<int, int, roadmap_t>>& successors) {
 

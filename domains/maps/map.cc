@@ -1,13 +1,13 @@
 // -*- coding: utf-8 -*-
-// grid.cc
+// map.cc
 // -----------------------------------------------------------------------------
 //
-// Started on <mar 29-08-2023 18:43:57.939251692 (1693327437)>
+// Started on <jue 23-11-2023 15:47:20.122543047 (1700750840)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
+//
 
 //
-// Implementation of a k shortest-path solver for grids with no obstacles
+// Implementation of a k shortest-path solver for maps
 //
 
 #include <chrono>
@@ -25,7 +25,7 @@
 #include "../solver.h"
 #include "../../src/ksearch.h"
 
-#include "grid_t.h"
+#include "map_t.h"
 
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
@@ -41,7 +41,7 @@ char *program_name;                       // The name the program was run with,
 
 static struct option const long_options[] =
 {
-    {"size", required_argument, 0, 'n'},
+    {"map", required_argument, 0, 'm'},
     {"solver", required_argument, 0, 's'},
     {"file", required_argument, 0, 'f'},
     {"variant", required_argument, 0, 'r'},
@@ -57,9 +57,10 @@ static struct option const long_options[] =
 
 const string get_domain ();
 const string get_variant ();
-const bool verify_state (const int x, const int y, const int length);
+const bool verify_state (const int x, const int y,
+                         const int width, const int height);
 static int decode_switches (int argc, char **argv,
-                            int& size, string& solver_name, string& filename, string& variant,
+                            string& mapname, string& solver_name, string& filename, string& variant,
                             string& k_params, string& csvname, bool& no_doctor, bool& want_summary,
                             bool& want_verbose);
 static void usage (int status);
@@ -67,7 +68,7 @@ static void usage (int status);
 // main entry point
 int main (int argc, char** argv) {
 
-    int size;                                        // size of the square grid
+    string mapname;                    // name of the file with the map to load
     string solver_name;                            // user selection of solvers
     string filename;                            // file with all cases to solve
     string variant;                                    // variant of the domain
@@ -83,7 +84,7 @@ int main (int argc, char** argv) {
     vector<string> variant_choices = {"unit", "octile"};
 
     // arg parse
-    decode_switches (argc, argv, size, solver_name, filename, variant, k_params, csvname, no_doctor, want_summary, want_verbose);
+    decode_switches (argc, argv, mapname, solver_name, filename, variant, k_params, csvname, no_doctor, want_summary, want_verbose);
 
     // process the solver names and get a vector with the signatures of all
     // solvers to execute
@@ -93,6 +94,13 @@ int main (int argc, char** argv) {
     auto kspec = split_ks (k_params);
 
     // parameter checking
+
+    // --mapname
+    if (mapname == "") {
+        cerr << "\n Please, provide a file with the contents of the map to load" << endl;
+        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        exit(EXIT_FAILURE);
+    }
 
     // --file
     if (filename == "") {
@@ -108,15 +116,12 @@ int main (int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (size <= 1) {
-        cerr << "\n The size of the square grid has to be at least 2" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
-        exit(EXIT_FAILURE);
-    }
-
     /* do the work */
 
     // /* !------------------------- INITIALIZATION --------------------------! */
+
+    // first, things first, initialize the map
+    map_t::init (mapname, variant);
 
     // open the given file and retrieve all cases from it
     vector<string> names;
@@ -130,7 +135,7 @@ int main (int argc, char** argv) {
     }
 
     // and now create a vector of tasks to solve
-    vector<instance_t<grid_t>> tasks;
+    vector<instance_t<map_t>> tasks;
     for (auto i = 0 ; i < instances.size () ; i++) {
 
         // verify the start and goal state
@@ -138,13 +143,13 @@ int main (int argc, char** argv) {
         int sy = stoi (instances[i][1]);
         int tx = stoi (instances[i][2]);
         int ty = stoi (instances[i][3]);
-        if (!verify_state (sx, sy, size)) {
-            cerr << "\n The x and y coordinates of the start state should be within the bounds of a square grid of length " << size << endl;
+        if (!verify_state (sx, sy, map_t::get_width (), map_t::get_height ())) {
+            cerr << "\n The x and y coordinates of the start state should be within the bounds of the map (" << map_t::get_width () << "x" << map_t::get_height () << ")" << endl;
             cerr << " (" << sx << "," << sy << ") found in problem id " << names[i] << endl << endl;
             exit (EXIT_FAILURE);
         }
-        if (!verify_state (tx, ty, size)) {
-            cerr << "\n The x and y coordinates of the goal state should be within the bounds of a square grid of length " << size << endl;
+        if (!verify_state (tx, ty, map_t::get_width (), map_t::get_height ())) {
+            cerr << "\n The x and y coordinates of the goal state should be within the bounds of the map (" << map_t::get_width () << "x" << map_t::get_height () << ")" << endl;
             cerr << " (" << tx << "," << ty << ") found in problem id " << names[i] << endl << endl;
             exit (EXIT_FAILURE);
         }
@@ -152,22 +157,19 @@ int main (int argc, char** argv) {
         // in case the specification is correct, add it to the pool of
         // optimization tasks to solve
         tasks.push_back (instance_t{names[i],
-                grid_t{stoi (instances[i][0]), stoi (instances[i][1])},
-                grid_t{stoi (instances[i][2]), stoi (instances[i][3])}});
+                map_t{stoi (instances[i][0]), stoi (instances[i][1])},
+                map_t{stoi (instances[i][2]), stoi (instances[i][3])}});
     }
-
-    // initialize the static data members of the definition of a grid
-    grid_t::set_n (size);
-    grid_t::set_variant (variant);
 
     /* !-------------------------------------------------------------------! */
 
     cout << endl;
-    cout << " size         : " << grid_t::get_n () << endl;
+    cout << " map          : " << mapname << endl;
+    cout << "    width     : " << map_t::get_width () << endl;
+    cout << "    height    : " << map_t::get_height () << endl;
     cout << " solver       : " << solver_name << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
-    cout << " variant      : " << grid_t::get_variant () << endl;
-    cout << " size         : " << grid_t::get_n () << endl;
+    cout << " variant      : " << map_t::get_variant () << endl;
     cout << " K            : ";
     for (auto& ispec: kspec) {
         cout << "[" << get<0>(ispec) << ", " << get<1>(ispec) << ", " << get<2> (ispec) << "] ";
@@ -180,8 +182,8 @@ int main (int argc, char** argv) {
     tstart = chrono::system_clock::now ();
 
     // create an instance of the "generic" domain-dependent solver
-    solver<grid_t> manager (get_domain (), variant,
-                            tasks, k_params);
+    solver<map_t> manager (get_domain (), variant,
+                           tasks, k_params);
 
     // solve all the instances with each solver selected by the user and in the
     // same order given
@@ -215,24 +217,26 @@ const string get_variant () {
     return "unit";
 }
 
-// verify the given state is within the bounds of a square grid of length n
-const bool verify_state (const int x, const int y, const int length)
-{
-    return (x >= 0 && x < length && y >= 0 && y < length);
+// verify the given state is within the bounds of a map with the given width and
+// height
+const bool verify_state (const int x, const int y,
+                         const int width, const int height) {
+
+    return (x >= 0 && x < width && y >= 0 && y < height);
 }
 
 // Set all the option flags according to the switches specified. Return the
 // index of the first non-option argument
 static int
 decode_switches (int argc, char **argv,
-                 int& size, string& solver_name, string& filename, string& variant,
+                 string& mapname, string& solver_name, string& filename, string& variant,
                  string& k_params, string& csvname, bool& no_doctor, bool& want_summary,
                  bool& want_verbose) {
 
     int c;
 
     // Default values
-    size = 10;
+    mapname = "";
     solver_name = "";
     filename = "";
     variant = "unit";
@@ -243,7 +247,7 @@ decode_switches (int argc, char **argv,
     want_verbose = false;
 
     while ((c = getopt_long (argc, argv,
-                             "n"  /* size */
+                             "m"  /* map */
                              "s"  /* solver */
                              "f"  /* file */
                              "r"  /* variant */
@@ -256,8 +260,8 @@ decode_switches (int argc, char **argv,
                              "V", /* version */
                              long_options, (int *) 0)) != EOF) {
         switch (c) {
-        case 'n':  /* --size */
-            size = atoi (optarg);
+        case 'm':  /* --map */
+            mapname = optarg;
             break;
         case 's':  /* --solver */
             solver_name = optarg;
@@ -301,11 +305,12 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the Grid domain (with no obstacles)" << endl << endl;
+    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the Map domain" << endl << endl;
     cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
     cout << "\
  Mandatory arguments:\n\
-      -n, --size [NUMBER]        length of the square grid. By default, 10\n\
+      -m, --map [STRING]         filename with the map to load. The file contents should be arranged according to the file format\n\
+                                 given in movingai. See the documentation for additional help\n\
       -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are:\n\
                                     + Brute-force search algorithms:\n\
                                        > 'mDijkstra': brute-force variant of mA*\n\
