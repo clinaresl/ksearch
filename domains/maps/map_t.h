@@ -39,14 +39,6 @@ private:
     // variant is also shared among all instances
     static std::string _variant;
 
-private:
-
-    // methods
-
-    // returns whether a position is blocked or not
-    bool _blocked (int x,  int y)
-        { return !_map [y*_width+x]; }
-
 public:
 
     // Default constructors are forbidden by default
@@ -110,11 +102,16 @@ public:
     }
 
     friend std::ostream& operator<< (std::ostream& stream, map_t state) {
-        stream << "(" << state.get_x () << ", " << state.get_y () << ")";
+        stream << state.get_x () << " " << state.get_y ();
         return stream;
     }
 
     // methods
+
+    // returns whether a position is blocked or not
+    bool blocked (int x,  int y) {
+        return !_map [y*_width+x];
+    }
 
     // load the map given in the specified file and store the given variant. The
     // file should define a map according to the File Format of movingai
@@ -224,7 +221,7 @@ namespace std {
         size_t operator() (const map_t& right) const {
 
             // The hash function is the location within the map
-            return right.get_y () * map_t::get_width () + right.get_x ();
+            return right.get_y () * right.get_width () + right.get_x ();
         }
 
     }; // struct hash<npancake_t>

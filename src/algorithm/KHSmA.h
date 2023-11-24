@@ -187,7 +187,7 @@ namespace khs {
         closed_t<backnode_t<T>> closed;
 
         // iterate until the k-shortest path problem has been fully solved
-        while (true) {
+        while (open.size () > 0) {
 
             // take the first node from OPEN
             auto node = open.pop_front ();
@@ -241,7 +241,7 @@ namespace khs {
                 closed[ptr] += node.get_backpointer (0);
             }
 
-            // expand this node. Note that the heuristic value is dismissed
+            // expand this node. Note tat the heuristic value is dismissed
             bsolver<T>::_expansions++;
             vector<tuple<int, int, T>> successors;
             const_cast<T&>(node.get_state ()).children ((_brute_force) ? 0 : node.get_h (),
@@ -265,6 +265,10 @@ namespace khs {
                 open.insert (onode, onode.get_f ());
             }
         }
+
+        // at this point, not all solutions have been found. The best is to
+        // return the number of solutions found
+        return ksolution;
     }
 
 } // namespace khs

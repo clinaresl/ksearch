@@ -284,7 +284,7 @@ decode_switches (int argc, char **argv,
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (n-pancake) " << CMAKE_VERSION << endl;
+            cout << " khs (grid) " << CMAKE_VERSION << endl;
             cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl;
             exit (EXIT_OK);
         case 'h':

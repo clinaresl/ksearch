@@ -76,6 +76,11 @@ public:
     T get_start () const { return _start; }
     T get_goal () const { return _goal; }
 
+    friend std::ostream& operator<< (std::ostream& stream, instance_t<T> right) {
+        stream << right.get_name () << " " << right.get_start () << " " << right.get_goal ();
+        return stream;
+    }
+
 }; // class instance_t<T>
 
 // Definition of a "generic" domain-dependent solver for the k shortest-path
@@ -224,6 +229,11 @@ private:
 
                     std::cout << " ⏵ "; std::cout.flush ();
                     auto ksolution = m->solve ();
+
+                    if (ksolution.size () == 0) {
+                        std::cout << _instances[i].get_name () << " ⚠ No solution found!" << std::endl;
+                        continue;
+                    }
 
                     // and while the solver is still alive (and all its data in
                     // main memory) measure memory usage again in Mbytes

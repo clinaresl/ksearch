@@ -35,7 +35,7 @@ void map_t::children (int h, const map_t& goal,
     // approximating the square root of 2
 
     // --west
-    if (_x > 0 && !_blocked (_x-1, _y)) {
+    if (_x > 0 && !blocked (_x-1, _y)) {
         map_t successor {_x-1, _y};
         successors.push_back (tuple<int, int, map_t>{
                 (_variant == "unit") ? 1 : 10,
@@ -44,7 +44,7 @@ void map_t::children (int h, const map_t& goal,
     }
 
     // --east
-    if (_x < _width-1 && !_blocked (_x+1, _y)) {
+    if (_x < _width-1 && !blocked (_x+1, _y)) {
         map_t successor {_x+1, _y};
         successors.push_back (tuple<int, int, map_t>{
                 (_variant == "unit") ? 1 : 10,
@@ -53,7 +53,7 @@ void map_t::children (int h, const map_t& goal,
     }
 
     // --south
-    if (_y > 0 && !_blocked (_x, _y-1)) {
+    if (_y > 0 && !blocked (_x, _y-1)) {
         map_t successor {_x, _y-1};
         successors.push_back (tuple<int, int, map_t>{
                 (_variant == "unit") ? 1 : 10,
@@ -62,7 +62,7 @@ void map_t::children (int h, const map_t& goal,
     }
 
     // --north
-    if (_y < _height-1 && !_blocked (_x, _y+1)) {
+    if (_y < _height-1 && !blocked (_x, _y+1)) {
         map_t successor {_x, _y+1};
         successors.push_back (tuple<int, int, map_t>{
                 (_variant == "unit") ? 1 : 10,
@@ -75,7 +75,7 @@ void map_t::children (int h, const map_t& goal,
     if (_variant == "octile") {
 
         // --southwest
-        if (_x > 0 && _y > 0 && !_blocked (_x-1, _y-1)) {
+        if (_x > 0 && _y > 0 && !blocked (_x-1, _y-1)) {
             map_t successor {_x-1, _y-1};
             successors.push_back (tuple<int, int, map_t>{
                     14,
@@ -84,7 +84,7 @@ void map_t::children (int h, const map_t& goal,
         }
 
         // --southeast
-        if (_x < _width-1 && _y > 0 && !_blocked (_x+1, _y-1)) {
+        if (_x < _width-1 && _y > 0 && !blocked (_x+1, _y-1)) {
             map_t successor {_x+1, _y-1};
             successors.push_back (tuple<int, int, map_t>{
                     14,
@@ -93,7 +93,7 @@ void map_t::children (int h, const map_t& goal,
         }
 
         // --northeast
-        if (_x < _width-1 && _y < _height-1 && !_blocked (_x+1, _y+1)) {
+        if (_x < _width-1 && _y < _height-1 && !blocked (_x+1, _y+1)) {
             map_t successor {_x+1, _y+1};
             successors.push_back (tuple<int, int, map_t>{
                     14,
@@ -102,7 +102,7 @@ void map_t::children (int h, const map_t& goal,
         }
 
         // --northwest
-        if (_x > 0 && _y < _height-1 && !_blocked (_x-1, _y+1)) {
+        if (_x > 0 && _y < _height-1 && !blocked (_x-1, _y+1)) {
             map_t successor {_x-1, _y+1};
             successors.push_back (tuple<int, int, map_t>{
                     14,
