@@ -209,7 +209,7 @@ int main (int argc, char** argv) {
 
 // return the domain of this solver
 const string get_domain () {
-    return "n-pancake";
+    return "maps";
 }
 
 // return the variant of the domain of this solver

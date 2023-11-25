@@ -188,6 +188,8 @@ namespace khs {
             return _solutions[idx];
         }
 
+        // methods
+
         // doctor verifies that this solution to a k shortest path problem is
         // correct:
         //
@@ -259,6 +261,18 @@ namespace khs {
             // at this point, this solution to the k-shortest path problem is
             // proven to be correct
             return true;
+        }
+
+        // the following service removes the i-th solution from this container
+        void remove (const size_t idx) {
+
+            // first, verify the index is within bounds
+            if (idx >= _solutions.size ()) {
+                throw std::out_of_range ("[ksolution_t::remove] out of bounds!");
+            }
+
+            // and then remove the i-th solution
+            _solutions.erase (_solutions.begin () + idx);
         }
 
         // stream out

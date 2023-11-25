@@ -230,27 +230,43 @@ private:
                     std::cout << " ⏵ "; std::cout.flush ();
                     auto ksolution = m->solve ();
 
+                    // in case that no solution has been generated, then skip it
+                    // the stats
                     if (ksolution.size () == 0) {
                         std::cout << _instances[i].get_name () << " ⚠ No solution found!" << std::endl;
                         continue;
                     }
-
-                    // and while the solver is still alive (and all its data in
-                    // main memory) measure memory usage again in Mbytes
-                    double vm, rss;
-                    process_mem_usage(vm, rss);
-                    ksolution.set_mem_usage((vm + rss)/1024.0);
 
                     // give a name to every individual solution
                     for (auto j = 0 ; j < ksolution.size () ; j++) {
                         ksolution[j].set_name (_instances[i].get_name () + "/" + std::to_string (1+j));
                     }
 
-                    // and show the result on the standard output. Prior to
-                    // that, give it a name so that it can be easily recognized
-                    // and record also the name of the solver used
+                    // give this instance a name so that it can be easily
+                    // recognized and record also the name of the solver used
                     ksolution.set_name (_instances[i].get_name ());
                     ksolution.set_solver (m->signature ());
+
+                    // in case a summary was requested then remove all solutions
+                    // but the information of the last one, which is used to
+                    // show the statistics for solving the whole k shortest-path
+                    // problem
+                    if (want_summary) {
+                        while (ksolution.size () > 1) {
+                            ksolution.remove(0);
+                        }
+                    }
+
+                    // and while the solver is still alive (and all its data in
+                    // main memory) measure memory usage again in Mbytes. Note
+                    // that if want_summary was given, then the memory needed
+                    // for storing the solutions is not taken into account
+                    double vm, rss;
+                    process_mem_usage(vm, rss);
+                    ksolution.set_mem_usage((vm + rss)/1024.0);
+
+                    // Verify the solution, if the user requested so and show
+                    // the result on the terminal
                     if (!no_doctor) {
                         ksolution.doctor ();
                     }
