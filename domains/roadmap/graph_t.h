@@ -120,6 +120,8 @@ public:
     const size_t get_nbedges () const { return _nbedges; }
     const std::vector<edge_t>& get_edges (size_t vertex) const { return _edges[vertex]; }
     const vertex_t get_vertex (size_t vertex) const { return _vertices[vertex]; }
+    const size_t get_nbvertices () const { return _vertices.size (); }
+    const std::vector<vertex_t>& get_vertices () const { return _vertices; }
 
     // methods
 
@@ -151,5 +153,4 @@ public:
 // Local Variables:
 // mode:cpp
 // fill-column:80
-
 // End:

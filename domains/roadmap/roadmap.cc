@@ -96,7 +96,7 @@ int main (int argc, char** argv) {
     // arg parse
     decode_switches (argc, argv, graph_name, solver_name, filename, variant, k_params, csvname, no_doctor, want_summary, want_verbose);
 
-    // for the name of the graph get the coordinates filename and process it
+    // get the coordinates filename from the graph name
     if (!get_coordinates_filename (graph_name, coordinates_name)) {
         cerr << " Warning: no coordinates file found!" << endl;
         cerr << "          it will not be possible to apply any heuristics" << endl << endl;

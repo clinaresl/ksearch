@@ -7,10 +7,10 @@ add_executable (map
 
 target_link_libraries (map LINK_PUBLIC ksearch)
 
-add_executable (generator
+add_executable (gen-map
   getopt1.c
   getopt.c
   map_t.cc
   generator.cc)
 
-target_link_libraries (generator LINK_PUBLIC ksearch)
+target_link_libraries (gen-map LINK_PUBLIC ksearch)

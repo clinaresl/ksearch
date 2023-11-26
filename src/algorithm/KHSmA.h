@@ -241,7 +241,7 @@ namespace khs {
                 closed[ptr] += node.get_backpointer (0);
             }
 
-            // expand this node. Note tat the heuristic value is dismissed
+            // expand this node. Note that the heuristic value is dismissed
             bsolver<T>::_expansions++;
             vector<tuple<int, int, T>> successors;
             const_cast<T&>(node.get_state ()).children ((_brute_force) ? 0 : node.get_h (),
