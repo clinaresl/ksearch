@@ -39,6 +39,11 @@ private:
     // the cost of every edge is read from the definition file
     static std::string _variant;
 
+    // The heuristic used in the roadmap is very time consuming. Thus, in case
+    // brute-force search variants are going to be used, the computation of the
+    // heuristic function must be skipped for the sake of efficiency
+    static bool _brute_force;
+
 public:
 
     // Default constructors are forbidden by default
@@ -93,7 +98,11 @@ public:
     // the 9th DIMACS competition.
     static void init (const std::string& filename,
                       const std::map<int, std::pair<double, double>>& coordinates,
+                      const bool brute_force = false,
                       const std::string& variant = "unit") {
+
+        // set whether the heuristic should be computed or not
+        roadmap_t::_brute_force = brute_force;
 
         // set the given variant
         roadmap_t::_variant = variant;

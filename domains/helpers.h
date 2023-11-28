@@ -30,6 +30,9 @@
 static std::vector<std::string> ack_solvers {"mDijkstra", "belA0", "K0",
     "mA*", "belA*", "K*"};
 
+// signature of brute-force search variants
+static std::vector<std::string> brute_force_solvers {"mDijkstra", "belA0", "K0"};
+
 // Left trimming a string
 static inline std::string& ltrim (std::string& s) {
     s.erase (s.begin(), std::find_if (s.begin(), s.end(), [](int ch) {

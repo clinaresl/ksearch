@@ -11,6 +11,7 @@
 // Paths http://www.dis.uniroma1.it/~challenge9
 //
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -63,6 +64,7 @@ static struct option const long_options[] =
 
 const string get_domain ();
 const string get_variant ();
+bool brute_force (const string& solver_name);
 void get_testcases (const string& filename, vector<instance_t<roadmap_t>>& instances);
 bool get_coordinates_filename (const string& filename, string& coordinates_filename);
 bool get_coordinates (const string& coordinates_filename,
@@ -150,7 +152,7 @@ int main (int argc, char** argv) {
     /* !------------------------- INITIALIZATION --------------------------! */
 
     // initialize the static data members of the definition of a roadmap
-    roadmap_t::init (graph_name, coordinates, variant);
+    roadmap_t::init (graph_name, coordinates, brute_force (solver_name), variant);
     auto nbedges = roadmap_t::get_graph ().get_nbedges ();
 
     // open the given file and retrieve all cases from it
@@ -167,7 +169,7 @@ int main (int argc, char** argv) {
 
     cout << endl;
     cout << " graph        : " << graph_name << " (" << nbedges << " edges processed)" << endl;
-    cout << " solver       : " << solver_name << endl;
+    cout << " solver       : " << solver_name << "( brute force: " << brute_force (solver_name) << ")" << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << variant << endl;
     cout << " K            : ";
@@ -216,6 +218,16 @@ const string get_domain () {
 const string get_variant () {
     return "dimacs";
 }
+
+// given the name of a solver, it returns true if it is a brute-force variant,
+// and false otherwise. The name of the brute-force search algorithms are stored
+// in a separate set
+bool brute_force (const string& solver_name) {
+    return find (brute_force_solvers.begin (),
+                 brute_force_solvers.end (),
+                 solver_name) != brute_force_solvers.end ();
+}
+
 
 // open the specified filename and retrieve the name of every instance (assigned
 // as an integer from 0 onwards) and a vector of strings with the contents of

@@ -16,6 +16,7 @@ using namespace std;
 
 // Static vars
 graph_t roadmap_t::_graph;
+bool roadmap_t::_brute_force = false;
 string roadmap_t::_variant = "unit";
 
 // return the children of this state as a vector of tuples, each containing:
@@ -37,8 +38,12 @@ void roadmap_t::children (int h, const roadmap_t& goal,
                                               0,
                                               successor));
         } else {
+
+            // even if we are running in the dimacs variant, ignore the
+            // computation of the heuristic function isf a brute-force variant
+            // is being used
             successors.push_back (make_tuple (edge.get_weight (),
-                                              successor.h (goal),
+                                              (roadmap_t::_brute_force) ? 0 : successor.h (goal),
                                               successor));
         }
     }
@@ -48,6 +53,12 @@ void roadmap_t::children (int h, const roadmap_t& goal,
 // The heuristic function implemented is the air distance according to the
 // cosine law using a value for the earth radius equal to 6530 kms
 int roadmap_t::h (const roadmap_t& goal) const {
+
+    // in case a brute force search algorithm is being used, then ignore the
+    // computation of the heuristic function
+    if (roadmap_t::_brute_force) {
+        return 0;
+    }
 
     // if this is the goal, then return 0 immediately
     if (_index == goal.get_index ()) {
