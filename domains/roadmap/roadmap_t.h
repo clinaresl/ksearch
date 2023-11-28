@@ -22,8 +22,6 @@
 
 #include "graph_t.h"
 
-constexpr int EARTH_RADIUS = 6'530'000;
-
 // Class definition
 //
 // Definition of a single state in the roadmap domain

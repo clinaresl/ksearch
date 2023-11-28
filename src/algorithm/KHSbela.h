@@ -119,8 +119,7 @@ namespace khs {
         // The following method provides a convenient wrapper to generate
         // solutions more comfortably
         const solution_t<T, vector> generate_solution (const vector<T>& path,
-                                                       const int g,
-                                                       const string& signature) {
+                                                       const int g) {
 
             // return a solution with this information
             return solution_t<T, vector> (bsolver<T>::_k,
@@ -132,7 +131,7 @@ namespace khs {
                                           g,
                                           bsolver<T>::_expansions,
                                           bsolver<T>::get_cpu_time (),
-                                          signature);
+                                          signature ());
         }
 
         // every solver must be uniquely identified by a signature
@@ -197,6 +196,12 @@ namespace khs {
                                           closed_t<labelednode_t<T>>& closed,
                                           bucket_t<centroid_t>& centroids,
                                           size_t bound = std::numeric_limits<size_t>::max ());
+
+        // brute-force variant of BELA*, the so-called BELA0
+        ksolution_t<T, vector> solve0 ();
+
+        // heuristic implementation of BELA*
+        ksolution_t<T, vector> solveStar ();
 
         // the main service of this class computes a solution of the k-shortest
         // path problem from the start to the goal using one variant of BELA*:
@@ -550,7 +555,7 @@ namespace khs {
                 // collection of solutions to reeturn. Note the cost of every
                 // path is equal to the overall cost of the centroid indeed!
                 bsolver<T>::_tend = chrono::system_clock::now ();
-                solutions += generate_solution (path, centroid.get_cost (), signature ());
+                solutions += generate_solution (path, centroid.get_cost ());
 
                 // in case the bound has been reached, return the current
                 // solutions
@@ -564,18 +569,9 @@ namespace khs {
         return solutions;
     }
 
-    // the main service of this class computes a solution of the k-shortest path
-    // problem from the start to the goal using one variant of BELA*:
-    //
-    //    * If brute_force is true, then BELA0*, i.e., with no heuristics is
-    //      used
-    //    * If brute_force is false then the heuristic variant of BELA* is
-    //      employed
-    //
-    // Importantly, the solutions shall be returned in the same order they are
-    // generated!
+    // brute-force variant of BELA*, the so-called BELA0
     template <typename T>
-    ksolution_t<T, vector> bela<T>::solve () {
+    ksolution_t<T, vector> bela<T>::solve0 () {
 
         // Start the chrono!
         bsolver<T>::_tstart = chrono::system_clock::now ();
@@ -594,7 +590,7 @@ namespace khs {
             // create then a single solution with no path (and no expansions!)
             std::vector<T> path;
             bsolver<T>::_tend = chrono::system_clock::now ();
-            ksolution += generate_solution (path, 0, (_brute_force) ? "BELA0*" : "BELA*");
+            ksolution += generate_solution (path, 0);
 
             // and return
             return ksolution;
@@ -605,8 +601,7 @@ namespace khs {
         // backpointer
         _start += labeledbackpointer_t{string::npos, 0};
         bucket_t<labelednode_t<T>> open;
-        _start.set_h ((_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
-        open.insert (_start, (_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
+        open.insert (_start, 0);
 
         // also, create a closed list for storing expanded nodes
         closed_t<labelednode_t<T>> closed;
@@ -623,8 +618,7 @@ namespace khs {
             auto node = open.pop_front ();
 
             // before expanding any node from OPEN, check whether there are any
-            // centroids with a cost less or equal than the f-value value of the
-            // current layer
+            // centroids with a cost less or equal than the current f-value
             auto minz = centroids.get_mini ();
             while (centroids.size () > 0 && minz <= node.get_f () && centroids.size (minz) > 0 ) {
 
@@ -634,9 +628,9 @@ namespace khs {
 
                 // get all paths represented by this centroid. Use here an upper
                 // bound equal to the number of requested paths minus the number
-                // of solution paths already found, so that if that number is
-                // achieved now it is possible to abort execution and exit with
-                // k shortest-paths
+                // of solution paths already found, so that achieving that
+                // number it is possible to abort execution and exit with k
+                // shortest-paths
                 ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
 
                 // and add them to the solutions already found. In case the
@@ -651,13 +645,13 @@ namespace khs {
                 minz = centroids.get_mini ();
             }
 
+            // check whether this node has been expanded before or not
+            auto ptr = closed.find (node);
+
             // in case this is the goal state
             if (node.get_state () == _goal.get_state ()) {
 
-                // first, ensure that the goal state gets also stored in CLOSED
-                auto ptr = closed.find (node);
-
-                // in case it has never been generated
+                // in case it has never been expanded
                 if (ptr == string::npos) {
 
                     // then add it to the CLOSED list
@@ -671,8 +665,7 @@ namespace khs {
                 // next, add the edge from the parent to the goal as a centroid
                 // ---in representation of direct paths from the start state to
                 // the goal. Note that the backwards g-value of the goal state
-                // must be zero and thus, it is not used in the computation of
-                // the overall cost of the new centroid
+                // must be zero and thus, only one centroid can be generated
                 auto parent = closed[node.get_backpointer (0).get_pointer ()];
                 centroid_t z { node.get_backpointer (0).get_pointer (),
                     ptr,
@@ -681,14 +674,11 @@ namespace khs {
 
                 // finally, skip the expansion of the goal state. This is very
                 // important! on one hand, we are never interested in solutions
-                // that contain the goal state more than once, on the other
+                // that contain the goal state more than once; on the other
                 // hand, skipping the expansion of the goal state ensures that
                 // no centroid starting from it will ever be created
                 continue;
             }
-
-            // check whether this node has been expanded before or not
-            auto ptr = closed.find (node);
 
             // in case it has never been expanded
             if (ptr == string::npos) {
@@ -731,17 +721,13 @@ namespace khs {
             // expand this node
             bsolver<T>::_expansions++;
             vector<tuple<int, int, T>> successors;
-            const_cast<T&>(node.get_state ()).children ((_brute_force) ? 0 : node.get_h (),
-                                                        _goal.get_state (),
-                                                        successors);
+            const_cast<T&>(node.get_state ()).children (0, _goal.get_state (), successors);
 
             // and insert them all in OPEN adding the right labeled backpointers
             for (auto& successor : successors) {
 
                 // create a new labeled node with this successor
-                labelednode_t<T> onode{get<2>(successor),
-                    (_brute_force) ? 0 : get<1>(successor),
-                    node.get_g ()+get<0>(successor)};
+                labelednode_t<T> onode{get<2>(successor), 0, node.get_g ()+get<0>(successor)};
 
                 // set the labeled backpointer to the location of its parent
                 onode += labeledbackpointer_t{ptr, get<0>(successor)};
@@ -779,6 +765,235 @@ namespace khs {
         // number of paths between two vertices)
         return ksolution;
     }
+
+    // heuristic implementation of BELA*
+    template <typename T>
+    ksolution_t<T, vector> bela<T>::solveStar () {
+
+        // Start the chrono!
+        bsolver<T>::_tstart = chrono::system_clock::now ();
+
+        // First things first, create a container to store all solutions found
+        ksolution_t<T, vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
+
+        // In case the start and the goal nodes are the same, return immediately
+        // with a single empty solution, and only one in spite of the number of
+        // solutions requested. Even if the main loop of BELA* can recognize
+        // this case, it would try to find (k-1) additional solution paths, but
+        // this is impossible as no solution path should contain the goal state
+        // more than once!
+        if (_start == _goal) {
+
+            // create then a single solution with no path (and no expansions!)
+            std::vector<T> path;
+            bsolver<T>::_tend = chrono::system_clock::now ();
+            ksolution += generate_solution (path, 0);
+
+            // and return
+            return ksolution;
+        }
+
+        // if the start and goal nodes are different, then create an open list
+        // and add the start state to it with its f-value and no labeled
+        // backpointer
+        _start += labeledbackpointer_t{string::npos, 0};
+        bucket_t<labelednode_t<T>> open;
+        _start.set_h (_start.get_state ().h (_goal.get_state ()));
+        open.insert (_start, _start.get_state ().h (_goal.get_state ()));
+
+        // also, create a closed list for storing expanded nodes
+        closed_t<labelednode_t<T>> closed;
+
+        // finally, create a bucket of centroids for storing those that are
+        // discovered during the search process
+        bucket_t<centroid_t> centroids;
+
+        // iterate utnil the k-shortest path problem has been fully solved, or
+        // OPEN is exhausted
+        while (open.size ()) {
+
+            // take the first node from OPEN
+            auto node = open.pop_front ();
+
+            // before expanding any node from OPEN, check whether there are any
+            // centroids with a cost less or equal than the current f-value
+            auto minz = centroids.get_mini ();
+            while (centroids.size () > 0 && minz <= node.get_f () && centroids.size (minz) > 0 ) {
+
+                // add all paths represented by this centroid and add them to
+                // the solution of the k shortest-path problem
+                auto z = centroids.pop_front ();
+
+                // get all paths represented by this centroid. Use here an upper
+                // bound equal to the number of requested paths minus the number
+                // of solution paths already found, so that achieving that
+                // number it is possible to abort execution and exit with k
+                // shortest-paths
+                ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
+
+                // and add them to the solutions already found. In case the
+                // requested number of solutions has been already found, then
+                // stop the chrono and exit immediately. Job done!
+                ksolution += solutions;
+                if (ksolution.size () >= bsolver<T>::_k) {
+                    return ksolution;
+                }
+
+                // and get the overall cost of the next available centroid
+                minz = centroids.get_mini ();
+            }
+
+            // check whether this node has been expanded before or not
+            auto ptr = closed.find (node);
+
+            // in case this is the goal state
+            if (node.get_state () == _goal.get_state ()) {
+
+                // in case it has never been expanded
+                if (ptr == string::npos) {
+
+                    // then add it to the CLOSED list
+                    ptr = closed.insert (node);
+                } else {
+
+                    // otherwise, update its labeled backpointers
+                    closed[ptr] += node.get_backpointer (0);
+                }
+
+                // next, add the edge from the parent to the goal as a centroid
+                // ---in representation of direct paths from the start state to
+                // the goal. Note that the backwards g-value of the goal state
+                // must be zero and thus, only one centroid can be generated
+                auto parent = closed[node.get_backpointer (0).get_pointer ()];
+                centroid_t z { node.get_backpointer (0).get_pointer (),
+                    ptr,
+                    parent.get_g () + node.get_backpointer (0).get_cost () };
+                centroids.insert (z, parent.get_g () + node.get_backpointer (0).get_cost ());
+
+                // finally, skip the expansion of the goal state. This is very
+                // important! on one hand, we are never interested in solutions
+                // that contain the goal state more than once; on the other
+                // hand, skipping the expansion of the goal state ensures that
+                // no centroid starting from it will ever be created
+                continue;
+            }
+
+            // in case it has never been expanded
+            if (ptr == string::npos) {
+
+                // then add it to CLOSED for the first time. Note that the new
+                // node in CLOSED contains only one labeled backpointer, the one
+                // stored in OPEN
+                ptr = closed.insert (node);
+            } else {
+
+                // Otherwise, if the node already exists in CLOSED then add a
+                // new labeled back pointer
+                closed[ptr] += node.get_backpointer (0);
+
+                // and check whether a centroid has been discovered, i.e.,
+                // whether this node already has some gb-values
+                auto parent = closed[node.get_backpointer (0).get_pointer ()];
+                for (auto ibg : closed[ptr].get_gb ()) {
+
+                    // and add a centroid from its parent to it with this
+                    // gb-value
+                    auto overall_cost = parent.get_g () + node.get_backpointer (0).get_cost () + ibg;
+                    centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
+                    centroids.insert (z, overall_cost);
+                }
+
+                // auto parent = closed[node.get_backpointer (0).get_pointer ()];
+                // if (parent.get_g () + node.get_backpointer (0).get_cost () > closed[ptr].get_g ()) {
+
+                //     // if, and only if, this node has been used in the
+                //     // construction of prefixes before, i.e., if and only if it
+                //     // has at least one backward g-value, then create a new
+                //     // centroid for each backward g-value found
+                //     for (auto ibg : closed[ptr].get_gb ()) {
+
+                //         // in case a centroid has been discovered, then add it
+                //         // to the collection of centroids to process
+                //         auto overall_cost = parent.get_g () + node.get_backpointer (0).get_cost () + ibg;
+                //         centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
+                //         centroids.insert (z, overall_cost);
+                //     }
+                // }
+
+                // and continue, skipping the expansion of this node. Here you
+                // are the beauty of BELA*
+                continue;
+            }
+
+            // expand this node
+            bsolver<T>::_expansions++;
+            vector<tuple<int, int, T>> successors;
+            const_cast<T&>(node.get_state ()).children (node.get_h (), _goal.get_state (), successors);
+
+            // and insert them all in OPEN adding the right labeled backpointers
+            for (auto& successor : successors) {
+
+                // create a new labeled node with this successor
+                labelednode_t<T> onode{get<2>(successor), get<1>(successor), node.get_g ()+get<0>(successor)};
+
+                // set the labeled backpointer to the location of its parent
+                onode += labeledbackpointer_t{ptr, get<0>(successor)};
+
+                // and add it to OPEN using the f-value as its index
+                open.insert (onode, onode.get_f ());
+            }
+        }
+
+        // At this point, the OPEN list has been exhausted so that the only way
+        // to find new shortest-paths consists of using the centroids
+        while (centroids.size () > 0) {
+
+            // get the next centroid and compute all its paths. Note that, in
+            // the process, other centroids are expected to be found, though
+            // this might not happen in the case of directed graphs, where the
+            // number of paths between two vertices can be bounded
+            auto z = centroids.pop_front ();
+            ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
+
+            // and add them to the solutions already found. In case the
+            // requested number of solutions has been already found, then
+            // stop the chrono and exit immediately. Job done!
+            ksolution += solutions;
+            if (ksolution.size () >= bsolver<T>::_k) {
+                bsolver<T>::_tend = chrono::system_clock::now ();
+                return ksolution;
+            }
+        }
+
+        // As noted above, when solving the k-shortest non-simple path problem,
+        // the number of solutions returned might not get to k. In this case,
+        // there is not much to do other than just returning the number of paths
+        // encountered between both vertices (which is paramount to count the
+        // number of paths between two vertices)
+        return ksolution;
+    }
+
+    // the main service of this class computes a solution of the k-shortest
+    // path problem from the start to the goal using one variant of BELA*:
+    //
+    //    * If brute_force is true, then BELA0*, i.e., with no heuristics is
+    //      used
+    //    * If brute_force is false then the heuristic variant of BELA* is
+    //      employed
+    //
+    // Importantly, the solutions shall be returned in the same order they
+    // are generated!
+    template<typename T>
+    ksolution_t<T, vector> bela<T>::solve () {
+
+        // in case _brute_force is given, use the brute-force variant of BELA*,
+        // otherwise use the heuristic variant
+        if (_brute_force) {
+            return solve0 ();
+        }
+        return solveStar ();
+    }
+
 
 } // namespace khs
 

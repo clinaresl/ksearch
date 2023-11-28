@@ -141,7 +141,7 @@ int graph_t::load (const std::string& filename,
             double long1 = ifrom->second.first;
             double long2 = ito->second.first;
 
-            int h = int (acos (sin (lat1) * sin (lat2) + cos (lat1) * cos (lat2) * cos (long2 - long1)) * 6'530'000);
+            int h = int (acos (sin (lat1) * sin (lat2) + cos (lat1) * cos (lat2) * cos (long2 - long1)) * EARTH_RADIUS);
 
             // check inconsistencies
             if (h > cost) {
