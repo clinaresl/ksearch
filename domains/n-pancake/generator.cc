@@ -7,7 +7,7 @@
 //
 
 //
-// Generator of random instances in the maps domain
+// Generator of random instances in the npancake domain
 //
 
 #include <chrono>
@@ -23,10 +23,11 @@
 
 #include <getopt.h>
 
+#include "../helpers.h"
 #include "../solver.h"
 #include "../../src/ksearch.h"
 
-#include "map_t.h"
+#include "npancake_t.h"
 
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
@@ -42,45 +43,48 @@ char *program_name;                       // The name the program was run with,
 
 static struct option const long_options[] =
 {
-    {"map", required_argument, 0, 'm'},
+    {"size", required_argument, 0, 's'},
     {"number", required_argument, 0, 'n'},
     {"file", required_argument, 0, 'f'},
     {"distance", required_argument, 0, 'D'},
+    {"variant", required_argument, 0, 'X'},
     {"verbose", no_argument, 0, 'v'},
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'V'},
     {NULL, 0, NULL, 0}
 };
 
-int get_instances (int num_instances, int distance,
-                   vector<instance_t<map_t>>& instances);
-void write_instances (const vector<instance_t<map_t>>& instances, string filename);
+int get_instances (int size, int num_instances, int distance,
+                   vector<instance_t<npancake_t>>& instances);
+void write_instances (const vector<instance_t<npancake_t>>& instances, string filename);
 static int decode_switches (int argc, char **argv,
-                            string& mapname, int& number, string& filename, int& distance,
+                            int& size, int& number, string& filename, int& distance, string& variant,
                             bool& want_verbose);
 static void usage (int status);
 
 // main entry point
 int main (int argc, char** argv) {
 
-    string mapname;                    // name of the file with the map to load
+    int size;                         // length of the permutations to generate
     int number;                              // number of instances to generate
     string filename;                            // file with all cases to solve
     int distance;              // minimum distance between start and goal state
+    string variant;      // variant of the n-pancake, either unit or heavy-cost
     bool want_verbose;                  // whether verbose output was requested
     chrono::time_point<chrono::system_clock> tstart, tend;          // CPU time
 
     // variables
     program_name = argv[0];
+    vector<string> variant_choices = {"unit", "heavy-cost"};
 
     // arg parse
-    decode_switches (argc, argv, mapname, number, filename, distance, want_verbose);
+    decode_switches (argc, argv, size, number, filename, distance, variant, want_verbose);
 
     // parameter checking
 
-    // --mapname
-    if (mapname == "") {
-        cerr << "\n Please, provide a file with the contents of the map to load" << endl;
+    // --size
+    if (size == 0) {
+        cerr << "\n Please, provide the length of the permutations to generate" << endl;
         cerr << " See " << program_name << " --help for more details" << endl << endl;
         exit(EXIT_FAILURE);
     }
@@ -107,21 +111,27 @@ int main (int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
+    // --variant
+    if (!get_choice (variant, variant_choices)) {
+        cerr << "\n Please, provide a correct name for the variant with --variant" << endl;
+        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        exit(EXIT_FAILURE);
+    }
+
     /* do the work */
 
     // /* !------------------------- INITIALIZATION --------------------------! */
 
-    // first, things first, initialize the map, using the unit variant arbitrarily
-    map_t::init (mapname, "unit");
+    // first, things first, initialize the heuristic table of the n-pancake
+    npancake_t::init (variant);
 
     /* !-------------------------------------------------------------------! */
 
     cout << endl;
-    cout << " map            : " << mapname << endl;
-    cout << "    width       : " << map_t::get_width () << endl;
-    cout << "    height      : " << map_t::get_height () << endl;
+    cout << " size           : " << size << endl;
     cout << " file           : " << filename << " (" << number << " instances)" << endl;
-    cout << " distance       : " << distance << "%" << endl << endl;
+    cout << " distance       : " << distance << endl;
+    cout << " variant        : " << variant << "%" << endl << endl;
 
     /* !--------------------------- GENERATION ----------------------------! */
 
@@ -129,8 +139,8 @@ int main (int argc, char** argv) {
     tstart = chrono::system_clock::now ();
 
     // generate the random instances
-    vector<instance_t<map_t>> tasks;
-    get_instances (number, distance, tasks);
+    vector<instance_t<npancake_t>> tasks;
+    get_instances (size, number, distance, tasks);
 
     // and write them in the specified file
     write_instances (tasks, filename);
@@ -144,56 +154,46 @@ int main (int argc, char** argv) {
     return (EXIT_OK);
 }
 
-// Randomly generate num_instances in the specified map and return them in a
+// Randomly generate num_instances of the specified length and return them in a
 // vector. The heuristic distance between every the start and goal states of
 // every task has to be at least equal to the given distance.
 //
 // Return the number of instances generated
-int get_instances (int num_instances, int distance,
-                   vector<instance_t<map_t>>& instances) {
+int get_instances (int size, int num_instances, int distance,
+                   vector<instance_t<npancake_t>>& instances) {
 
-    int width = map_t::get_width ();                        // width of the map
-    int height = map_t::get_height ();                     // height of the map
+    // random generator
+    auto rng = std::default_random_engine {};
 
-    // random generators
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> wdist(0,width-1);
-    std::uniform_int_distribution<std::mt19937::result_type> hdist(0,height-1);
-
-    // compute the maximum heuristic distance, i.e., from (0, 0) to (width-1,
-    // height-1)
-    map_t min_start {0,0};
-    map_t max_goal {width-1, height-1};
-    int max_distance = min_start.h (max_goal);
+    // create the identity permutation which is used as the goal state
+    vector<int> identity;
+    for (auto i = 0 ; i < size ; identity.push_back (i++));
+    npancake_t goal {identity};
+    cout << " * " << goal << endl; cout.flush ();
 
     while (instances.size () < num_instances) {
 
-        // randomly pick up a couple of locations from the given map
-        int x0 = wdist (rng); int y0 = hdist (rng);
-        int x1 = wdist (rng); int y1 = hdist (rng);
-        map_t start{x0, y0};
-        map_t goal {x1, y1};
+        // create a random instance just by shuffling a copy of the goal state
+        vector<int> n (identity);
+        shuffle (n.begin (), n.end (), rng);
+        npancake_t start {n};
 
-        // compute their heuristic distance
-        int h = start.h (goal);
-
-        // accept this pair if and only if they are not blocked and their
-        // heuristic distance is at least the specified one
-        if (!start.blocked (x0, y0) && !goal.blocked (x1, y1) &&
-            h >= distance * max_distance / 100 ) {
+        // accept this pair if and only if the heuristic distance is either
+        // larger or equal than the given distance
+        if (start.h (goal) >= distance) {
 
             // add this instance to the vector to return
-            instances.push_back (instance_t<map_t>{to_string (instances.size ()),
+            instances.push_back (instance_t<npancake_t>{to_string (instances.size ()),
                     start, goal});
         }
     }
 
-    return instances.size ();
+    // return instances.size ();
+    return 0;
 }
 
 // write all the given instances in the specified filename
-void write_instances (const vector<instance_t<map_t>>& instances, string filename) {
+void write_instances (const vector<instance_t<npancake_t>>& instances, string filename) {
 
     std::ofstream istream (filename, ios::out);
 
@@ -205,7 +205,9 @@ void write_instances (const vector<instance_t<map_t>>& instances, string filenam
     // write all instances in the given file
     for (auto& instance : instances) {
 
-        istream << instance << endl;
+        // do not show the goal, as it is always assumed to be the identity
+        // permutation
+        istream << instance.get_name () << " " << instance.get_start () << endl;
     }
 }
 
@@ -213,30 +215,32 @@ void write_instances (const vector<instance_t<map_t>>& instances, string filenam
 // index of the first non-option argument
 static int
 decode_switches (int argc, char **argv,
-                 string& mapname, int& number, string& filename, int& distance,
+                 int& size, int& number, string& filename, int& distance, string& variant,
                  bool& want_verbose) {
 
     int c;
 
     // Default values
-    mapname = "";
+    size = 0;
     number = 100;
     filename = "";
     distance = 0;
+    variant = "unit";
     want_verbose = false;
 
     while ((c = getopt_long (argc, argv,
-                             "m"  /* map */
+                             "s"  /* size */
                              "n"  /* number */
                              "f"  /* file */
                              "D"  /* distance */
+                             "X"  /* variant */
                              "v"  /* verbose */
                              "h"  /* help */
                              "V", /* version */
                              long_options, (int *) 0)) != EOF) {
         switch (c) {
-        case 'm':  /* --map */
-            mapname = optarg;
+        case 's':  /* --size */
+            size = stoi (optarg);
             break;
         case 'n':  /* --solver */
             number = stoi (optarg);
@@ -247,11 +251,14 @@ decode_switches (int argc, char **argv,
         case 'D': /* --distance */
             distance = stoi (optarg);
             break;
+        case 'X':  /* --variant */
+            variant = optarg;
+            break;
         case 'v':  /* --verbose */
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (maps generator) " << CMAKE_VERSION << endl;
+            cout << " khs (npancake generator) " << CMAKE_VERSION << endl;
             cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl;
             exit (EXIT_OK);
         case 'h':
@@ -268,21 +275,19 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " Random generator of instances for the maps domain" << endl << endl;
+    cout << endl << " " << program_name << " Random generator of instances for the N-Pancake domain" << endl << endl;
     cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
     cout << "\
  Mandatory arguments:\n\
-      -m, --map [STRING]         filename with the map to load. The file contents should be arranged according to the file format\n\
-                                 given in movingai. See the documentation for additional help\n\
-      -n, --number [NUMBER       Number of instances to generate. By default, 100]\n\
-      -f, --file [STRING]        filename used to store all the random instances. Each line consists of five digits: the first\n\
-                                 one is the problem id, which has to be unique; the second and third digits are the x- and\n\
-                                 y-coordinates of the start state; the last two digits are the x- andy-coordinates of the goal\n\
-                                 state. Note that test cases are relative to the map given in --map\n\
+      -s, --size [NUMBER]        length of the permutations to generate\n\
+      -n, --number [NUMBER]      Number of instances to generate. By default, 100]\n\
+      -f, --file [STRING]        filename used to store all the random instances. Each line consists of a problem id and the\n\
+                                 permutation.\n\
 \n\
  Optional arguments:\n\
-      -D, --distance [NUMBER]    Minimum heuristic distance between the start and goal states randomly generated measured as a\n\
-                                 percentage ratio of the maximum distance. By default, 0\n                                                        \
+      -D, --distance [NUMBER]    Minimum heuristic distance between the start and goal states randomly generatedBy default, 0\n\
+      -X, --variant [STRING]     variant to use for measuring the heuristic distance between two states, either 'unit' or\n\
+                                 'heavy-cost'. By default, 'unit'\n\
 \n\
  Misc arguments:\n\
       --verbose                  print more information\n\

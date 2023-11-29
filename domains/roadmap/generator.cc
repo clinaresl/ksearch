@@ -384,7 +384,7 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the Map domain" << endl << endl;
+    cout << endl << " " << program_name << " Random generator of instances for the Roadmap domain" << endl << endl;
     cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
     cout << "\
  Mandatory arguments:\n\
