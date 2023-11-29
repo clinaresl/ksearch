@@ -169,7 +169,7 @@ int main (int argc, char** argv) {
 
     cout << endl;
     cout << " graph        : " << graph_name << " (" << nbedges << " edges processed)" << endl;
-    cout << " solver       : " << solver_name << "( brute force: " << brute_force (solver_name) << ")" << endl;
+    cout << " solver       : " << solver_name << " " << git_describe () << "( brute force: " << brute_force (solver_name) << ")" << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << variant << endl;
     cout << " K            : ";

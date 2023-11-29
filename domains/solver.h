@@ -198,6 +198,7 @@ private:
         // the summary flag
         _results.set_domain (_domain);
         _results.set_variant (_variant);
+        _results.set_version (git_describe ());
         _results.set_summary (want_summary);
 
         // for all values of k selected by the user
@@ -244,8 +245,10 @@ private:
 
                     // give this instance a name so that it can be easily
                     // recognized and record also the name of the solver used
+                    // and the version of this code
                     ksolution.set_name (_instances[i].get_name ());
                     ksolution.set_solver (m->signature ());
+                    ksolution.set_version (git_describe ());
 
                     // in case a summary was requested then remove all solutions
                     // but the information of the last one, which is used to

@@ -167,7 +167,7 @@ int main (int argc, char** argv) {
     cout << " map          : " << mapname << endl;
     cout << "    width     : " << map_t::get_width () << endl;
     cout << "    height    : " << map_t::get_height () << endl;
-    cout << " solver       : " << solver_name << endl;
+    cout << " solver       : " << solver_name << " " << git_describe () << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << map_t::get_variant () << endl;
     cout << " K            : ";

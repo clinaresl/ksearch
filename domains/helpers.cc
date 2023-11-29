@@ -14,6 +14,29 @@
 
 using namespace std;
 
+// Return the output of the command "git describe"
+const string git_describe () {
+    std::string cmd = "git describe";
+    std::string result = "";
+    FILE* pipe = popen (cmd.c_str(), "r");
+    if (!pipe) throw std::runtime_error ("popen() failed!");
+    try {
+        while (feof (pipe) == 0) {
+            char buffer[128];
+            if (fgets (buffer, 128, pipe) != NULL)
+                result += buffer;
+        }
+    } catch (...) {
+        pclose (pipe);
+        throw;
+    }
+    pclose (pipe);
+
+    // remove the newline character
+    result.erase(remove(result.begin(), result.end(), '\n'), result.cend());
+    return result;
+}
+
 // process a single user selection for the values of k and issue an error in
 // case they are incorrect. Otherwise, return a tuple of integers with the the
 // first k, the second and the increment between successive values of k. If

@@ -49,6 +49,9 @@ static inline std::string& rtrim (std::string& s) {
     return s;
 }
 
+// Return the output of the command "git describe"
+const std::string git_describe ();
+
 // process a single user selection for the values of k and issue an error in
 // case they are incorrect. Otherwise, return a tuple of integers with the the
 // first k, the second and the increment between successive values of k. If

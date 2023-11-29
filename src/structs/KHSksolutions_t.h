@@ -34,6 +34,10 @@ namespace khs {
         std::string _domain;
         std::string _variant;
 
+        // To improve traceability, the version of the code that generated this
+        // solution is stored as well
+        string _version;
+
         // A dedicated flag is used to determine whether to report the
         // information of every single solution path within every solution to a
         // k shortest-path problem, or only the last one. By default,
@@ -64,6 +68,9 @@ namespace khs {
         const std::string get_variant () const {
             return _variant;
         }
+        const std::string get_version () const {
+            return _version;
+        }
         bool get_summary () const {
             return _summary;
         }
@@ -74,6 +81,9 @@ namespace khs {
         }
         void set_variant (const std::string variant) {
             _variant = variant;
+        }
+        void set_version (const std::string version) {
+            _version = version;
         }
         void set_summary (const bool value) {
             _summary = value;
@@ -119,7 +129,7 @@ namespace khs {
             // first to a string stream and then copy its output to the given
             // stream
             std::stringstream ss;
-            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;nbcentroids;mem;runtime;expansions/sec;solver;doctor" << endl;
+            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;nbcentroids;mem;runtime;expansions/sec;solver;doctor;version" << endl;
             for (auto& ksolution : ksolutions.get_ksolutions ()) {
 
                 // in case only a summary report has been requested, provide
@@ -127,7 +137,8 @@ namespace khs {
                 if (ksolutions.get_summary ()) {
                     ss << ksolutions.get_domain () << ";";
                     ss << ksolutions.get_variant () << ";";
-                    ss << ksolution[ksolution.size ()-1] << endl;
+                    ss << ksolution[ksolution.size ()-1] << ";";
+                    ss << ksolutions.get_version () << endl;
                 } else {
 
                     // otherwise, provide information about all the solution
@@ -137,7 +148,8 @@ namespace khs {
 
                         ss << ksolutions.get_domain () << ";";
                         ss << ksolutions.get_variant () << ";";
-                        ss << solution << std::endl;
+                        ss << solution << ";";
+                        ss << ksolutions.get_version () << endl;
                     }
                 }
             }

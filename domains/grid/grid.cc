@@ -164,7 +164,7 @@ int main (int argc, char** argv) {
 
     cout << endl;
     cout << " size         : " << grid_t::get_n () << endl;
-    cout << " solver       : " << solver_name << endl;
+    cout << " solver       : " << solver_name << " " << git_describe () << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << grid_t::get_variant () << endl;
     cout << " size         : " << grid_t::get_n () << endl;

@@ -144,7 +144,7 @@ int main (int argc, char** argv) {
     /* !-------------------------------------------------------------------! */
 
     cout << endl;
-    cout << " solver       : " << solver_name << endl;
+    cout << " solver       : " << solver_name << " " << git_describe () << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << variant << endl;
     cout << " size         : " << npancake_t::get_n () << endl;

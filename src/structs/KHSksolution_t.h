@@ -47,9 +47,13 @@ namespace khs {
         // is stored also in this container
         string _solver;
 
-        // Finally, a solution to the k-shortest path problem must be verifiable
+        // Importantly, a solution to the k-shortest path problem must be verifiable
         // and, as a result, an error code should be given
         solution_error _error_code;
+
+        // Finally, to improve traceability, the version of the code that
+        // generated this solution is stored as well
+        string _version;
 
     public:
 
@@ -68,7 +72,8 @@ namespace khs {
             _expansions { 0 },
             _cpu_time { 0.0 },
             _mem_usage { 0 },
-            _solver { "" }
+            _solver { "" },
+            _version { "" }
             {
                 // Initially solutions are not checked unless the doctor service
                 // is invoked
@@ -112,6 +117,9 @@ namespace khs {
         const solution_error get_error_code () const {
             return _error_code;
         }
+        const string& get_version () const {
+            return _version;
+        }
 
         // setters
         void set_name (const string& name) {
@@ -120,6 +128,11 @@ namespace khs {
         void set_solver (const string& solver) {
             _solver = solver;
         }
+
+        void set_version (const string& version) {
+            _version = version;
+        }
+
         void set_mem_usage (const size_t mem_usage) {
             _mem_usage = mem_usage;
 
@@ -295,7 +308,8 @@ namespace khs {
             ss << solutions.get_mem_usage () << ";";
             ss << solutions.get_cpu_time() << ";";
             ss << solutions.get_solver () << ";";
-            ss << solution_t<T, path_t>::get_error_msg (solutions.get_error_code ());
+            ss << solution_t<T, path_t>::get_error_msg (solutions.get_error_code ()) << ";";
+            ss << solutions.get_version ();
 
             // and now redirect the contents of the string stream to the given
             // stream
