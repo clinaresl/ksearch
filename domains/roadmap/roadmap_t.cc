@@ -77,6 +77,13 @@ int roadmap_t::h (const roadmap_t& goal) const {
     double long1 = ivertex.get_longitude ();
     double long2 = jvertex.get_longitude ();
 
+    // if (lat1, long1) == (lat2, long2), then return 0 immediately to avoid
+    // errors in the computation of the formula
+    if ( int (lat1 * 1000000) == int (lat2 * 1000000) &&
+         int (long1 * 1000000) == int (long2 * 1000000)) {
+        return 0;
+    }
+
     // and return the arc length over the earth sphere
     return int (acos (sin (lat1) * sin (lat2) +
                       cos (lat1) * cos (lat2) * cos (long2 - long1)) * EARTH_RADIUS);
