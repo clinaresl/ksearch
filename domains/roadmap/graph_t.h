@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-constexpr int EARTH_RADIUS = 6'530'000;
+constexpr int EARTH_RADIUS = 6'350'000;
 
 // Definition of a vertex as a pair of longitude (x-value) and latitude
 // (y-value)

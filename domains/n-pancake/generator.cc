@@ -169,7 +169,6 @@ int get_instances (int size, int num_instances, int distance,
     vector<int> identity;
     for (auto i = 0 ; i < size ; identity.push_back (i++));
     npancake_t goal {identity};
-    cout << " * " << goal << endl; cout.flush ();
 
     while (instances.size () < num_instances) {
 
