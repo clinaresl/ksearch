@@ -7,7 +7,7 @@
 //
 
 //
-// Generator of random instances in the npancake domain
+// Generator of random instances in the N-Puzzle domain
 //
 
 #include <chrono>
@@ -27,7 +27,7 @@
 #include "../solver.h"
 #include "../../src/ksearch.h"
 
-#include "npancake_t.h"
+#include "npuzzle_t.h"
 
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
@@ -54,9 +54,10 @@ static struct option const long_options[] =
     {NULL, 0, NULL, 0}
 };
 
+bool solvable (const npuzzle_t& npuzzle);
 int get_instances (int size, int num_instances, int distance,
-                   vector<instance_t<npancake_t>>& instances);
-void write_instances (const vector<instance_t<npancake_t>>& instances, string filename);
+                   vector<instance_t<npuzzle_t>>& instances);
+void write_instances (const vector<instance_t<npuzzle_t>>& instances, string filename);
 static int decode_switches (int argc, char **argv,
                             int& size, int& number, string& filename, int& distance, string& variant,
                             bool& want_verbose);
@@ -69,7 +70,7 @@ int main (int argc, char** argv) {
     int number;                              // number of instances to generate
     string filename;                            // file with all cases to solve
     int distance;              // minimum distance between start and goal state
-    string variant;      // variant of the n-pancake, either unit or heavy-cost
+    string variant;      // variant of the n-puzzle, either unit or heavy-cost
     bool want_verbose;                  // whether verbose output was requested
     chrono::time_point<chrono::system_clock> tstart, tend;          // CPU time
 
@@ -84,7 +85,7 @@ int main (int argc, char** argv) {
 
     // --size
     if (size == 0) {
-        cerr << "\n Please, provide the length of the permutations to generate" << endl;
+        cerr << "\n Please, provide the length of the side of the N-Puzzle" << endl;
         cerr << " See " << program_name << " --help for more details" << endl << endl;
         exit(EXIT_FAILURE);
     }
@@ -121,13 +122,14 @@ int main (int argc, char** argv) {
 
     // /* !------------------------- INITIALIZATION --------------------------! */
 
-    // first, things first, initialize the heuristic table of the n-pancake
-    npancake_t::init (variant);
+    // first, things first, initialize the heuristic table of the n-puzzle
+    npuzzle_t::initops ();
+    npuzzle_t::init (variant);
 
     /* !-------------------------------------------------------------------! */
 
     cout << endl;
-    cout << " size           : " << size << endl;
+    cout << " side           : " << size << " / N: " << size*size << endl;
     cout << " file           : " << filename << " (" << number << " instances)" << endl;
     cout << " distance       : " << distance << endl;
     cout << " variant        : " << variant << endl << endl;
@@ -138,8 +140,8 @@ int main (int argc, char** argv) {
     tstart = chrono::system_clock::now ();
 
     // generate the random instances
-    vector<instance_t<npancake_t>> tasks;
-    get_instances (size, number, distance, tasks);
+    vector<instance_t<npuzzle_t>> tasks;
+    get_instances (size*size, number, distance, tasks);
 
     // and write them in the specified file
     write_instances (tasks, filename);
@@ -153,13 +155,58 @@ int main (int argc, char** argv) {
     return (EXIT_OK);
 }
 
+// return whether the given instance of the n-puzzle is solvable or not
+bool solvable (const npuzzle_t& npuzzle) {
+
+    int inversions = 0;
+    int blank_row = 0;
+    vector<int> permutation = npuzzle.get_perm ();
+
+    // count the number of inversions of the permutation
+    for (auto i = 0 ; i < permutation.size () ; i++) {
+
+        // if this is the location of the blank tile then annotate the row from
+        // the bottom where it is located
+        if (i == npuzzle.get_blank ()) {
+            blank_row = npuzzle.get_n () - i / npuzzle.get_n ();
+            continue;
+        }
+
+        for (auto j = i + 1 ; j < permutation.size () ; j++) {
+
+            // an inversion happens when the content of the location i is larger
+            // than the content of the j-th location, with i>j. The blank is not
+            // considered
+            if (permutation[i] > permutation[j] &&
+                j != npuzzle.get_blank ()) {
+                inversions++;
+            }
+        }
+    }
+
+    // an instance is solvable if:
+    //
+    //    1. If the width is even:
+    //       a. If the blank is in an even row from the bottom, then the number
+    //          of inversions must be odd.
+    //       b. If the blank is in an odd row from the bottom, then the number
+    //          of inversions must be even.
+    if (npuzzle.get_n () % 2 == 0) {
+        return ( (blank_row % 2 == 0 && inversions % 2 == 1) ||
+                 (blank_row % 2 == 1 && inversions % 2 == 0) );
+    }
+
+    //    2. If the width is odd, then the number of inversions must be even
+    return (inversions % 2 == 0);
+}
+
 // Randomly generate num_instances of the specified length and return them in a
-// vector. The heuristic distance between the start and goal states of
-// every task has to be at least equal to the given distance.
+// vector. The heuristic distance between the start and goal states of every
+// task has to be at least equal to the given distance.
 //
 // Return the number of instances generated
 int get_instances (int size, int num_instances, int distance,
-                   vector<instance_t<npancake_t>>& instances) {
+                   vector<instance_t<npuzzle_t>>& instances) {
 
     // random generator
     auto rng = std::default_random_engine {};
@@ -167,21 +214,22 @@ int get_instances (int size, int num_instances, int distance,
     // create the identity permutation which is used as the goal state
     vector<int> identity;
     for (auto i = 0 ; i < size ; identity.push_back (i++));
-    npancake_t goal {identity};
+    npuzzle_t goal {identity};
 
     while (instances.size () < num_instances) {
 
         // create a random instance just by shuffling a copy of the goal state
         vector<int> n (identity);
         shuffle (n.begin (), n.end (), rng);
-        npancake_t start {n};
+        npuzzle_t start {n};
 
-        // accept this pair if and only if the heuristic distance is either
-        // larger or equal than the given distance
-        if (start.h (goal) >= distance) {
+        // accept this pair if and only if: first, the start state is solvable,
+        // and also the heuristic distance is either larger or equal than the
+        // given distance
+        if (solvable (n) && start.h (goal) >= distance) {
 
             // add this instance to the vector to return
-            instances.push_back (instance_t<npancake_t>{to_string (instances.size ()),
+            instances.push_back (instance_t<npuzzle_t>{to_string (instances.size ()),
                     start, goal});
         }
     }
@@ -191,7 +239,7 @@ int get_instances (int size, int num_instances, int distance,
 }
 
 // write all the given instances in the specified filename
-void write_instances (const vector<instance_t<npancake_t>>& instances, string filename) {
+void write_instances (const vector<instance_t<npuzzle_t>>& instances, string filename) {
 
     std::ofstream istream (filename, ios::out);
 
@@ -256,7 +304,7 @@ decode_switches (int argc, char **argv,
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (npancake generator) " << CMAKE_VERSION << endl;
+            cout << " khs (npuzzle generator) " << CMAKE_VERSION << " (" << git_describe () << ")" << endl;
             cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl;
             exit (EXIT_OK);
         case 'h':
@@ -273,11 +321,11 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " Random generator of instances for the N-Pancake domain" << endl << endl;
+    cout << endl << " " << program_name << " Random generator of instances for the N-Puzzle domain" << endl << endl;
     cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
     cout << "\
  Mandatory arguments:\n\
-      -s, --size [NUMBER]        length of the permutations to generate\n\
+      -s, --size [NUMBER]        length of the side of the sliding-tile puzzle\n\
       -n, --number [NUMBER]      Number of instances to generate. By default, 100]\n\
       -f, --file [STRING]        filename used to store all the random instances. Each line consists of a problem id and the\n\
                                  permutation.\n\
