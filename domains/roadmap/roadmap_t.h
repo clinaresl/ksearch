@@ -66,6 +66,7 @@ public:
         }
         _variant = variant;
     }
+    static void set_brute_force (bool brute_force) { _brute_force = brute_force; }
 
     // operator overloading
 
@@ -98,11 +99,7 @@ public:
     // the 9th DIMACS competition.
     static void init (const std::string& filename,
                       const std::map<int, std::pair<double, double>>& coordinates,
-                      const bool brute_force = false,
                       const std::string& variant = "unit") {
-
-        // set whether the heuristic should be computed or not
-        roadmap_t::_brute_force = brute_force;
 
         // set the given variant
         roadmap_t::_variant = variant;

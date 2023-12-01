@@ -152,7 +152,7 @@ int main (int argc, char** argv) {
     /* !------------------------- INITIALIZATION --------------------------! */
 
     // initialize the static data members of the definition of a roadmap
-    roadmap_t::init (graph_name, coordinates, brute_force (solver_name), variant);
+    roadmap_t::init (graph_name, coordinates, variant);
     auto nbedges = roadmap_t::get_graph ().get_nbedges ();
 
     // open the given file and retrieve all cases from it
@@ -169,7 +169,7 @@ int main (int argc, char** argv) {
 
     cout << endl;
     cout << " graph        : " << graph_name << " (" << nbedges << " edges processed)" << endl;
-    cout << " solver       : " << solver_name << " " << git_describe () << "( brute force: " << brute_force (solver_name) << ")" << endl;
+    cout << " solver       : " << solver_name << " " << git_describe () << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << variant << endl;
     cout << " K            : ";
@@ -190,6 +190,15 @@ int main (int argc, char** argv) {
     // solve all the instances with each solver selected by the user and in the
     // same order given
     for (auto isolver : solvers) {
+
+        // before running the solver make it explicit whether the heuristic
+        // should be computed or not
+        if (brute_force (isolver)) {
+            cout << endl << " ⚠ Ignoring the heuristic function!" << endl;
+            roadmap_t::set_brute_force (true);
+        } else {
+            roadmap_t::set_brute_force (false);
+        }
         manager.run (isolver, no_doctor, want_summary, want_verbose);
     }
 

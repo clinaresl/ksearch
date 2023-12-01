@@ -132,7 +132,7 @@ int main (int argc, char** argv) {
 
     // initialize the static data members of the definition of a roadmap under
     // the unit variant
-    roadmap_t::init (graph_name, coordinates, false, "unit");
+    roadmap_t::init (graph_name, coordinates, "unit");
     auto nbedges = roadmap_t::get_graph ().get_nbedges ();
 
     /* !-------------------------------------------------------------------! */

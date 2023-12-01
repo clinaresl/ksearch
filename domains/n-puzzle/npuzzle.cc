@@ -1,13 +1,13 @@
 // -*- coding: utf-8 -*-
-// npancake.cc
+// npuzzle.cc
 // -----------------------------------------------------------------------------
 //
-// Started on <lun 29-11-2021 18:48:45.490311369 (1638208125)>
+// Started on <jue 30-11-2023 18:39:03.956008322 (1701365943)>
 // Carlos Linares López <carlos.linares@uc3m.es>
-// Ian Herman <iankherman@gmail.com>   Ian Herman <iankherman@gmail.com>
+//
 
 //
-// Implementation of a k-shortest path solver for the n-pancake
+// Implementation of a k-shortest path solver for the N-Puzzle domain
 //
 
 #include <chrono>
@@ -25,7 +25,7 @@
 #include "../solver.h"
 #include "../../src/ksearch.h"
 
-#include "npancake_t.h"
+#include "npuzzle_t.h"
 
 #define EXIT_OK 0
 #define EXIT_FAILURE 1
@@ -122,23 +122,25 @@ int main (int argc, char** argv) {
 
     // create the goal state which is represented as the identity permutation.
     // All instances are assumed to have the same length, so use the length of
-    // any as the length of the N-Pancake to solve next
+    // any as the length of the N-Puzzle to solve next
     vector<int> permutation;
     for (auto i = 0 ; i < instances[0].size () ; permutation.push_back (i++));
-    npancake_t goal (permutation);
+    npuzzle_t goal (permutation);
 
     // and now create a vector of tasks to solve
-    vector<instance_t<npancake_t>> tasks;
+    vector<instance_t<npuzzle_t>> tasks;
     for (auto i = 0 ; i < instances.size () ; i++) {
         vector<int> permutation;
         for (auto& disc: instances[i]) {
             permutation.push_back (stoi (disc));
         }
-        tasks.push_back (instance_t<npancake_t> {names[i], permutation, goal});
+        tasks.push_back (instance_t<npuzzle_t> {names[i], permutation, goal});
     }
 
-    // initialize the incremental table with the updates of the gap heuristic
-    npancake_t::init (variant);
+    // initialize the list of operators and also the incremental table with the
+    // updates of the manhattan distance
+    npuzzle_t::initops();
+    npuzzle_t::init (variant);
 
     /* !-------------------------------------------------------------------! */
 
@@ -146,7 +148,7 @@ int main (int argc, char** argv) {
     cout << " solver       : " << solver_name << " " << git_describe () << endl;
     cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
     cout << " variant      : " << variant << endl;
-    cout << " size         : " << npancake_t::get_n () << endl;
+    cout << " size         : " << npuzzle_t::get_n () << endl;
     cout << " K            : ";
     for (auto& ispec: kspec) {
         cout << "[" << get<0>(ispec) << ", " << get<1>(ispec) << ", " << get<2> (ispec) << "] ";
@@ -159,8 +161,8 @@ int main (int argc, char** argv) {
     tstart = chrono::system_clock::now ();
 
     // create an instance of the "generic" domain-dependent solver
-    solver<npancake_t> manager (get_domain (), variant,
-                                tasks, k_params);
+    solver<npuzzle_t> manager (get_domain (), variant,
+                               tasks, k_params);
 
     // solve all the instances with each solver selected by the user and in the
     // same order given
@@ -186,7 +188,7 @@ int main (int argc, char** argv) {
 
 // return the domain of this solver
 const string get_domain () {
-    return "n-pancake";
+    return "n-puzzle";
 }
 
 // return the variant of the domain of this solver
@@ -252,7 +254,7 @@ decode_switches (int argc, char **argv,
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (n-pancake) " << CMAKE_VERSION << endl;
+            cout << " khs (n-puzzle) " << CMAKE_VERSION << endl;
             cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl;
             exit (EXIT_OK);
         case 'h':
@@ -269,7 +271,7 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the N-Pancake using the GAP heuristic" << endl << endl;
+    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the N-Puzzle using the Manhattan heuristic" << endl << endl;
     cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
     cout << "\
  Mandatory arguments:\n\
@@ -287,7 +289,7 @@ usage (int status)
       -f, --file [STRING]        filename with a line for each instance to solve wrt to the identity permutation.\n\
                                  Each line consists of a problem id and the permutation to solve given as a list of numbers\n\
                                  separated by spaces in the range [0, N)\n\
-      -r, --variant [STRING]     Variant of the n-Pancake to consider. Choices are {unit, heavy-cost}. By default, unit\n\
+      -r, --variant [STRING]     Variant of the N-Puzzle to consider. Choices are {unit, heavy-cost}. By default, unit\n\
                                  is used\n\
       -k, --k [NUMBER]+          Definition of the different values of K to test.\n\
                                  The entire specification consists of a semicolon separated list of single specifications\n\

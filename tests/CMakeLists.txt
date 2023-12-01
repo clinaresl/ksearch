@@ -10,7 +10,9 @@ add_executable(gtest
   structs/TSTbucket_t.cc
   ../domains/n-pancake/npancake_t.cc
   domains/TSTnpancake.cc
-  ../domains/roadmap/graph_t.cc
+  ../domains/n-puzzle/npuzzle_t.cc
+  domains/TSTnpuzzle.cc
+   ../domains/roadmap/graph_t.cc
   domains/TSTgraph.cc
   ../domains/roadmap/roadmap_t.cc
   domains/TSTroadmap.cc
