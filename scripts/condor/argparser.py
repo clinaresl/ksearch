@@ -58,11 +58,14 @@ def createPrgArgParser():
     parser_optional.add_argument('-m', '--map',
                                  type=str,
                                  default=None,
-                                 help="name of the map to be used in the domains 'map' or 'roadmap' without the suffix, e.g., 'USA-road-d.BAY' or 'random512-15-0'")
+                                 help="name of the map to be used in the domains 'map' or 'roadmap' without the suffix, e.g., 'USA-road-d.BAY' or 'random512-15-0'. It serves also to identify the test file with the instances to solve, and thus it is not necessary in the domains 'maps' and 'roadmap'")
     parser_optional.add_argument('-s', '--size',
                                  type=int,
                                  default=0,
                                  help="Length of the permutations in the N-Pancake or the side of the square N-puzzle.")
+    parser_mandatory.add_argument('-t', '--testfile',
+                                  type=str,
+                                  help="Filename with the test cases to solve. It should not contain any path, and it is necessary in the domains 'n-puzzle' and 'n-pancake'")
     parser_optional.add_argument('-u', '--user',
                                  type=str,
                                  default="carlos.linares@uc3m.es",

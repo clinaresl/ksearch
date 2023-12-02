@@ -30,6 +30,15 @@ EXECUTABLE = {
     "roadmap": "roadmap"
 }
 
+# the arguments of every executable are given next
+ARGS = {
+    "maps": "--map domains/$domain/benchmark/$testfile.map --solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
+    "n-pancake": "--solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
+    "n-puzzle": "--solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
+    "roadmap": "--graph domains/$domain/benchmark/$testfile.map --solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
+}
+
+
 # filenames are indexed by the domain name
 FILENAME = {
     "maps": "$map.$solver.$variant.$mink-$maxk",
@@ -62,9 +71,10 @@ error = $filename.$$(Cluster).err
 
 should_transfer_files = yes
 transfer_input_files = ../libksearch
-#transfer_output_files = results
+transfer_output_files = $filename.csv
 
-queue"""
+queue
+"""
 
 # template used for generating the shell script to execute in the backend
 SHELL_FILE = """#!/usr/bin/sh
@@ -75,9 +85,9 @@ cd libksearch
 cmake . -DCMAKE_BUILD_TYPE=Release  -DDISABLE_TESTS=ON
 make ksearch
 
-# Compile the executable and run it
+# Compile the executable and run it writing the output in a csv file
 make $executable
-domains/$domain/$executable --version
+domains/$domain/$executable $args
 """
 
 # Local Variables:

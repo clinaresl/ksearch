@@ -39,10 +39,14 @@ INFO_K_INTERVAL = "The values of K are in the interval [{0}, {1}]"
 INFO_CONDOR_FILE_GENERATED = "The condor file '{0}' has been generated"
 INFO_SHELL_FILE_GENERATED = "The shell file '{0}' has been generated"
 
+# warning messages
+WARNING_UNNECESSARY_TESTFILE = "The testfile is not necessary for the domain '{}' and it will be ignored. Make sure to name it after the data file!"
+
 # critical messages
 CRITICAL_INVALID_VARIANT = "The variant '{}' is not valid for the domain '{}'"
 CRITICAL_MAP_NOT_GIVEN = "The map name must be given for the domain 'maps' or 'roadmap'"
 CRITICAL_SIZE_NOT_GIVEN = "The size of the instance must be given for the domain 'n-pancake' or 'n-puzzle'"
+CRITICAL_TESTFILE_NOT_GIVEN = "The testfile is mandatory for the domain '{}'"
 
 # -----------------------------------------------------------------------------
 # validate_variant
@@ -110,7 +114,9 @@ def generate_condor_file(domain: str, variant: str, algorithm: str, user:str,
 #
 # generates the shell script to execute in the backend node
 # -----------------------------------------------------------------------------
-def generate_shell_file(domain: str, variant: str, algorithm: str, user:str,
+def generate_shell_file(domain: str, variant: str, algorithm: str,
+                        testfile: str, kspec: str,
+                        user:str,
                         mink: int, maxk: int,
                         mapname: str,
                         n: int, nbtiles: int):
@@ -130,13 +136,24 @@ def generate_shell_file(domain: str, variant: str, algorithm: str, user:str,
                                    n=n,
                                    nbtiles=nbtiles)
 
+    # prior to the creation of the shell file, compute the arguments to give to
+    # the solver
+    template = Template(cndconf.ARGS[domain])
+    args = template.substitute(domain=domain,
+                               testfile=testfile,
+                               algorithm=algorithm,
+                               variant=variant,
+                               kspec=kspec,
+                               filename=filename)
+
     # next, create the contents of the condor submission file
     template = Template(cndconf.SHELL_FILE)
     contents = template.substitute(domain=domain,
                                    variant=variant,
                                    algorithm=algorithm,
                                    user=user,
-                                   executable=cndconf.EXECUTABLE[domain])
+                                   executable=cndconf.EXECUTABLE[domain],
+                                   args=args)
 
     # and write the contents in the condor job submission configuration file
     with open(filename + SHELL_SUFFIX, "w") as condor:
@@ -184,6 +201,33 @@ def main():
         LOGGER.critical(CRITICAL_SIZE_NOT_GIVEN)
         raise ValueError(CRITICAL_SIZE_NOT_GIVEN)
 
+    # Compute the name of the testfile. If the domain is the 'maps' or the
+    # 'roadmap' it should be indeed equal to the map filename and thus, it must
+    # not be given 'n-pancake' and 'n-puzzle'.
+    testfile=None
+    if (params.domain in ['maps', 'roadmap']):
+
+        # In case it is given in the 'maps' or 'roadmap' domain a warning
+        # message is issued because it will be ignored (and it is a better idea
+        # to ignore it and to force the test suite to be named after the
+        # map/roadmap file instead of overwritting it)
+        if  (params.testfile is not None):
+            LOGGER.warning(WARNING_UNNECESSARY_TESTFILE.format(params.domain))
+
+        # and update the name of the testfile
+        testfile = params.map
+
+    # If the domain selected is either the n-pancake or the n-puzzle then it is
+    # mandatory
+    if (params.domain in ['n-pancake', 'n-puzzle']):
+
+        if (params.testfile is None):
+            LOGGER.critical(CRITICAL_TESTFILE_NOT_GIVEN.format(params.domain))
+            raise ValueError(CRITICAL_TESTFILE_NOT_GIVEN.format(params.domain))
+
+        # and copy the name of the testfile
+        testfile = params.testfile
+
     # generate the condor file
     generate_condor_file(params.domain, params.variant, params.algorithm, params.user,
                          k.min(), k.max(),
@@ -191,7 +235,9 @@ def main():
                          params.size, params.size*params.size-1)
 
     # and also the shell file
-    generate_shell_file(params.domain, params.variant, params.algorithm, params.user,
+    generate_shell_file(params.domain, params.variant, params.algorithm,
+                        testfile, params.k,
+                        params.user,
                         k.min(), k.max(),
                         params.map,
                         params.size, params.size*params.size-1)
