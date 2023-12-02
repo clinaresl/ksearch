@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16.1)
 
 # Declaration
-project(ksearch VERSION 1.5)
+project(ksearch VERSION 1.6)
 
 # some extensions of c++17 are used
 set(CMAKE_CXX_STANDARD 17)
