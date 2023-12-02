@@ -59,9 +59,10 @@ algorithms:
 
 This package comes with a number of domain-dependent solvers under `domains/`:
 
-* *Grid*
 * *2D Pathfinding*
+* *Grid*
 * *N-Pancake*
+* *N-Puzzle*
 * *Roadmap* 
 
 Every domain-dependent solver provides all the search algorithms described

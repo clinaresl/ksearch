@@ -150,6 +150,8 @@ of every task is automatically created. The following information is given:
   implementations provided.
 * *solver*: signature of the solver used for computing this solution
 * *doctor*: output of the automated error checking process. See the previous section
+* *version*: output of the command `git describe` which informs of the exact
+  version of `libksearch` used for running an algorithm.
 
 # License #
 
