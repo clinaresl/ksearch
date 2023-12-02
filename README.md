@@ -5,6 +5,14 @@ This library implements a number of search algorithms to compute *K*
 search algorithms. It also comes with a number of domain-dependent solvers that
 test the performance of these algorithms
 
+# Dependencies #
+
+Tests have been created using the [Google Test
+Framework](https://github.com/google/googletest) which is necessary for both
+compiling and runing the tests, see below.designed using
+
+In addition, a number of scripts are provided for various purposes. They all
+have been implemented in python 3.8.
 
 # Install #
 
@@ -22,7 +30,25 @@ To compile the source code, create first the `Makefile` with:
 ```
 
 from the `libksearch/` directory created after the clone. It will build the
-library, a solver for every domain defined under `domains/`, and the unit tests.
+library, a solver for every domain defined under `domains/`, along with a random
+generator for it , and all the unit tests.
+
+It is also possible to compile separately different parts of the whole bundle.
+To compile only the library do:
+
+``` sh
+   $ make ksearch
+```
+
+which generates a static library.
+
+To generate an executable to solve instances in a specific domain use `make 
+domain` where *domain* can be any of the following: `grid`, `map`, `npancake`,
+`npuzzle` or `roadmap`.
+
+Finally, all domains (but *grid*) come with their own random generator of
+instances. To generate them execute `make gen-domain` where *domain* can be any
+of the following: `map`, `npancake`, `npuzzle` or `roadmap`.
 
 # Tests #
 

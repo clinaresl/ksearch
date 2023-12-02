@@ -3,13 +3,21 @@
 This directory contains a number of domain-dependent solvers that test the
 different search algorithms implemented in `libksearch`
 
-## N-Pancake ##
+## 2D Pathfinding ##
 
-The N-Pancake domain is implemented under `domains/n-pancake`
+The maps domain is implemented under `domains/maps`
 
 ## Grid ##
 
 The Grid domain is implemented under `domains/grid`
+
+## N-Pancake ##
+
+The N-Pancake domain is implemented under `domains/n-pancake`
+
+## N-Pancake ##
+
+The N-Puzzle domain is implemented under `domains/n-puzzle`
 
 ## Roadmap ##
 
@@ -28,6 +36,10 @@ Typically, the mandatory arguments are the following:
   - **belA0**: Brute-force Bidirectional Edge-labelling A* search algorithm
   - **mDijkstra**: Brute-force mA* search algorithm 
   - **K0**: Brute-force K* search algorithm
+  - **belA***: Informed implementation of the Bidirectional Edge-labelling A*
+    search algorithm
+  - **mA***: A* search algorithm which expands nodes as many times as paths are
+    required to be found
   - **K**: Informed K* search algorithm
 
 * `--file`: File with the description of the test set to solve. Details might be

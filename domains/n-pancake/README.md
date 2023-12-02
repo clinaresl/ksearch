@@ -40,7 +40,7 @@ follows:
 This solver accepts the same flags discussed in the entry above under `domains/`
 and no other specific directives are provided.
 
-An example for the computation of test distinct paths for every case specified
+An example for the computation of ten distinct paths for every case specified
 above under the heavy-cost variant is shown next:
 
 ``` sh

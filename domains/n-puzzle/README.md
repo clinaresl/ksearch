@@ -1,6 +1,6 @@
 # N-puzzle #
 
-Ths domain implments the *sliding-tile puzzle* over square matrices, i.e., it
+Ths domain implements the *sliding-tile puzzle* over square matrices, i.e., it
 consists of a permutation of the symbols *[0, N^2)*, where *0* denotes the
 *blank tile* over a square of length *N*. The only allowed moves consist of
 moving the blank tile either horizontally or vertically without getting out of
@@ -44,8 +44,8 @@ which are, indeed, the 10 easiest instances from Korf's test suite.
 This solver accepts the same flags discussed in the entry above under `domains/`
 and no other specific directives are provided.
 
-An example for the computation of test distinct paths for every case specified
-above under the heavy-cost variant is shown next:
+An example for the computation of ten distinct paths for the 50 easiest
+instances from Korf's test suite under the unit variant is shown next:
 
 ``` sh
     $ ./npuzzle --solver "belA*" --file test --variant unit --k "10" --no-doctor --summary --csv test.csv
