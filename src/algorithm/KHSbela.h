@@ -694,23 +694,15 @@ namespace khs {
                 closed[ptr] += node.get_backpointer (0);
 
                 // and check whether a centroid has been discovered, i.e.,
-                // whether getting to this node through the edge that created it
-                // in OPEN is suboptimal
+                // whether this node already has some gb-values
                 auto parent = closed[node.get_backpointer (0).get_pointer ()];
-                if (parent.get_g () + node.get_backpointer (0).get_cost () > closed[ptr].get_g ()) {
+                for (auto ibg : closed[ptr].get_gb ()) {
 
-                    // if, and only if, this node has been used in the
-                    // construction of prefixes before, i.e., if and only if it
-                    // has at least one backward g-value, then create a new
-                    // centroid for each backward g-value found
-                    for (auto ibg : closed[ptr].get_gb ()) {
-
-                        // in case a centroid has been discovered, then add it
-                        // to the collection of centroids to process
-                        auto overall_cost = parent.get_g () + node.get_backpointer (0).get_cost () + ibg;
-                        centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
-                        centroids.insert (z, overall_cost);
-                    }
+                    // and add a centroid from its parent to it with this
+                    // gb-value
+                    auto overall_cost = parent.get_g () + node.get_backpointer (0).get_cost () + ibg;
+                    centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
+                    centroids.insert (z, overall_cost);
                 }
 
                 // and continue, skipping the expansion of this node. Here you
@@ -902,23 +894,6 @@ namespace khs {
                     centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
                     centroids.insert (z, overall_cost);
                 }
-
-                // auto parent = closed[node.get_backpointer (0).get_pointer ()];
-                // if (parent.get_g () + node.get_backpointer (0).get_cost () > closed[ptr].get_g ()) {
-
-                //     // if, and only if, this node has been used in the
-                //     // construction of prefixes before, i.e., if and only if it
-                //     // has at least one backward g-value, then create a new
-                //     // centroid for each backward g-value found
-                //     for (auto ibg : closed[ptr].get_gb ()) {
-
-                //         // in case a centroid has been discovered, then add it
-                //         // to the collection of centroids to process
-                //         auto overall_cost = parent.get_g () + node.get_backpointer (0).get_cost () + ibg;
-                //         centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
-                //         centroids.insert (z, overall_cost);
-                //     }
-                // }
 
                 // and continue, skipping the expansion of this node. Here you
                 // are the beauty of BELA*
