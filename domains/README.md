@@ -3,26 +3,6 @@
 This directory contains a number of domain-dependent solvers that test the
 different search algorithms implemented in `libksearch`
 
-## 2D Pathfinding ##
-
-The maps domain is implemented under `domains/maps`
-
-## Grid ##
-
-The Grid domain is implemented under `domains/grid`
-
-## N-Pancake ##
-
-The N-Pancake domain is implemented under `domains/n-pancake`
-
-## N-Pancake ##
-
-The N-Puzzle domain is implemented under `domains/n-puzzle`
-
-## Roadmap ##
-
-The Roadmap domain is implemented under `domains/roadmap`
-
 # Usage #
 
 All solvers acknowledge the flags `--version` and `--help`. Other than these,
