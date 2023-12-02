@@ -16,7 +16,7 @@ using namespace std;
 
 // Return the output of the command "git describe"
 const string git_describe () {
-    std::string cmd = "git describe";
+    std::string cmd = "git describe --tags";
     std::string result = "";
     FILE* pipe = popen (cmd.c_str(), "r");
     if (!pipe) throw std::runtime_error ("popen() failed!");
