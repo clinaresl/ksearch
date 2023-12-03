@@ -174,8 +174,6 @@ class PLTGNUfile:
             gnustream.write("{}".format(iserie))
             gnustream.write("end\n")
 
-        # Finally add a pause command to see the iamge
-        gnustream.write('pause -1 "Press ENTER to exit ..."')
 
 # Local Variables:
 # mode:python

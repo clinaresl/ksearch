@@ -60,7 +60,7 @@ notify_user = $user
 notification = Always
 getenv = True
 
-requirements = MyMachine=="32GB"
+# requirements = MyMachine=="32GB"
 
 Executable     = $filename.sh
 Universe       = vanilla
@@ -71,7 +71,7 @@ error = $filename.$$(Cluster).err
 
 should_transfer_files = yes
 transfer_input_files = ../libksearch
-transfer_output_files = $filename.csv
+transfer_output_files = libksearch/$filename.csv
 
 queue
 """
