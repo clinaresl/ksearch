@@ -289,7 +289,12 @@ decode_switches (int argc, char **argv,
             break;
         case 'V':
             cout << " khs (maps) " << CMAKE_VERSION << endl;
-            cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl;
+            cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl << endl;
+
+            // show cpu and mem info
+            cout << get_cpu_info() << endl;
+            cout << get_mem_info() << endl;
+
             exit (EXIT_OK);
         case 'h':
             usage (EXIT_OK);

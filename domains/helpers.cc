@@ -37,6 +37,50 @@ const string git_describe () {
     return result;
 }
 
+// Return information on all cpus available in the system
+const std::string get_cpu_info() {
+
+    std::string cmd = "lscpu";
+    std::string result = "";
+    FILE* pipe = popen (cmd.c_str(), "r");
+    if (!pipe) throw std::runtime_error ("popen() failed!");
+    try {
+        while (feof (pipe) == 0) {
+            char buffer[128];
+            if (fgets (buffer, 128, pipe) != NULL)
+                result += buffer;
+        }
+    } catch (...) {
+        pclose (pipe);
+        throw;
+    }
+    pclose (pipe);
+
+    return result;
+}
+
+// Return information on the available memory in the system
+const std::string get_mem_info() {
+
+    std::string cmd = "free -h";
+    std::string result = "";
+    FILE* pipe = popen (cmd.c_str(), "r");
+    if (!pipe) throw std::runtime_error ("popen() failed!");
+    try {
+        while (feof (pipe) == 0) {
+            char buffer[128];
+            if (fgets (buffer, 128, pipe) != NULL)
+                result += buffer;
+        }
+    } catch (...) {
+        pclose (pipe);
+        throw;
+    }
+    pclose (pipe);
+
+    return result;
+}
+
 // process a single user selection for the values of k and issue an error in
 // case they are incorrect. Otherwise, return a tuple of integers with the the
 // first k, the second and the increment between successive values of k. If

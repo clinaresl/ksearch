@@ -85,8 +85,12 @@ cd libksearch
 cmake . -DCMAKE_BUILD_TYPE=Release  -DDISABLE_TESTS=ON
 make ksearch
 
-# Compile the executable and run it writing the output in a csv file
+# Compile the executable
 make $executable
+
+# Run the executable with the given arguments but show first the current version
+# and information on the cpu and memory
+domains/$domain/$executable --version
 domains/$domain/$executable $args
 """
 

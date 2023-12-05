@@ -52,6 +52,12 @@ static inline std::string& rtrim (std::string& s) {
 // Return the output of the command "git describe"
 const std::string git_describe ();
 
+// Return information on all cpus available in the system
+const std::string get_cpu_info();
+
+// Return information on the available memory in the system
+const std::string get_mem_info();
+
 // process a single user selection for the values of k and issue an error in
 // case they are incorrect. Otherwise, return a tuple of integers with the the
 // first k, the second and the increment between successive values of k. If
