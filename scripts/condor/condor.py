@@ -74,7 +74,8 @@ def validate_variant(domain: str, variant: str):
 #
 # generates the condor file from the values given
 # -----------------------------------------------------------------------------
-def generate_condor_file(domain: str, variant: str, algorithm: str, user:str,
+def generate_condor_file(domain: str, variant: str, algorithm: str,
+                         requirements: str, user: str,
                          mink: int, maxk: int,
                          mapname: str,
                          n: int, nbtiles: int):
@@ -94,11 +95,18 @@ def generate_condor_file(domain: str, variant: str, algorithm: str, user:str,
                                    size=n,
                                    nbtiles=nbtiles)
 
-    # next, create the contents of the condor submission file
+    # next, create the contents of the condor submission file. Note that if
+    # requirements is not given, then nothing should be written, otherwise
+    # "requirements = " should be prefixing the value given
+    if requirements is not None and len(requirements) > 0:
+        requirements = "requirements = " + requirements
+    else:
+        requirements = ""
     template = Template(cndconf.CONDOR_FILE)
     contents = template.substitute(domain=domain,
                                    variant=variant,
                                    algorithm=algorithm,
+                                   requirements=requirements,
                                    user=user,
                                    filename=filename)
 
@@ -229,7 +237,8 @@ def main():
         testfile = params.testfile
 
     # generate the condor file
-    generate_condor_file(params.domain, params.variant, params.algorithm, params.user,
+    generate_condor_file(params.domain, params.variant, params.algorithm,
+                         params.requirements, params.user,
                          k.min(), k.max(),
                          params.map,
                          params.size, params.size*params.size-1)

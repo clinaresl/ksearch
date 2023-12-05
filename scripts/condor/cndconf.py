@@ -60,7 +60,7 @@ notify_user = $user
 notification = Always
 getenv = True
 
-# requirements = MyMachine=="32GB"
+$requirements
 
 Executable     = $filename.sh
 Universe       = vanilla

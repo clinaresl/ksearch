@@ -66,6 +66,10 @@ def createPrgArgParser():
     parser_mandatory.add_argument('-t', '--testfile',
                                   type=str,
                                   help="Filename with the test cases to solve. It should not contain any path, and it is necessary in the domains 'n-puzzle' and 'n-pancake'")
+    parser_optional.add_argument('-r', '--requirements',
+                                 type=str,
+                                 default=None,
+                                 help="In case it is given it is added verbatim in the requirements field of the condor job submission file.")
     parser_optional.add_argument('-u', '--user',
                                  type=str,
                                  default="carlos.linares@uc3m.es",
