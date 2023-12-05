@@ -42,7 +42,7 @@ ARGS = {
 # filenames are indexed by the domain name
 FILENAME = {
     "maps": "$map.$solver.$variant.$mink-$maxk",
-    "n-pancake": "$size.$solver.$variant.$mink-$maxk",
+    "n-pancake": "${size}pancake.$solver.$variant.$mink-$maxk",
     "n-puzzle": "${nbtiles}puzzle.$solver.$variant.$mink-$maxk",
     "roadmap": "$map.$solver.$variant.$mink-$maxk"
 }

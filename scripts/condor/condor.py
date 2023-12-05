@@ -91,7 +91,7 @@ def generate_condor_file(domain: str, variant: str, algorithm: str, user:str,
                                    variant=variant,
                                    mink=mink,
                                    maxk=maxk,
-                                   n=n,
+                                   size=n,
                                    nbtiles=nbtiles)
 
     # next, create the contents of the condor submission file
@@ -133,7 +133,7 @@ def generate_shell_file(domain: str, variant: str, algorithm: str,
                                    variant=variant,
                                    mink=mink,
                                    maxk=maxk,
-                                   n=n,
+                                   size=n,
                                    nbtiles=nbtiles)
 
     # prior to the creation of the shell file, compute the arguments to give to
