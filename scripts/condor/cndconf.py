@@ -35,7 +35,7 @@ ARGS = {
     "maps": "--map domains/$domain/benchmark/$testfile.map --solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
     "n-pancake": "--solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
     "n-puzzle": "--solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
-    "roadmap": "--graph domains/$domain/benchmark/$testfile.map --solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
+    "roadmap": "--graph domains/$domain/benchmark/$testfile.gr --solver '$algorithm' --file domains/$domain/benchmark/$testfile.test --variant '$variant' --k '$kspec' --summary --no-doctor --csv $filename.csv",
 }
 
 
