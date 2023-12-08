@@ -20,7 +20,7 @@ import datetime
 import os
 import sys
 
-import cndconf
+import figconf
 import version
 
 # -----------------------------------------------------------------------------
@@ -37,43 +37,30 @@ def createPrgArgParser():
     parser_mandatory.add_argument('-d', '--domain',
                                   required=True,
                                   type=str,
-                                  choices=cndconf.VALID_DOMAINS,
+                                  choices=figconf.VALID_DOMAINS,
                                   help="Name of the domain to be used.")
     parser_mandatory.add_argument('-v', '--variant',
                                   required=True,
                                   type=str,
                                   help="Name of the variant to be used under the selected domain. It must be a valid variant for the selected domain")
-    parser_mandatory.add_argument('-a', '--algorithm',
+    parser_mandatory.add_argument('-p', '--param',
                                   required=True,
                                   type=str,
-                                  choices=cndconf.VALID_ALGORITHMS,
-                                  help="Name of the algorithm to use for solving instances under the given domains with the selected variant.")
-    parser_mandatory.add_argument('-k', '--k',
+                                  choices=figconf.VALID_PARAMS,
+                                  help="Name of the parameter to show in the images")
+    parser_mandatory.add_argument('-s', '--search',
                                   required=True,
                                   type=str,
-                                  help="Number of paths to find. The specification of k follows the specification of k for any solver implemented in this library, i.e., it consists of a semicolon separated specification of values of k. Each part might consist of up to three different numbers: <first-k> <last-k> <step>. If only one value is given, only that value of k is considered; if two values are given, the step is assumed by default equal to one.")
-
-    # Group of optional arguments
-    parser_optional = parser.add_argument_group('Optional', 'The following arguments are optional')
-    parser_optional.add_argument('-m', '--map',
-                                 type=str,
-                                 default=None,
-                                 help="name of the map to be used in the domains 'map' or 'roadmap' without the suffix, e.g., 'USA-road-d.BAY' or 'random512-15-0'. It serves also to identify the test file with the instances to solve, and thus it is not necessary in the domains 'n-pancake' and 'n-puzzle'")
-    parser_optional.add_argument('-s', '--size',
-                                 type=int,
-                                 default=0,
-                                 help="Length of the permutations in the N-Pancake or the side of the square N-puzzle.")
-    parser_mandatory.add_argument('-t', '--testfile',
+                                  choices=figconf.VALID_SEARCH,
+                                  help="Set of search algorithms to show in the figures")
+    parser_mandatory.add_argument('-f', '--file',
+                                  required=True,
                                   type=str,
-                                  help="Filename with the test cases to solve. It should not contain any path, and it is necessary in the domains 'n-puzzle' and 'n-pancake'")
-    parser_optional.add_argument('-r', '--requirements',
-                                 type=str,
-                                 default=None,
-                                 help="In case it is given it is added verbatim in the requirements field of the condor job submission file.")
-    parser_optional.add_argument('-u', '--user',
-                                 type=str,
-                                 default="carlos.linares@uc3m.es",
-                                 help="e-mail address to notify upon completion of the condor job. To be included in the condor job submission file")
+                                  help="Name of the file to be generated with the LaTeX code to show all images. By default, the standard output is used")
+    parser_mandatory.add_argument('-r', '--root',
+                                  required=True,
+                                  type=str,
+                                  help="Path of results from which the given domain can be accessed, i.e., '../plotter/results'")
 
     # Group of logging services
     logging = parser.add_argument_group('Logging', 'The following arguments specify logging settings')
