@@ -30,7 +30,7 @@ VALID_SEARCH = ['brute-force', 'heuristic', 'mixed']
 RE_PNGFILENAME = {
     "maps": r'.*/random512-\d+.(?P<search>[a-zA-Z-]+).(?P<variant>[a-zA-Z-]+).(?P<param>[a-zA-Z-]+).png',
     "n-pancake": r'.*/\d+pancake.(?P<search>[a-zA-Z-]+).(?P<param>[a-zA-Z-]+).png',
-    "n-puzzle": "${nbtiles}puzzle.$search.$param.png",
+    "n-puzzle": r'.*/\d+puzzle.(?P<search>[a-zA-Z-]+).(?P<param>[a-zA-Z-]+).png',
     "roadmap": r'.*/USA-road-d.[a-zA-Z-]{1,3}\.(?P<search>[a-zA-Z-]+).(?P<param>[a-zA-Z-]+).png'
 }
 

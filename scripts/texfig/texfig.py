@@ -32,6 +32,7 @@ LOGGER = utils.LOGGER
 
 # debug messages
 DEBUG_EXAMINING_FOLDER = "Examining folder '{}'"
+DEBUG_ADDING_SUBFIGURE = "\t Adding subfigure from file '{}'"
 
 # critical messages
 CRITICAL_INVALID_VARIANT = "The variant '{}' is not valid for the domain '{}'"
@@ -101,6 +102,8 @@ def generate_tex_code(domain: str, variant: str, param: str, search: str,
                             # and add this file to the list of files to add in
                             # the LaTeX figure
                             files.append(str(jsubdir))
+
+                            LOGGER.debug(DEBUG_ADDING_SUBFIGURE.format(jsubdir))
 
     # now, create the LaTeX figure with a subfigure for each png file
     counter = 0                # used to refer to the subfigures: (a), (b), ...
