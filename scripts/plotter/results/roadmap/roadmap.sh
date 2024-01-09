@@ -77,7 +77,7 @@ function create_brute_force_images() {
 
         # Brute-force variants are also applied to the dimacs variant
         VARIANT="dimacs"
-        for MAP in "BAY" "CAL" "COL" "CTR" "E" "FLA" "LKS" "NE" "NW" "NY" "W"
+        for MAP in "BAY" "CAL" "COL" "CTR" "E" "FLA" "LKS" "NE" "NW" "NY" "W" "USA"
         do
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.csv \
                         --y runtime \
@@ -121,7 +121,7 @@ function create_brute_force_images() {
 function create_heuristic_images() {
         # Heuristic variants are only applied to the dimacs variant
         VARIANT="dimacs"
-        for MAP in "BAY" "CAL" "COL" "CTR" "E" "FLA" "LKS" "NE" "NW" "NY" "W"
+        for MAP in "BAY" "CAL" "COL" "CTR" "E" "FLA" "LKS" "NE" "NW" "NY" "W" "USA"
         do
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.csv \
                         --y runtime \
@@ -165,7 +165,7 @@ function create_heuristic_images() {
 function create_mixed_images() {
         # Heuristic variants are only applied to the dimacs variant
         VARIANT="dimacs"
-        for MAP in "BAY" "CAL" "COL" "CTR" "E" "FLA" "LKS" "NE" "NW" "NY" "W"
+        for MAP in "BAY" "CAL" "COL" "CTR" "E" "FLA" "LKS" "NE" "NW" "NY" "W" "USA"
         do
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.belA*csv \
                                        data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.K*csv \

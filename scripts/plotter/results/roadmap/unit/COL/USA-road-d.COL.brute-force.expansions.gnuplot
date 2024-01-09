@@ -3,7 +3,7 @@
 #
 # results/roadmap/unit/COL/USA-road-d.COL.brute-force.expansions.gnuplot
 #
-# Started on 12/13/2023 18:51:58
+# Started on 01/09/2024 14:28:28
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

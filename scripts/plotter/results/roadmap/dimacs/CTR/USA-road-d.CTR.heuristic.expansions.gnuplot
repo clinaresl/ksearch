@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/CTR/USA-road-d.CTR.heuristic.expansions.gnuplot
 #
-# Started on 12/13/2023 18:57:48
+# Started on 01/09/2024 14:37:17
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

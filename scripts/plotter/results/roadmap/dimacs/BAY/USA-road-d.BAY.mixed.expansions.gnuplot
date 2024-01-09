@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/BAY/USA-road-d.BAY.mixed.expansions.gnuplot
 #
-# Started on 12/13/2023 19:00:23
+# Started on 01/09/2024 14:41:28
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

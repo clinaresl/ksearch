@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/W/USA-road-d.W.heuristic.runtime.gnuplot
 #
-# Started on 12/13/2023 18:59:57
+# Started on 01/09/2024 14:40:26
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

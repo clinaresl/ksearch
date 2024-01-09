@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/NW/USA-road-d.NW.mixed.mem.gnuplot
 #
-# Started on 12/13/2023 19:02:51
+# Started on 01/09/2024 14:44:52
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

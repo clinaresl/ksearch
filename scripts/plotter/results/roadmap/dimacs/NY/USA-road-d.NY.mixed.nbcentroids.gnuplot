@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/NY/USA-road-d.NY.mixed.nbcentroids.gnuplot
 #
-# Started on 12/13/2023 19:03:18
+# Started on 01/09/2024 14:45:32
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

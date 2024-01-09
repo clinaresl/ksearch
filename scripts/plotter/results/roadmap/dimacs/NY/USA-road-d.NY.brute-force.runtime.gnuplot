@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/NY/USA-road-d.NY.brute-force.runtime.gnuplot
 #
-# Started on 12/13/2023 18:56:03
+# Started on 01/09/2024 14:34:14
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

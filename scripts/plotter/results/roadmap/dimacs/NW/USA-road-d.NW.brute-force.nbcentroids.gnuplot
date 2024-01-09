@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/NW/USA-road-d.NW.brute-force.nbcentroids.gnuplot
 #
-# Started on 12/13/2023 18:55:58
+# Started on 01/09/2024 14:34:07
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

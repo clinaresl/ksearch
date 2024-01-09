@@ -3,7 +3,7 @@
 #
 # results/roadmap/unit/LKS/USA-road-d.LKS.brute-force.nbcentroids.gnuplot
 #
-# Started on 12/13/2023 18:52:32
+# Started on 01/09/2024 14:29:18
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

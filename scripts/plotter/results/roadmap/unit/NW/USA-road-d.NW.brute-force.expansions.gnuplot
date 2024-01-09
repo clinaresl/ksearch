@@ -3,7 +3,7 @@
 #
 # results/roadmap/unit/NW/USA-road-d.NW.brute-force.expansions.gnuplot
 #
-# Started on 12/13/2023 18:52:51
+# Started on 01/09/2024 14:29:44
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

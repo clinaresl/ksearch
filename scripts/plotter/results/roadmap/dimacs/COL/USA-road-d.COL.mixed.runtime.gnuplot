@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/COL/USA-road-d.COL.mixed.runtime.gnuplot
 #
-# Started on 12/13/2023 19:00:52
+# Started on 01/09/2024 14:42:07
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

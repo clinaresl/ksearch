@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/NE/USA-road-d.NE.brute-force.runtime.gnuplot
 #
-# Started on 12/13/2023 18:55:24
+# Started on 01/09/2024 14:33:16
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

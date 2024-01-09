@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/NY/USA-road-d.NY.mixed.runtime.gnuplot
 #
-# Started on 12/13/2023 19:03:04
+# Started on 01/09/2024 14:45:12
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

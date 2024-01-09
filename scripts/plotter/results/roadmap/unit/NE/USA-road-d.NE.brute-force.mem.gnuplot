@@ -3,7 +3,7 @@
 #
 # results/roadmap/unit/NE/USA-road-d.NE.brute-force.mem.gnuplot
 #
-# Started on 12/13/2023 18:52:37
+# Started on 01/09/2024 14:29:25
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

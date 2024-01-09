@@ -3,7 +3,7 @@
 #
 # results/roadmap/dimacs/NW/USA-road-d.NW.heuristic.nbcentroids.gnuplot
 #
-# Started on 12/13/2023 18:59:31
+# Started on 01/09/2024 14:39:50
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
