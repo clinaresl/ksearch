@@ -26,6 +26,7 @@
 
 // the following function provides a report on the memory usage in Kbytes
 // Literally taken from the gist thirdwing/memory_check.cpp
+#ifdef __unix__
 void process_mem_usage(double& vm_usage, double& resident_set)
 {
     vm_usage     = 0.0;
@@ -46,6 +47,7 @@ void process_mem_usage(double& vm_usage, double& resident_set)
     vm_usage = vsize / 1024.0;
     resident_set = rss * page_size_kb;
 }
+#endif
 
 // Definition of an instance
 template <typename T>
@@ -260,6 +262,7 @@ private:
                         }
                     }
 
+#ifdef __unix__
                     // and while the solver is still alive (and all its data in
                     // main memory) measure memory usage again in Mbytes. Note
                     // that if want_summary was given, then the memory needed
@@ -267,6 +270,7 @@ private:
                     double vm, rss;
                     process_mem_usage(vm, rss);
                     ksolution.set_mem_usage((vm + rss)/1024.0);
+#endif
 
                     // Verify the solution, if the user requested so and show
                     // the result on the terminal

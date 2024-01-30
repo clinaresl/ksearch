@@ -1,5 +1,13 @@
 enable_testing()
-find_package(GTest REQUIRED)
+find_package(GTest QUIET)
+
+if (GTest_FOUND)
+    message(STATUS "Tests enabled")
+else()
+    message(NOTICE "GTest package not found, continuing with tests disabled")
+    message(STATUS "Tests disabled")
+    return()
+endif()
 
 add_executable(gtest
   gtest.cc

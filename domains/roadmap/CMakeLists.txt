@@ -16,3 +16,5 @@ add_executable (gen-roadmap
   generator.cc)
 
 target_link_libraries (gen-roadmap LINK_PUBLIC ksearch)
+
+add_subdirectory(benchmark)
