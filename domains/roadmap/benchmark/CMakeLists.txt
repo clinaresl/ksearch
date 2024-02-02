@@ -31,14 +31,14 @@
 #figure out which ungz command to use
 find_program(GUNZIP_LOCATION gunzip DOC "Path to gunzip program. Set either this one, GZIP_LOCATION, or 7Z_LOCATION to build amber.")
 find_program(GZIP_LOCATION gzip DOC "Path to gzip program. Set either this one, GUNZIP_LOCATION, or 7Z_LOCATION to build amber.")
-find_program(7Z_LOCATION 7z 7za PATHS ENV PROGRAMFILES/7-Zip ENV PROGRAMFILES(X86)/7-Zip DOC "Path to the (p)7-zip command line program, either 7z or 7za. Set either this one, GZIP_LOCATION, or GUNZIP_LOCATION to build amber.")
+find_program(7Z_LOCATION 7z 7za 7-Zip/7z.exe PATHS ENV PROGRAMFILES PROGRAMFILES(X86) DOC "Path to the (p)7-zip command line program, either 7z or 7za. Set either this one, GZIP_LOCATION, or GUNZIP_LOCATION to build amber.")
 
 if(GZIP_LOCATION)
     set(UNZIP_COMMAND ${GZIP_LOCATION} -dc)
 elseif(GUNZIP_LOCATION)
     set(UNZIP_COMMAND ${GUNZIP_LOCATION} -c)
 elseif(7Z_LOCATION)
-    set(UNZIP_COMMAND ${7Z_LOCATION} e -so)
+    set(UNZIP_COMMAND ${7Z_LOCATION} e -so -si -tgzip)
 else()
     #cause the searches to be repeated
     unset(GZIP_LOCATION CACHE)
@@ -46,9 +46,9 @@ else()
     unset(7Z_LOCATION CACHE)
 
     if(WIN32)
-        message(FATAL_ERROR "A gzip unarchiver is required to build AMBER, but was not found.  Please install gzip or 7-zip and set GZIP_LOCATION, GUNZIP_LOCATION, or 7Z_LOCATION to the gzip or 7z executable.")
+        message(FATAL_ERROR "A gzip unarchiver is required to download data, but was not found.  Please install gzip or 7-zip and set GZIP_LOCATION, GUNZIP_LOCATION, or 7Z_LOCATION to the gzip or 7z executable.")
     else()
-        message(FATAL_ERROR "A gzip unarchiver is required to build AMBER, but was not found.  Please install gzip, gunzip, or p7zip.")
+        message(FATAL_ERROR "A gzip unarchiver is required to download data, but was not found.  Please install gzip, gunzip, or p7zip.")
     endif()
 endif()
 

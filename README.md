@@ -94,6 +94,29 @@ This package comes with a number of domain-dependent solvers under `domains/`:
 Every domain-dependent solver provides all the search algorithms described
 above. For further details, check out the documentation under `domains/`
 
+# Additional CMake Options
+Various CMake options are available that automatically download datafiles for some domains.
+* `-DDATA_ALL`: downloads all data files for the roadmap domain to `domains/roadmap/benchmark`.
+* `-DDATA_*`: downloads the data files for specific maps in the roadmap domain to `domains/roadmap/benchmark`.
+  + `-DDATA_USA`: Full USA
+  + `-DDATA_CTR`: Central USA
+  + `-DDATA_W`: Western USA
+  + `-DDATA_E`: Eastern USA
+  + `-DDATA_LKS`: Great Lakes
+  + `-DDATA_CAL`: California and Nevada
+  + `-DDATA_NE`: Northeast USA
+  + `-DDATA_NW`: Northwest USA
+  + `-DDATA_FLA`: Florida
+  + `-DDATA_COL`: Colorado
+  + `-DDATA_BAY`: San Fransisco Bay Area
+  + `-DDATA_NY`: New York City
+
+**NOTE:** An installation of 7zip, Gunzip, or gzip is needed for automatic downloads to work. If your installation is 
+not in a default location, a path can be provided through the following CMake options:
+* `-D7ZIP_LOCATION`: Path to 7zip executable
+* `-DGUNZIP_LOCATION`: Path to Gunzip executable
+* `-DGZIP_LOCATION`: Path to gzip executable
+
 # License #
 
 MIT License
