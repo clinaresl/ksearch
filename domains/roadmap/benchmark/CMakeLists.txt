@@ -31,7 +31,7 @@
 #figure out which ungz command to use
 find_program(GUNZIP_LOCATION gunzip DOC "Path to gunzip program. Set either this one, GZIP_LOCATION, or 7Z_LOCATION to build amber.")
 find_program(GZIP_LOCATION gzip DOC "Path to gzip program. Set either this one, GUNZIP_LOCATION, or 7Z_LOCATION to build amber.")
-find_program(7Z_LOCATION 7z 7za 7-Zip/7z.exe PATHS ENV PROGRAMFILES DOC "Path to the (p)7-zip command line program, either 7z or 7za. Set either this one, GZIP_LOCATION, or GUNZIP_LOCATION to build amber.")
+find_program(7Z_LOCATION 7z 7za PATHS ENV PROGRAMFILES/7-Zip ENV PROGRAMFILES(X86)/7-Zip DOC "Path to the (p)7-zip command line program, either 7z or 7za. Set either this one, GZIP_LOCATION, or GUNZIP_LOCATION to build amber.")
 
 if(GZIP_LOCATION)
     set(UNZIP_COMMAND ${GZIP_LOCATION} -dc)
@@ -55,7 +55,8 @@ endif()
 #message(STATUS "Un-gzip command: ${UNZIP_COMMAND}")
 
 macro(ungzip_file SOURCE DESTINATION)
-    execute_process(COMMAND ${UNZIP_COMMAND} ${SOURCE} > ${DESTINATION})
+    execute_process(COMMAND ${UNZIP_COMMAND} INPUT_FILE ${SOURCE} OUTPUT_FILE ${DESTINATION})
+
 endmacro(ungzip_file)
 
 
@@ -68,13 +69,19 @@ function(download_data AREA)
         if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/USA-road-d.${AREA}.gr")
             message(STATUS "Downloading ${AREA} graph file")
             file(DOWNLOAD "http://www.diag.uniroma1.it/~challenge9/data/USA-road-d/USA-road-d.${AREA}.gr.gz" tmp.gz SHOW_PROGRESS)
-            ungzip_file(tmp.gz ${CMAKE_CURRENT_SOURCE_DIR}/USA-road-d.${AREA}.gr)
+            ungzip_file(tmp.gz "${CMAKE_CURRENT_SOURCE_DIR}/USA-road-d.${AREA}.gr")
+            if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/USA-road-d.${AREA}.gr")
+                message(SEND_ERROR "Download Failed")
+            endif ()
         endif ()
         # If coordinate file doesn't exist, download and extract it
         if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/USA-road-d.${AREA}.co")
             message(STATUS "Downloading ${AREA} coordinate file")
             file(DOWNLOAD "http://www.diag.uniroma1.it/~challenge9/data/USA-road-d/USA-road-d.${AREA}.co.gz" tmp.gz SHOW_PROGRESS)
-            ungzip_file(tmp.gz ${CMAKE_CURRENT_SOURCE_DIR}/USA-road-d.${AREA}.co)
+            ungzip_file(tmp.gz "${CMAKE_CURRENT_SOURCE_DIR}/USA-road-d.${AREA}.co")
+            if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/USA-road-d.${AREA}.co")
+                message(SEND_ERROR "Download Failed")
+            endif ()
         endif ()
     endif ()
 endfunction()
