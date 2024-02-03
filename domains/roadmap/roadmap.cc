@@ -310,7 +310,7 @@ bool get_coordinates_filename (const string& filename, string& coordinates_filen
             (perms & filesystem::perms::group_read) != filesystem::perms::none &&
             (perms & filesystem::perms::others_read) != filesystem::perms::none) {
 
-            coordinates_filename = cofile.c_str ();
+            coordinates_filename = cofile.string ();
             return true;
         }
     }

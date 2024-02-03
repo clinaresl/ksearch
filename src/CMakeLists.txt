@@ -16,7 +16,7 @@ add_library (ksearch
   algorithm/KHSIKStar.h)
 
 # Generate the main header file from its template
-configure_file(ksearch.h.in ./ksearch.h)
+configure_file(ksearch.h.in ${CMAKE_CURRENT_SOURCE_DIR}/ksearch.h)
 
 set_target_properties(ksearch PROPERTIES LINKER_LANGUAGE CXX)
 
