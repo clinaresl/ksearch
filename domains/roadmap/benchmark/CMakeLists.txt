@@ -1,5 +1,11 @@
 # This file allows test data to be downloaded at CMake config time
 
+# We can return from this file if no downloads were requested
+get_cmake_property(variable_names VARIABLES)
+string (REGEX MATCHALL "(^|;)DATA_[A-Za-z0-9_]*" matched_variables "${variable_names}")
+if (NOT matched_variables)
+    return()
+endif ()
 
 # The following defines a macro for unzipping .gz files from https://github.com/Amber-MD/cmake-buildscripts
 #MIT License
