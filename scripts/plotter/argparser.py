@@ -38,7 +38,7 @@ def createPrgArgParser():
                                 description="DESCRIPTION: Generate a GNUplot file from spreadsheet data")
     ky = subparser.add_parser("ky",
                               help="Generate a GNUplot file with k versus the average time of the given y column over all problem ids",
-                              description="DESCRIPTION: Generate a GNUplot file with k versus the average time of the given y column over all problem ids")
+                              description="DESCRIPTION: Generate either a GNUplot file or the data body of a LaTeX table with k versus the average time of the given y column over all problem ids")
 
     # plot
     # -------------------------------------------------------------------------
@@ -103,6 +103,9 @@ def createPrgArgParser():
     ky_optional.add_argument('-k', '--k',
                              type=str,
                              help="process only the k values given in a list separated by semicolons. Those k values not appearing in the input spreadsheet are ignored. By default, all are considered")
+    ky_optional.add_argument('-l', '--table',
+                             action='store_true',
+                             help="if given, the data body of a LaTeX table is generated instead of a gnuplot file")
     ky_optional.add_argument('-d', '--delimiter',
                                type=str,
                                default=';',
@@ -118,11 +121,11 @@ def createPrgArgParser():
     ky_optional.add_argument('-w', '--output',
                              type=str,
                              default=None,
-                             help="Name of the gnuplot file to be generated. If none is given, no output file is generated")
+                             help="Name of the file to be generated with the gnuplot commands or the data body of the LaTeX file. If none is given, no output file is generated")
     ky_optional.add_argument('-p', '--png',
                              type=str,
                              default=None,
-                             help="Name of the png file to be generated. If none is given, no png file is generated")
+                             help="Name of the png file to be generated only when creating gnuplot files, i.e., it is of no use when generating the body data of LaTeX tables. If none is given, no png file is generated")
 
     # Parser
     # -------------------------------------------------------------------------

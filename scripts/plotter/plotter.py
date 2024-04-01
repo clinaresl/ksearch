@@ -26,6 +26,7 @@ import pltchecker
 import pltGNUfile
 import pltkserie
 import pltserie
+import plttable
 import spsreader
 import utils
 
@@ -374,7 +375,7 @@ def create_gnuplotfile(series: list, gnufilename: str, title: str, png: str) -> 
     # in case no serie has been created, then return immediately
     if len(series) > 0:
 
-        # get the x- and y- legends. It is assumed that all series have been
+        # get the x- and y- titles. It is assumed that all series have been
         # created with the same values for the x- and y- axis
         (xname, yname) = (series[0].get_xtitle(), series[0].get_ytitle())
 
@@ -408,6 +409,58 @@ def create_gnuplotfile(series: list, gnufilename: str, title: str, png: str) -> 
     # finally, return the GNUplot file with all series extracted from the
     # spreadsheet
     return gnustream
+
+
+# -----------------------------------------------------------------------------
+# create_tablefile
+#
+# Given a list of series represented as instances of either PLTserie or
+# PLTKSerie, return an instance of a plttable named after tablefilename which
+# contains all those series and the specified title if any is given.
+# -----------------------------------------------------------------------------
+def create_tablefile(series: list, tablefilename: str, title: str) -> plttable.PLTTable:
+    """Given a list of series represented as instances of either PLTserie or
+       PLTKSerie, return an instance of a plttable named after tablefilename
+       which contains all those series and the specified title if any is given.
+
+    """
+
+    # --initialization
+    tablestream: plttable.PLTTable
+
+    # in case no serie has been created, then return immediately
+    if len(series) > 0:
+
+        # get the x- and y- titles. It is assumed that all series have been
+        # created with the same values for the x- and y- axis
+        (xname, yname) = (series[0].get_xtitle(), series[0].get_ytitle())
+
+        # create a table with the information of all the given series, in case
+        # any has been given. Note the titles for the x and y axis are the same
+        # for all series
+        if tablefilename is not None and len(tablefilename) > 0:
+            tablestream = plttable.PLTTable(tablefilename, xname, yname)
+
+            # and add all series
+            for iserie in series:
+
+                # in case this is a kserie, then apply the operator and add the
+                # resulting serie to the table
+                if isinstance(iserie, pltkserie.PLTKSerie):
+                    iserie.exec(numpy.average)
+                    tablestream += iserie
+                else:
+
+                    # otherwise, add the serie straight away
+                    tablestream += iserie
+
+            # give the plot file a title, if any was given
+            if title is not None and len(title) > 0:
+                tablestream.set_title(title)
+
+    # finally, return the table file with all series extracted from the
+    # spreadsheet
+    return tablestream
 
 
 # -----------------------------------------------------------------------------
@@ -468,12 +521,12 @@ def do_plot(params: argparse.Namespace):
 
 
 # -----------------------------------------------------------------------------
-# do_ktime
+# do_ky
 #
-# Execute the ktime command with the given parameters
+# Execute the ky command with the given parameters
 # -----------------------------------------------------------------------------
 def do_ky(params: argparse.Namespace):
-    """Execute the ktime command with the given parameters"""
+    """Execute the ky command with the given parameters"""
 
     # get the full list of spreadsheets to process ---which can be of different
     # types
@@ -514,8 +567,22 @@ def do_ky(params: argparse.Namespace):
         if params.output is None or len(params.output) == 0:
             LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
         else:
-            gnufile = create_gnuplotfile(series, params.output, params.title, params.png)
-            gnufile.write_gnuplot()
+
+            # finally, in case a LaTeX table has been requested creat it
+            if params.table:
+                tablefile = create_tablefile(series,
+                                             utils.get_filename(params.output, "tex"),
+                                             params.title)
+                tablefile.write_table()
+
+            else:
+
+                # otherwise, generate the gnuplotfile
+                gnufile = create_gnuplotfile(series,
+                                             utils.get_filename(params.output, "gnuplot"),
+                                             params.title,
+                                             utils.get_filename(params.png, "png"))
+                gnufile.write_gnuplot()
 
     else:
         LOGGER.warning(WARNING_NO_DATA)

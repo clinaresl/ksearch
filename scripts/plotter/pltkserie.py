@@ -57,16 +57,33 @@ class PLTKSerie:
         self._data = defaultdict(list)
 
         # data, when being processed is stored as a list of tuples where the
-        # first value is every index of the dicdtionary and the second value is
+        # first value is every index of the dictionary and the second value is
         # the result of applying an operation over all values of the dictionary
         # under the same key
-        self._serie = []
-
-        # keys are stored separately to be used when iterating this instance
-        self._keys = []
+        self._serie: list = []
 
         # counter of the number of values stored in the serie
         self._len = 0
+
+
+    def __getitem__(self, key) -> float:
+        """Return the value of the processed serie of this instance
+           corresponding to the given key. If no value is found, it returns None
+
+           This method works only when this serie has been processed with exec
+
+        """
+
+        # linearly search for the key
+        for idata in self._serie:
+
+            # every processed datapoint is stored as a tuple where the first
+            # value is the index and the second value is the processed result
+            if idata[0] == key:
+                return idata[1]
+
+        # if none has been found return so
+        return None
 
 
     def __iadd__(self, data: tuple):
@@ -122,6 +139,11 @@ class PLTKSerie:
 
             # store the value returned by the given operation for all values under this key
             self._serie.append((ikey, op(self._data[ikey])))
+
+    def get_data(self) -> dict:
+        """return the data of this instance"""
+
+        return self._data
 
     def get_legend(self) -> str:
         """returns the legend of this serie"""

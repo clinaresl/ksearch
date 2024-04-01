@@ -52,15 +52,15 @@ class PLTGNUfile:
         (self._filename, self._xtitle, self._ytitle) = (filename, xtitle, ytitle)
 
         # initialize the data
-        self._data = []
+        self._data: list = []
 
         # and also the counter used for iterating
         self._idx = 0
 
         # other data members that are initialized by other services are listed
         # below
-        self._png = None
-        self._title = None
+        self._png = ""
+        self._title = ""
 
 
     def __iadd__(self, data):
