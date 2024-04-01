@@ -60,6 +60,9 @@ def createPrgArgParser():
 
     # Group of optional arguments
     plot_optional = plot.add_argument_group('Optional', 'The following arguments are optional')
+    plot_optional.add_argument('-k', '--k',
+                               type=str,
+                               help="process only the k values given in a list separated by semicolons. Those k values not appearing in the input spreadsheet are ignored. By default, all are considered")
     plot_optional.add_argument('-d', '--delimiter',
                                type=str,
                                default=';',
@@ -97,6 +100,9 @@ def createPrgArgParser():
 
     # Group of optional arguments
     ky_optional = ky.add_argument_group('Optional', 'The following arguments are optional')
+    ky_optional.add_argument('-k', '--k',
+                             type=str,
+                             help="process only the k values given in a list separated by semicolons. Those k values not appearing in the input spreadsheet are ignored. By default, all are considered")
     ky_optional.add_argument('-d', '--delimiter',
                                type=str,
                                default=';',

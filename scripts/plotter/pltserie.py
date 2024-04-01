@@ -41,7 +41,7 @@ class PLTSerie:
 
     def __init__(self, legend: str, xtitle: str, ytitle: str):
         """A serie is defined by a legend with titles for the x and y axis. Data
-        is added with the += operator
+           is added with the += operator
 
         """
 

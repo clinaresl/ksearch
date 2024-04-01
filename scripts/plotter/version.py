@@ -14,10 +14,10 @@ Version information and other admin data
 """
 
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = "Carlos Linares López"
 __email__ = "carlos.linares@uc3m.es"
-__description__ = "Generation of GNUplot images from .xlsx spreadsheet data"
+__description__ = "Generation of GNUplot images and LaTeX tables from .csv/.xlsx spreadsheet data"
 
 # Local Variables:
 # mode:python

@@ -36,6 +36,7 @@ import utils
 LOGGER = utils.LOGGER
 
 # regular expressions
+RE_KAPPA = ";"
 RE_SERIES = "\s*(?P<legend>[^:]+)\s*:(?P<condition>.*)\s*"
 RE_PROBLEM_ID = "^\s*(?P<id>\d+)/(?P<k>\d+)\s*$"
 
@@ -59,6 +60,7 @@ ERROR_UNKNOWN_HEADER = "The {}-name does not exist in the current line and will 
 # critical messages
 CRITICAL_DUPLICATED_HEADER = "Duplicated header {}"
 CRITICAL_INVALID_SERIE = "The serie {} can not be parsed. Type '--help' to get additional information"
+
 
 # -----------------------------------------------------------------------------
 # filter_data
@@ -126,11 +128,14 @@ def filter_data(data: list, line: dict,
 # re.match('00/\d+', id)"") which can use variables that have to be found in the
 # spreadsheet as header names.
 #
+# In addition, only datapoints relative to any of the k values appearing in
+# kappa are accepted. kappa must be given as a list of integer values
+#
 # Every datapoint of each serie consists of a tuple (x, y) whose values are
 # given by the contents of the headers xname and yname respectively.
 # -----------------------------------------------------------------------------
 def get_data(spreadsheets: list, delimiter: str,
-             series: list, xname: str, yname: str) -> list:
+             series: list, xname: str, yname: str, kappa: list) -> list:
     """return a list with all series of data accepted from a list of
        spreadsheets, each represented as an intance of PLTSerie
 
@@ -139,6 +144,9 @@ def get_data(spreadsheets: list, delimiter: str,
        expression (including matching regular expressions, e.g., ""Problem #0:
        re.match('00/\d+', id)"") which can use variables that have to be found
        in the spreadsheet as header names.
+
+       In addition, only datapoints relative to any of the k values appearing in
+       kappa are accepted. kappa must be given as a list of integer values
 
        Every datapoint of each serie consists of a tuple (x, y) whose values are
        given by the contents of the headers xname and yname respectively.
@@ -189,6 +197,11 @@ def get_data(spreadsheets: list, delimiter: str,
                 # add this key to the dictionary
                 line[ikey] = irecord[ikey]
 
+            # verify this point refers to an accepted k value. If the list of k
+            # values to accept is empty, then accept them all
+            if len(kappa) > 0 and line['k'] not in kappa:
+                continue
+
             # once the entire line has been retrieved, ensure that there are headers
             # named after the x and y names. If not, skip this line
             if xname not in line:
@@ -230,11 +243,14 @@ def get_data(spreadsheets: list, delimiter: str,
 # re.match('00/\d+', id)"") which can use variables that have to be found in the
 # spreadsheet as header names.
 #
+# In addition, only datapoints relative to any of the k values appearing in
+# kappa are accepted. kappa must be given as a list of integer values
+#
 # Every datapoint of each serie consists of a tuple (x, y) whose values are
 # given by the contents of the headers xname and yname respectively.
 # -----------------------------------------------------------------------------
 def get_k_data(spreadsheets: list, delimiter,
-               series: list, xname: str, yname: str) -> list:
+               series: list, xname: str, yname: str, kappa: list) -> list:
     """return a list with all series of data accepted from a list of
        spreadsheets, each represented as an instance of PLTKSerie.
 
@@ -243,6 +259,9 @@ def get_k_data(spreadsheets: list, delimiter,
        expression (including matching regular expressions, e.g., ""Problem #0:
        re.match('00/\d+', id)"") which can use variables that have to be found
        in the spreadsheet as header names.
+
+       In addition, only datapoints relative to any of the k values appearing in
+       kappa are accepted. kappa must be given as a list of integer values
 
        Every datapoint of each serie consists of a tuple (x, y) whose values are
        given by the contents of the headers xname and yname respectively.
@@ -297,6 +316,11 @@ def get_k_data(spreadsheets: list, delimiter,
             # the number of paths requested. If not, skip it
             m = re.match(RE_PROBLEM_ID, line["id"])
             if int(m.group("k")) != int(line["k"]):
+                continue
+
+            # even if this line is accepted, remove it in case this k value is
+            # not among those requested by the user
+            if len(kappa) > 0 and line['k'] not in kappa:
                 continue
 
             # once the entire line has been retrieved, ensure that there are headers
@@ -414,9 +438,15 @@ def do_plot(params: argparse.Namespace):
     # is named after a concatenation of the names of all spreadsheets
     user_series = ["{}:True".format("/".join(spreadsheets))] if params.series is None else params.series
 
+    # Also, create a list of k values to accept from the user specification. If
+    # none was given, then accept them all
+    kvalues = []
+    if params.k and len(params.k) > 0:
+        kvalues = [int(x) for x in re.split(RE_KAPPA, params.k)]
+
     # in case any serie is produced from the given spreadsheet using the
     # variables x and y
-    series = get_data(spreadsheets, params.delimiter, user_series, params.x, params.y)
+    series = get_data(spreadsheets, params.delimiter, user_series, params.x, params.y, kvalues)
     if series is not None and len(series) > 0:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in series:
@@ -465,9 +495,15 @@ def do_ky(params: argparse.Namespace):
     # is named after a concatenation of the names of all spreadhseets
     user_series = ["{}:True".format("/".join(spreadsheets))] if params.series is None else params.series
 
+    # Also, create a list of k values to accept from the user specification. If
+    # none was given, then accept them all
+    kvalues = []
+    if params.k and len(params.k) > 0:
+        kvalues = [int(x) for x in re.split(RE_KAPPA, params.k)]
+
     # in case any serie si produced from the given spreadsheet using the
     # variables k and the given y
-    series = get_k_data(spreadsheets, params.delimiter, user_series, "k", params.y)
+    series = get_k_data(spreadsheets, params.delimiter, user_series, "k", params.y, kvalues)
     if series is not None and len(series) > 0:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in series:
