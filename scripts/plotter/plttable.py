@@ -33,7 +33,8 @@ CRITICAL_INVALID_DATA = "Series have to be given as instances of PLTSerie"
 CRITICAL_DUPLICATED_SERIE = "Duplicated serie! A serie with legend {} was already inserted"
 
 # (half-)templates
-TMPL_TITLE = Template(r'\multicolumn{$nbcolumns}{c}{$title}\\')
+TMPL_BEGIN_TABULAR = Template(r'\begin{tabular}{c|$spec}\toprule')
+TMPL_TITLE = Template(r'\multicolumn{$nbcolumns}{c}{$title}\\ \midrule')
 TMPL_BEST_ONE = Template(r'\textbf{$value}')
 
 # -----------------------------------------------------------------------------
@@ -204,6 +205,10 @@ class PLTTable:
         # instance.
         with open(self._filename, 'w') as tablestream:
 
+            # Beginning of the tabular environment
+            tablestream.write(TMPL_BEGIN_TABULAR.substitute({'spec': 'c'*(nbcolumns-1)}))
+            tablestream.write("\n")
+
             # Headers of all columns.
 
             # In case a title was given, then show it first on a single line
@@ -222,10 +227,10 @@ class PLTTable:
                     tablestream.write(" & ")
                 else:
                     tablestream.write(" ")
-            tablestream.write("\\\\\n")
+            tablestream.write("\\\\ \midrule\n")
 
             # and now, write each serie in a row
-            for iserie in row_names:
+            for irow, iserie in enumerate(row_names):
                 tablestream.write("{0} & ".format(iserie))
 
                 # and all values of the y parameter for every value of the x
@@ -248,8 +253,18 @@ class PLTTable:
                     else:
                         tablestream.write(" ")
 
-                # and start now a new line
-                tablestream.write("\\\\\n")
+                # and start now a new line. In case this is the last line, then
+                # show a bottom line
+                if irow < len(row_names) - 1:
+                    tablestream.write("\\\\\n")
+                else:
+                    tablestream.write("\\\\ \\bottomrule \n")
+
+            # End of the tabular environment
+            tablestream.write("\\end{tabular}")
+            tablestream.write("\n")
+
+
 
 # Local Variables:
 # mode:python
