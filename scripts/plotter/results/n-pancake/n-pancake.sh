@@ -198,7 +198,7 @@ function create_brute_force_tables() {
                 ./plotter.py ky --file data/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.* \
                         --y expansions \
                         --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
-                        --title "#Expansions - ${SIZE}-Pancake ${VARIANT}" \
+                        --title "Number of expansions - ${SIZE}-Pancake ${VARIANT}" \
                         --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                         --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.brute-force.expansions \
                         --table
@@ -206,7 +206,7 @@ function create_brute_force_tables() {
                 ./plotter.py ky --file data/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.* \
                         --y nbcentroids \
                         --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
-                        --title "#Centroids - ${SIZE}-Pancake ${VARIANT}" \
+                        --title "Number of centroids - ${SIZE}-Pancake ${VARIANT}" \
                         --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                         --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.brute-force.nbcentroids \
                         --table
@@ -240,7 +240,7 @@ function create_heuristic_tables() {
                         ./plotter.py ky --file data/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.* \
                                 --y expansions \
                                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                                --title "#Expansions - ${SIZE}-Pancake ${VARIANT}" \
+                                --title "Number of expansions - ${SIZE}-Pancake ${VARIANT}" \
                                 --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                                 --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.heuristic.expansions \
                                 --table
@@ -248,7 +248,7 @@ function create_heuristic_tables() {
                         ./plotter.py ky --file data/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.* \
                                 --y nbcentroids \
                                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                                --title "#Centroids - ${SIZE}-Pancake ${VARIANT}" \
+                                --title "Number of centroids - ${SIZE}-Pancake ${VARIANT}" \
                                 --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                                 --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.heuristic.nbcentroids \
                                 --table
@@ -277,7 +277,7 @@ function create_heuristic_tables() {
         ./plotter.py ky --file data/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.* \
                 --y expansions \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --title "#Expansions - ${SIZE}-Pancake ${VARIANT}" \
+                --title "Number of expansions - ${SIZE}-Pancake ${VARIANT}" \
                 --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                 --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.heuristic.expansions \
                 --table
@@ -285,7 +285,7 @@ function create_heuristic_tables() {
         ./plotter.py ky --file data/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.* \
                 --y nbcentroids \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --title "#Centroids - ${SIZE}-Pancake ${VARIANT}" \
+                --title "Number of centroids - ${SIZE}-Pancake ${VARIANT}" \
                 --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                 --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.heuristic.nbcentroids \
                 --table

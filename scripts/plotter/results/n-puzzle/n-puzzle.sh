@@ -153,7 +153,7 @@ function create_brute_force_tables() {
         ./plotter.py ky --file data/n-puzzle/${VARIANT}/${SIZE}/${SIZE}puzzle.* \
             --y expansions \
             --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
-            --title "#Expansions - ${SIZE}-Puzzle ${VARIANT}" \
+            --title "Number of expansions - ${SIZE}-Puzzle ${VARIANT}" \
             --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
             --output results/n-puzzle/${VARIANT}/${SIZE}/${SIZE}puzzle.brute-force.expansions \
             --table
@@ -161,7 +161,7 @@ function create_brute_force_tables() {
         ./plotter.py ky --file data/n-puzzle/${VARIANT}/${SIZE}/${SIZE}puzzle.* \
             --y nbcentroids \
             --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
-            --title "#Centroids - ${SIZE}-Puzzle ${VARIANT}" \
+            --title "Number of centroids - ${SIZE}-Puzzle ${VARIANT}" \
             --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
             --output results/n-puzzle/${VARIANT}/${SIZE}/${SIZE}puzzle.brute-force.nbcentroids \
             --table
@@ -193,7 +193,7 @@ function create_heuristic_tables() {
             ./plotter.py ky --file data/n-puzzle/${VARIANT}/${SIZE}/${SIZE}puzzle.* \
                 --y expansions \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --title "#Expansions - ${SIZE}-Puzzle ${VARIANT}" \
+                --title "Number of expansions - ${SIZE}-Puzzle ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/n-puzzle/${VARIANT}/${SIZE}/${SIZE}puzzle.heuristic.expansions \
                 --table
@@ -201,7 +201,7 @@ function create_heuristic_tables() {
             ./plotter.py ky --file data/n-puzzle/${VARIANT}/${SIZE}/${SIZE}puzzle.* \
                 --y nbcentroids \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --title "#Centroids - ${SIZE}-Puzzle ${VARIANT}" \
+                --title "Number of centroids - ${SIZE}-Puzzle ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/n-puzzle/${VARIANT}/${SIZE}/${SIZE}puzzle.heuristic.nbcentroids \
                 --table

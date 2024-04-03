@@ -187,7 +187,7 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
-                --title  "#Expansions - Maps ${RATIO} ${VARIANT}" \
+                --title  "Number of expansions - Maps ${RATIO} ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
                 --table
@@ -198,7 +198,7 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
-                --title  "#Centroids - Maps ${RATIO} ${VARIANT}" \
+                --title  "Number of centroids - Maps ${RATIO} ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
                 --table
@@ -240,7 +240,7 @@ function create_heuristic_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --title  "#Expansions - Maps ${RATIO} ${VARIANT}" \
+                --title  "Number of expansions - Maps ${RATIO} ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE} \
                 --table
@@ -251,7 +251,7 @@ function create_heuristic_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --title  "#Centroids - Maps ${RATIO} ${VARIANT}" \
+                --title  "Number of centroids - Maps ${RATIO} ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE} \
                 --table

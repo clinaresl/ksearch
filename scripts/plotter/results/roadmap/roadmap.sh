@@ -250,7 +250,7 @@ function create_brute_force_tables() {
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.csv \
                         --y expansions \
                         --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
-                        --title "#Expansions - ${MAP} Roadmap ${VARIANT}" \
+                        --title "Number of expansions - ${MAP} Roadmap ${VARIANT}" \
                         --k "1;10;50;100;500;1000;5000;10000" \
                         --output results/roadmap/${VARIANT}/${MAP}/USA-road-d.${MAP}.brute-force.expansions \
                         --table
@@ -258,7 +258,7 @@ function create_brute_force_tables() {
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.csv \
                         --y nbcentroids \
                         --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
-                        --title "#Centroids - ${MAP} Roadmap ${VARIANT}" \
+                        --title "Number of centroids - ${MAP} Roadmap ${VARIANT}" \
                         --k "1;10;50;100;500;1000;5000;10000" \
                         --output results/roadmap/${VARIANT}/${MAP}/USA-road-d.${MAP}.brute-force.nbcentroids \
                         --table
@@ -287,7 +287,7 @@ function create_brute_force_tables() {
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.csv \
                         --y expansions \
                         --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
-                        --title "#Expansions - ${MAP} Roadmap ${VARIANT}" \
+                        --title "Number of expansions - ${MAP} Roadmap ${VARIANT}" \
                         --k "1;10;50;100;500;1000;5000;10000" \
                         --output results/roadmap/${VARIANT}/${MAP}/USA-road-d.${MAP}.brute-force.expansions \
                         --table
@@ -295,7 +295,7 @@ function create_brute_force_tables() {
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.csv \
                         --y nbcentroids \
                         --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
-                        --title "#Centroids - ${MAP} Roadmap ${VARIANT}" \
+                        --title "Number of centroids - ${MAP} Roadmap ${VARIANT}" \
                         --k "1;10;50;100;500;1000;5000;10000" \
                         --output results/roadmap/${VARIANT}/${MAP}/USA-road-d.${MAP}.brute-force.nbcentroids \
                         --table
@@ -327,7 +327,7 @@ function create_heuristic_tables() {
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.csv \
                         --y expansions \
                         --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                        --title "#Expansions - ${MAP} Roadmap ${VARIANT}" \
+                        --title "Number of expansions - ${MAP} Roadmap ${VARIANT}" \
                         --k "1;10;50;100;500;1000;5000;10000" \
                         --output results/roadmap/${VARIANT}/${MAP}/USA-road-d.${MAP}.heuristic.expansions \
                         --table
@@ -335,7 +335,7 @@ function create_heuristic_tables() {
                 ./plotter.py ky --file data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.csv \
                         --y nbcentroids \
                         --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                        --title "#Centroids - ${MAP} Roadmap ${VARIANT}" \
+                        --title "Number of centroids - ${MAP} Roadmap ${VARIANT}" \
                         --k "1;10;50;100;500;1000;5000;10000" \
                         --output results/roadmap/${VARIANT}/${MAP}/USA-road-d.${MAP}.heuristic.nbcentroids \
                         --table
@@ -370,7 +370,7 @@ function create_mixed_tables() {
                                        data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.K*csv \
                         --y expansions \
                         --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" \
-                        --title "#Expansions - ${MAP} Roadmap ${VARIANT}" \
+                        --title "Number of expansions - ${MAP} Roadmap ${VARIANT}" \
                         --k "1;10;50;100;500;1000;5000;10000" \
                         --output results/roadmap/${VARIANT}/${MAP}/USA-road-d.${MAP}.mixed.expansions \
                         --table
@@ -379,7 +379,7 @@ function create_mixed_tables() {
                                        data/roadmap/${VARIANT}/${MAP}/USA-road-d.*.K*csv \
                         --y nbcentroids \
                         --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" \
-                        --title "#Centroids - ${MAP} Roadmap ${VARIANT}" \
+                        --title "Number of centroids - ${MAP} Roadmap ${VARIANT}" \
                         --k "1;10;50;100;500;1000;5000;10000" \
                         --output results/roadmap/${VARIANT}/${MAP}/USA-road-d.${MAP}.mixed.nbcentroids \
                         --table
