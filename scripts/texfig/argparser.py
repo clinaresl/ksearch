@@ -47,20 +47,26 @@ def createPrgArgParser():
                                   required=True,
                                   type=str,
                                   choices=figconf.VALID_PARAMS,
-                                  help="Name of the parameter to show in the images")
+                                  help="Name of the parameter to show in the resulting image or table")
     parser_mandatory.add_argument('-s', '--search',
                                   required=True,
                                   type=str,
                                   choices=figconf.VALID_SEARCH,
-                                  help="Set of search algorithms to show in the figures")
+                                  help="Set of search algorithms to show in the image or table")
     parser_mandatory.add_argument('-f', '--file',
                                   required=True,
                                   type=str,
-                                  help="Name of the file to be generated with the LaTeX code to show all images. By default, the standard output is used")
+                                  help="Name of the file to be generated with the LaTeX code to show all images or tables. By default, the standard output is used")
     parser_mandatory.add_argument('-r', '--root',
                                   required=True,
                                   type=str,
-                                  help="Path of results from which the given domain can be accessed, i.e., '../plotter/results'")
+                                  help="Path of results from which the given domain can be accessed, e.g., '../plotter/results'")
+
+    # Group of optional arguments
+    parser_optional = parser.add_argument_group("Optional arguments", "The following arguments are optional")
+    parser_optional.add_argument('-l', '--table',
+                                 action='store_true',
+                                 help="if given, a LaTeX table is generated instead of an image")
 
     # Group of logging services
     logging = parser.add_argument_group('Logging', 'The following arguments specify logging settings')

@@ -3,11 +3,13 @@
 #
 # results/maps/octile/15/random512-15.heuristic.octile.expansions.gnuplot
 #
-# Started on 04/02/2024 19:56:17
+# Started on 04/02/2024 21:34:37
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
 set ylabel "expansions"
+
+set title "#Expansions - Maps 15 octile"
 
 set terminal png enhanced font "Ariel,10"
 set output 'random512-15.heuristic.octile.expansions.png'

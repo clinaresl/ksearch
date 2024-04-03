@@ -3,11 +3,13 @@
 #
 # results/maps/unit/20/random512-20.heuristic.unit.nbcentroids.gnuplot
 #
-# Started on 04/02/2024 19:56:28
+# Started on 04/02/2024 21:34:48
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
 set ylabel "nbcentroids"
+
+set title "#Centroids - Maps 20 unit"
 
 set terminal png enhanced font "Ariel,10"
 set output 'random512-20.heuristic.unit.nbcentroids.png'

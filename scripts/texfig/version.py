@@ -17,7 +17,7 @@ Version information and other admin data
 __version__ = "1.1.0"
 __author__ = "Carlos Linares López"
 __email__ = "carlos.linares@uc3m.es"
-__description__ = "Creates LaTeX code for generating the images with all data from the experiments"
+__description__ = "Creates LaTeX code for generating the images and the tables with all data from the experiments"
 
 # Local Variables:
 # mode:python

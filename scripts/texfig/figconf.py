@@ -25,6 +25,9 @@ VALID_PARAMS = ['runtime', 'mem', 'expansions', 'nbcentroids']
 # the allowed search variants are
 VALID_SEARCH = ['brute-force', 'heuristic', 'mixed']
 
+# images
+# -----------------------------------------------------------------------------
+
 # png filenames are indexed by the domain name and given as regexps for
 # extracting its components
 RE_PNGFILENAME = {
@@ -63,6 +66,30 @@ VERBATIM_PARAM = {
     "runtime": "Runtime (in seconds)"
 }
 CAPTION_FIGURE = "${param} in the ${domain} (${variant}) domain with ${search} search algorithms"
+
+# tables
+# -----------------------------------------------------------------------------
+
+# tex filenames are indexed by the domain name and given as regexps for
+# extracting its components
+RE_TEXFILENAME = {
+    "maps": r'.*/random512-\d+.(?P<search>[a-zA-Z-]+).(?P<variant>[a-zA-Z-]+).(?P<param>[a-zA-Z-]+).tex',
+    "n-pancake": r'.*/\d+pancake.(?P<search>[a-zA-Z-]+).(?P<param>[a-zA-Z-]+).tex',
+    "n-puzzle": r'.*/\d+puzzle.(?P<search>[a-zA-Z-]+).(?P<param>[a-zA-Z-]+).tex',
+    "roadmap": r'.*/USA-road-d.[a-zA-Z-]{1,3}\.(?P<search>[a-zA-Z-]+).(?P<param>[a-zA-Z-]+).tex'
+}
+
+# Each table is generated with the following template
+LATEX_TABLE = """\\begin{table*}
+  \\centering
+    \\input{$file}
+  \\caption{$caption}
+  \\label{tab:$domain:$variant:$search:$param}
+\\end{table*}
+  """
+
+CAPTION_TABLE = "${param} in the ${domain} (${variant}) domain with ${search} search algorithms"
+
 
 # Local Variables:
 # mode:python

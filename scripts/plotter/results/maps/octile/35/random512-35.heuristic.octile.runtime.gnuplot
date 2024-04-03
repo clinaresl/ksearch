@@ -3,11 +3,13 @@
 #
 # results/maps/octile/35/random512-35.heuristic.octile.runtime.gnuplot
 #
-# Started on 04/02/2024 19:57:25
+# Started on 04/02/2024 21:35:43
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
 set ylabel "runtime"
+
+set title "Runtime (seconds) - Maps 35 octile"
 
 set terminal png enhanced font "Ariel,10"
 set output 'random512-35.heuristic.octile.runtime.png'

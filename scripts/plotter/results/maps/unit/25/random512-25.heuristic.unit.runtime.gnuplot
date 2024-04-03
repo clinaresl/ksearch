@@ -3,11 +3,13 @@
 #
 # results/maps/unit/25/random512-25.heuristic.unit.runtime.gnuplot
 #
-# Started on 04/02/2024 19:56:40
+# Started on 04/02/2024 21:34:59
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
 set ylabel "runtime"
+
+set title "Runtime (seconds) - Maps 25 unit"
 
 set terminal png enhanced font "Ariel,10"
 set output 'random512-25.heuristic.unit.runtime.png'

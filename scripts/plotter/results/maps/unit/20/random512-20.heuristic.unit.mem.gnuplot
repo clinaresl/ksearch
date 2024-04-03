@@ -3,11 +3,13 @@
 #
 # results/maps/unit/20/random512-20.heuristic.unit.mem.gnuplot
 #
-# Started on 04/02/2024 19:56:24
+# Started on 04/02/2024 21:34:44
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
 set ylabel "mem"
+
+set title "Memory (Mbytes) - Maps 20 unit"
 
 set terminal png enhanced font "Ariel,10"
 set output 'random512-20.heuristic.unit.mem.png'

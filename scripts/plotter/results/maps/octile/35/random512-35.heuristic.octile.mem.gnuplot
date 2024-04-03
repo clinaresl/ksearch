@@ -3,11 +3,13 @@
 #
 # results/maps/octile/35/random512-35.heuristic.octile.mem.gnuplot
 #
-# Started on 04/02/2024 19:57:27
+# Started on 04/02/2024 21:35:45
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
 set ylabel "mem"
+
+set title "Memory (Mbytes) - Maps 35 octile"
 
 set terminal png enhanced font "Ariel,10"
 set output 'random512-35.heuristic.octile.mem.png'

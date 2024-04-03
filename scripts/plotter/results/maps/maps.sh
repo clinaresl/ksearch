@@ -165,7 +165,8 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
-                --k "1;5;10;50;100;500;1000;5000;10000" \
+                --title  "Runtime (seconds) - Maps ${RATIO} ${VARIANT}" \
+                --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
                 --table
 
@@ -175,7 +176,8 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
-                --k "1;5;10;50;100;500;1000;5000;10000" \
+                --title  "Memory (Mbytes) - Maps ${RATIO} ${VARIANT}" \
+                --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
                 --table
 
@@ -185,7 +187,8 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
-                --k "1;5;10;50;100;500;1000;5000;10000" \
+                --title  "#Expansions - Maps ${RATIO} ${VARIANT}" \
+                --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
                 --table
 
@@ -195,7 +198,8 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
-                --k "1;5;10;50;100;500;1000;5000;10000" \
+                --title  "#Centroids - Maps ${RATIO} ${VARIANT}" \
+                --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
                 --table
         done
@@ -214,9 +218,10 @@ function create_heuristic_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --k "1;5;10;50;100;500;1000;5000;10000" \
+                --title  "Runtime (seconds) - Maps ${RATIO} ${VARIANT}" \
+                --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE} \
-                --png    random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png
+                --table
 
             export MEASURE="mem"
             ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
@@ -224,9 +229,10 @@ function create_heuristic_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --k "1;5;10;50;100;500;1000;5000;10000" \
+                --title  "Memory (Mbytes) - Maps ${RATIO} ${VARIANT}" \
+                --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE} \
-                --png    random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png
+                --table
 
             export MEASURE="expansions"
             ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
@@ -234,9 +240,10 @@ function create_heuristic_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --k "1;5;10;50;100;500;1000;5000;10000" \
+                --title  "#Expansions - Maps ${RATIO} ${VARIANT}" \
+                --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE} \
-                --png    random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png
+                --table
 
             export MEASURE="nbcentroids"
             ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
@@ -244,9 +251,10 @@ function create_heuristic_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
-                --k "1;5;10;50;100;500;1000;5000;10000" \
+                --title  "#Centroids - Maps ${RATIO} ${VARIANT}" \
+                --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE} \
-                --png    random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png
+                --table
         done
     done
 }

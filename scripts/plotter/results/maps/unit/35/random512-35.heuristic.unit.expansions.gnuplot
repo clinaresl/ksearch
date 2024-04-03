@@ -3,11 +3,13 @@
 #
 # results/maps/unit/35/random512-35.heuristic.unit.expansions.gnuplot
 #
-# Started on 04/02/2024 19:57:21
+# Started on 04/02/2024 21:35:39
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
 set ylabel "expansions"
+
+set title "#Expansions - Maps 35 unit"
 
 set terminal png enhanced font "Ariel,10"
 set output 'random512-35.heuristic.unit.expansions.png'

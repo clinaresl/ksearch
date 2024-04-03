@@ -33,6 +33,7 @@ LOGGER = utils.LOGGER
 # debug messages
 DEBUG_EXAMINING_FOLDER = "Examining folder '{}'"
 DEBUG_ADDING_SUBFIGURE = "\t Adding subfigure from file '{}'"
+DEBUG_ADDING_TABLE = "\t Adding table from file '{}'"
 
 # critical messages
 CRITICAL_INVALID_VARIANT = "The variant '{}' is not valid for the domain '{}'"
@@ -66,15 +67,14 @@ def validate_variant(domain: str, variant: str):
 
 
 # -----------------------------------------------------------------------------
-# generate_tex_code
+# generate_image_tex_code
 #
 # Generate the LaTeX code for generating the images with all data for the given
 # selection of input parameters
 # -----------------------------------------------------------------------------
-def generate_tex_code(domain: str, variant: str, param: str, search: str,
-                      filename: str, root:str):
+def generate_image_tex_code(domain: str, variant: str, param: str, search: str, root: str):
     """Generate the LaTeX code for generating the images with all data for the
-         given selection of input parameters
+       given selection of input parameters
 
     """
 
@@ -138,6 +138,69 @@ def generate_tex_code(domain: str, variant: str, param: str, search: str,
                                                                   variant=variant,
                                                                   search=search))
 
+# -----------------------------------------------------------------------------
+# generate_table_tex_code
+#
+# Generate the LaTeX code for generating tables with all data for the given
+# selection of input parameters
+# -----------------------------------------------------------------------------
+def generate_table_tex_code(domain: str, variant: str, param: str, search: str, root: str):
+    """Generate the LaTeX code for generating tables with all data for the given
+       selection of input parameters
+
+    """
+
+    # move to the right directory where all the results can be found
+    folder = os.path.join(root, domain, variant)
+
+    # determine all the different cases for this combination of domain and
+    # variant and store all tex files with the requested information, i.e.,
+    # corresonding to the given search variant and param selection
+    files = []
+    for isubdir in Path(folder).iterdir():
+        if isubdir.is_dir():
+            LOGGER.debug(DEBUG_EXAMINING_FOLDER.format(isubdir))
+            for jsubdir in Path(isubdir).iterdir():
+                if jsubdir.is_file():
+
+                    # check whether this file matches the filename corresponding
+                    # to the combination specified by the user
+                    if (m := re.match(figconf.RE_TEXFILENAME[domain], str(jsubdir))):
+
+                        # verify the search and param values given by the user
+                        if (m.group('search') == search and
+                            m.group('param') == param):
+
+                            # and add this file to the list of files to add in
+                            # the LaTeX figure
+                            files.append(str(jsubdir))
+
+                            LOGGER.debug(DEBUG_ADDING_TABLE.format(jsubdir))
+
+    # now, create a LaTeX table for each file
+    latex_tables = ""
+    for ifile in sorted(files):
+
+        # first, generate the right caption for this table
+        tmpl_caption = Template(figconf.CAPTION_TABLE)
+
+        # instantiate the template to generate information for this specific
+        # table and add it to the LaTeX commands necessary for generating all
+        # tables
+        template = Template(figconf.LATEX_TABLE)
+        latex_tables += template.substitute(domain=domain,
+                                            variant=variant,
+                                            search=search,
+                                            param=param,
+                                            file=ifile,
+                                            caption=tmpl_caption.substitute(param=figconf.VERBATIM_PARAM[param],
+                                                                            domain=domain,
+                                                                            variant=variant,
+                                                                            search=search))
+
+    # and return the code generated so far
+    return latex_tables
+
 
 # -----------------------------------------------------------------------------
 # main body
@@ -170,9 +233,14 @@ def main():
         LOGGER.critical(CRITICAL_INVALID_SEARCH.format(params.domain))
         raise ValueError(CRITICAL_INVALID_SEARCH.format(params.domain))
 
-    # and generate the code
-    code =generate_tex_code(params.domain, params.variant, params.param, params.search,
-                            params.file, params.root)
+    # and generate the requested code. In case a table was requested, then
+    # create a table, otherwise, create a figure
+    if params.table:
+        code =generate_table_tex_code(params.domain, params.variant, params.param, params.search,
+                                      params.root)
+    else:
+        code =generate_image_tex_code(params.domain, params.variant, params.param, params.search,
+                                      params.root)
 
     # and save the LaTeX commands in the specified file
     with open(params.file, 'w') as stream:

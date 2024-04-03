@@ -3,11 +3,13 @@
 #
 # results/maps/octile/15/random512-15.heuristic.octile.nbcentroids.gnuplot
 #
-# Started on 04/02/2024 19:56:19
+# Started on 04/02/2024 21:34:39
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
 set ylabel "nbcentroids"
+
+set title "#Centroids - Maps 15 octile"
 
 set terminal png enhanced font "Ariel,10"
 set output 'random512-15.heuristic.octile.nbcentroids.png'
