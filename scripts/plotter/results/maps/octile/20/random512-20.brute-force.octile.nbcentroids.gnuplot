@@ -3,7 +3,7 @@
 #
 # results/maps/octile/20/random512-20.brute-force.octile.nbcentroids.gnuplot
 #
-# Started on 12/06/2023 14:52:05
+# Started on 04/03/2024 23:08:57
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

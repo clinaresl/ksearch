@@ -3,7 +3,7 @@
 #
 # results/maps/unit/15/random512-15.brute-force.unit.mem.gnuplot
 #
-# Started on 12/06/2023 14:51:25
+# Started on 04/03/2024 23:08:17
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

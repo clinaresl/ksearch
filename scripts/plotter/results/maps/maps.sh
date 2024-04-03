@@ -44,9 +44,9 @@ function create_brute_force_images() {
         for VARIANT in "unit" "octile"
         do
             export MEASURE="runtime"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.1-10000.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
                 --title  "Runtime (seconds) - Maps ${RATIO} ${VARIANT}" \
@@ -56,9 +56,9 @@ function create_brute_force_images() {
             mv random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png
 
             export MEASURE="mem"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
                 --title  "Memory (Mbytes) - Maps ${RATIO} ${VARIANT}" \
@@ -68,9 +68,9 @@ function create_brute_force_images() {
             mv random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png
 
             export MEASURE="expansions"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 2" \
                 --title  "#Expansions - Maps ${RATIO} ${VARIANT}" \
@@ -80,9 +80,9 @@ function create_brute_force_images() {
             mv random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png
 
             export MEASURE="nbcentroids"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
                 --title  "#Centroids - Maps ${RATIO} ${VARIANT}" \
@@ -101,9 +101,9 @@ function create_heuristic_images() {
         for VARIANT in "unit" "octile"
         do
             export MEASURE="runtime"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA*:re.match('BELA\*', solver)" "K*:re.match('K\*', solver)" "mA*:re.match('mA\*', solver)" \
                 --title  "Runtime (seconds) - Maps ${RATIO} ${VARIANT}" \
@@ -113,9 +113,9 @@ function create_heuristic_images() {
             mv random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png
 
             export MEASURE="mem"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA*:re.match('BELA\*', solver)" "K*:re.match('K\*', solver)" "mA*:re.match('mA\*', solver)" \
                 --title  "Memory (Mbytes) - Maps ${RATIO} ${VARIANT}" \
@@ -125,9 +125,9 @@ function create_heuristic_images() {
             mv random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png
 
             export MEASURE="expansions"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA*:re.match('BELA\*', solver)" "K*:re.match('K\*', solver)" "mA*:re.match('mA\*', solver)" \
                 --title  "#Expansions - Maps ${RATIO} ${VARIANT}" \
@@ -137,9 +137,9 @@ function create_heuristic_images() {
             mv random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.heuristic.${VARIANT}.${MEASURE}.png
 
             export MEASURE="nbcentroids"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA*:re.match('BELA\*', solver)" "K*:re.match('K\*', solver)" "mA*:re.match('mA\*', solver)" \
                 --title  "#Centroids - Maps ${RATIO} ${VARIANT}" \
@@ -160,9 +160,9 @@ function create_brute_force_tables() {
         for VARIANT in "unit" "octile"
         do
             export MEASURE="runtime"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
                 --title  "Runtime (seconds) - Maps ${RATIO} ${VARIANT}" \
@@ -171,9 +171,9 @@ function create_brute_force_tables() {
                 --table
 
             export MEASURE="mem"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
                 --title  "Memory (Mbytes) - Maps ${RATIO} ${VARIANT}" \
@@ -182,9 +182,9 @@ function create_brute_force_tables() {
                 --table
 
             export MEASURE="expansions"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
                 --title  "Number of expansions - Maps ${RATIO} ${VARIANT}" \
@@ -193,9 +193,9 @@ function create_brute_force_tables() {
                 --table
 
             export MEASURE="nbcentroids"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
                 --title  "Number of centroids - Maps ${RATIO} ${VARIANT}" \
@@ -213,9 +213,9 @@ function create_heuristic_tables() {
         for VARIANT in "unit" "octile"
         do
             export MEASURE="runtime"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
                 --title  "Runtime (seconds) - Maps ${RATIO} ${VARIANT}" \
@@ -224,9 +224,9 @@ function create_heuristic_tables() {
                 --table
 
             export MEASURE="mem"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
                 --title  "Memory (Mbytes) - Maps ${RATIO} ${VARIANT}" \
@@ -235,9 +235,9 @@ function create_heuristic_tables() {
                 --table
 
             export MEASURE="expansions"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
                 --title  "Number of expansions - Maps ${RATIO} ${VARIANT}" \
@@ -246,9 +246,9 @@ function create_heuristic_tables() {
                 --table
 
             export MEASURE="nbcentroids"
-            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.1-10000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.1-1000.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.1-100.csv \
+            ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belAs.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.Ks.${VARIANT}.*.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mAs.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
                 --title  "Number of centroids - Maps ${RATIO} ${VARIANT}" \
