@@ -151,7 +151,7 @@ function create_heuristic_images() {
     done
 }
 
-# Creating images
+# Creating tables
 # -----------------------------------------------------------------------------
 # Brute-force variants
 function create_brute_force_tables() {
