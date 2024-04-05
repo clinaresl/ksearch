@@ -3,7 +3,7 @@
 #
 # results/maps/octile/25/random512-25.brute-force.octile.nbcentroids.gnuplot
 #
-# Started on 04/03/2024 23:09:21
+# Started on 04/05/2024 10:27:05
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -82,9 +82,33 @@ end
 	800 0.0
 	900 0.0
 	1000 0.0
+	2000 0.0
+	3000 0.0
+	4000 0.0
+	5000 0.0
+	6000 0.0
+	7000 0.0
+	8000 0.0
+	9000 0.0
+	10000 0.0
 end
 	1 0.0
 	2 0.0
 	3 0.0
 	4 0.0
+	5 0.0
+	6 0.0
+	7 0.0
+	8 0.0
+	9 0.0
+	10 0.0
+	20 0.0
+	30 0.0
+	40 0.0
+	50 0.0
+	60 0.0
+	70 0.0
+	80 0.0
+	90 0.0
+	100 0.0
 end

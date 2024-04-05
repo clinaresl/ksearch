@@ -3,7 +3,7 @@
 #
 # results/maps/unit/20/random512-20.heuristic.unit.nbcentroids.gnuplot
 #
-# Started on 04/03/2024 23:11:10
+# Started on 04/05/2024 10:28:49
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

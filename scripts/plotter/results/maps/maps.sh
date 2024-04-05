@@ -45,10 +45,10 @@ function create_brute_force_images() {
         do
             export MEASURE="runtime"
             ./plotter.py ky --file data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.belA0.${VARIANT}.*.csv \
-                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-1000.csv \
+                data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.1-*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
-                --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
+                --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
                 --title  "Runtime (seconds) - Maps ${RATIO} ${VARIANT}" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.gnuplot \
                 --png    random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png
@@ -60,7 +60,7 @@ function create_brute_force_images() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
-                --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
+                --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
                 --title  "Memory (Mbytes) - Maps ${RATIO} ${VARIANT}" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.gnuplot \
                 --png    random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png
@@ -72,7 +72,7 @@ function create_brute_force_images() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
-                --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 2" \
+                --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
                 --title  "#Expansions - Maps ${RATIO} ${VARIANT}" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.gnuplot \
                 --png    random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png
@@ -84,7 +84,7 @@ function create_brute_force_images() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
-                --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
+                --series "BELA0:re.match('BELA0', solver)" "K0:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
                 --title  "#Centroids - Maps ${RATIO} ${VARIANT}" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.gnuplot \
                 --png    random512-${RATIO}.brute-force.${VARIANT}.${MEASURE}.png
@@ -164,7 +164,7 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
-                --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
+                --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
                 --title  "Runtime (seconds) - Maps ${RATIO} ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
@@ -175,7 +175,7 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
-                --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
+                --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
                 --title  "Memory (Mbytes) - Maps ${RATIO} ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
@@ -186,7 +186,7 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
-                --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
+                --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
                 --title  "Number of expansions - Maps ${RATIO} ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \
@@ -197,7 +197,7 @@ function create_brute_force_tables() {
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.K0.${VARIANT}.*.csv \
                 data/maps/${VARIANT}/${RATIO}/random512-${RATIO}-0.mDijkstra.${VARIANT}.*.csv \
                 --y      ${MEASURE} \
-                --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver) and k < 5" \
+                --series "BELA\$_0\$:re.match('BELA0', solver)" "K\$_0\$:re.match('K0', solver)" "mDijkstra:re.match('mDijkstra', solver)" \
                 --title  "Number of centroids - Maps ${RATIO} ${VARIANT}" \
                 --k "1;2;3;4;5;10;50;100;500;1000;5000;10000" \
                 --output results/maps/${VARIANT}/${RATIO}/random512-${RATIO}.brute-force.${VARIANT}.${MEASURE} \

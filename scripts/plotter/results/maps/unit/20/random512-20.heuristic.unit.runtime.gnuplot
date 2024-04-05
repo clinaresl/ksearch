@@ -3,7 +3,7 @@
 #
 # results/maps/unit/20/random512-20.heuristic.unit.runtime.gnuplot
 #
-# Started on 04/03/2024 23:11:01
+# Started on 04/05/2024 10:28:40
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

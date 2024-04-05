@@ -3,7 +3,7 @@
 #
 # results/maps/unit/10/random512-10.brute-force.unit.mem.gnuplot
 #
-# Started on 04/03/2024 23:07:55
+# Started on 04/05/2024 10:25:39
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -87,4 +87,19 @@ end
 	2 448.19
 	3 631.16
 	4 737.31
+	5 939.02
+	6 928.0
+	7 928.0
+	8 928.0
+	9 928.0
+	10 1731.76
+	20 2127.64
+	30 1747.9
+	40 5985.77
+	50 6499.09
+	60 6494.06
+	70 11067.16
+	80 12943.79
+	90 14691.4
+	100 16418.21
 end
