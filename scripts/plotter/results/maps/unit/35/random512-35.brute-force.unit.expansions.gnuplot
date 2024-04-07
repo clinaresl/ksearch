@@ -3,7 +3,7 @@
 #
 # results/maps/unit/35/random512-35.brute-force.unit.expansions.gnuplot
 #
-# Started on 04/07/2024 18:14:06
+# Started on 04/07/2024 21:46:20
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -82,6 +82,15 @@ end
 	800 160826.2
 	900 160826.2
 	1000 160826.2
+	2000 160826.2
+	3000 160826.2
+	4000 160826.2
+	5000 160826.2
+	6000 160826.2
+	7000 160826.2
+	8000 160826.2
+	9000 160826.2
+	10000 160826.2
 end
 	1 160777.6
 	2 321555.1

@@ -3,7 +3,7 @@
 #
 # results/maps/octile/30/random512-30.heuristic.octile.mem.gnuplot
 #
-# Started on 04/07/2024 18:16:15
+# Started on 04/07/2024 21:48:31
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
