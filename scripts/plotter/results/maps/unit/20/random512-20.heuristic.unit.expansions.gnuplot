@@ -3,7 +3,7 @@
 #
 # results/maps/unit/20/random512-20.heuristic.unit.expansions.gnuplot
 #
-# Started on 04/05/2024 10:28:46
+# Started on 04/07/2024 18:15:18
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -102,4 +102,8 @@ end
 	80 2130671.2
 	90 2395754.13
 	100 2660764.85
+	200 5306786.29
+	300 7948045.56
+	400 10586096.66
+	500 13221926.64
 end
