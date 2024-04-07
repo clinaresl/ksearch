@@ -3,7 +3,7 @@
 #
 # results/maps/unit/30/random512-30.brute-force.unit.nbcentroids.gnuplot
 #
-# Started on 04/07/2024 21:45:58
+# Started on 04/07/2024 22:02:05
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

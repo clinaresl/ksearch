@@ -3,7 +3,7 @@
 #
 # results/maps/octile/10/random512-10.heuristic.octile.nbcentroids.gnuplot
 #
-# Started on 04/07/2024 21:47:00
+# Started on 04/07/2024 22:03:07
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

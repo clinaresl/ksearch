@@ -3,7 +3,7 @@
 #
 # results/maps/octile/30/random512-30.brute-force.octile.runtime.gnuplot
 #
-# Started on 04/07/2024 21:46:01
+# Started on 04/07/2024 22:02:08
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
