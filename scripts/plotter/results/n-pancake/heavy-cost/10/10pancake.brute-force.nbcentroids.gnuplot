@@ -3,7 +3,7 @@
 #
 # results/n-pancake/heavy-cost/10/10pancake.brute-force.nbcentroids.gnuplot
 #
-# Started on 12/07/2023 15:24:39
+# Started on 04/09/2024 14:21:04
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

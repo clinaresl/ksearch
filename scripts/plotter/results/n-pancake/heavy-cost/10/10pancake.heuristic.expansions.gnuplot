@@ -3,7 +3,7 @@
 #
 # results/n-pancake/heavy-cost/10/10pancake.heuristic.expansions.gnuplot
 #
-# Started on 12/07/2023 15:25:05
+# Started on 04/09/2024 14:21:32
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

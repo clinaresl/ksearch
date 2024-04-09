@@ -3,7 +3,7 @@
 #
 # results/n-pancake/unit/10/10pancake.brute-force.runtime.gnuplot
 #
-# Started on 12/07/2023 15:24:29
+# Started on 04/09/2024 14:20:53
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -33,7 +33,9 @@ end
 	4 89.10279900000002
 	5 89.83587200000002
 end
-	1 15.876123599999998
-	2 36.89844409999999
-	3 58.38230400000001
+	1 12.3814568
+	2 28.8679621
+	3 45.64931299999999
+	4 60.13520999999999
+	5 76.01700199999999
 end

@@ -3,7 +3,7 @@
 #
 # results/n-pancake/unit/20/20pancake.heuristic.nbcentroids.gnuplot
 #
-# Started on 12/07/2023 15:24:48
+# Started on 04/09/2024 14:21:13
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

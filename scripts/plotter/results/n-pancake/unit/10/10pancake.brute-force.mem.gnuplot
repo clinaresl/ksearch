@@ -3,7 +3,7 @@
 #
 # results/n-pancake/unit/10/10pancake.brute-force.mem.gnuplot
 #
-# Started on 12/07/2023 15:24:30
+# Started on 04/09/2024 14:20:54
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -33,7 +33,9 @@ end
 	4 25461.47
 	5 25476.73
 end
-	1 4349.86
-	2 6427.79
-	3 8683.1
+	1 4349.83
+	2 6427.34
+	3 8682.98
+	4 11608.4
+	5 14737.69
 end

@@ -3,7 +3,7 @@
 #
 # results/n-pancake/unit/10/10pancake.brute-force.nbcentroids.gnuplot
 #
-# Started on 12/07/2023 15:24:31
+# Started on 04/09/2024 14:20:56
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -36,4 +36,6 @@ end
 	1 0.0
 	2 0.0
 	3 0.0
+	4 0.0
+	5 0.0
 end
