@@ -3,7 +3,7 @@
 #
 # results/n-pancake/unit/20/20pancake.heuristic.runtime.gnuplot
 #
-# Started on 04/09/2024 14:21:06
+# Started on 04/11/2024 16:44:45
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

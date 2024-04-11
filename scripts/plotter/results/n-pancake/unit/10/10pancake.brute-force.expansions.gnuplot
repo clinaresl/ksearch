@@ -3,7 +3,7 @@
 #
 # results/n-pancake/unit/10/10pancake.brute-force.expansions.gnuplot
 #
-# Started on 04/09/2024 14:20:55
+# Started on 04/11/2024 16:44:33
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

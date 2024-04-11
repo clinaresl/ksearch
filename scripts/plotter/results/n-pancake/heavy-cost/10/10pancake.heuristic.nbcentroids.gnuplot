@@ -3,7 +3,7 @@
 #
 # results/n-pancake/heavy-cost/10/10pancake.heuristic.nbcentroids.gnuplot
 #
-# Started on 04/09/2024 14:21:34
+# Started on 04/11/2024 16:45:12
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

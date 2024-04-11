@@ -3,7 +3,7 @@
 #
 # results/n-pancake/unit/30/30pancake.heuristic.mem.gnuplot
 #
-# Started on 04/09/2024 14:21:17
+# Started on 04/11/2024 16:44:55
 # Author: Carlos Linares López
 set grid
 set xlabel "k"

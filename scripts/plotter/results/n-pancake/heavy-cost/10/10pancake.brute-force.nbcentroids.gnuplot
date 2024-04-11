@@ -3,7 +3,7 @@
 #
 # results/n-pancake/heavy-cost/10/10pancake.brute-force.nbcentroids.gnuplot
 #
-# Started on 04/09/2024 14:21:04
+# Started on 04/11/2024 16:44:42
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -29,6 +29,9 @@ plot "-" title "BELA0"      with linesp, "-" title "K0"      with linesp, "-" ti
 end
 	1 0.0
 	2 0.0
+	3 0.0
+	4 0.0
+	5 0.0
 end
 	1 0.0
 	2 0.0

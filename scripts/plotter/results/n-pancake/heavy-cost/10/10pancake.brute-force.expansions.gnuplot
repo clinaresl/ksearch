@@ -3,7 +3,7 @@
 #
 # results/n-pancake/heavy-cost/10/10pancake.brute-force.expansions.gnuplot
 #
-# Started on 04/09/2024 14:21:02
+# Started on 04/11/2024 16:44:40
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
@@ -29,6 +29,9 @@ plot "-" title "BELA0"      with linesp, "-" title "K0"      with linesp, "-" ti
 end
 	1 2905025.5
 	2 3052600.9
+	3 3112364.76
+	4 3138698.57
+	5 3158725.26
 end
 	1 2865499.08
 	2 5764147.44

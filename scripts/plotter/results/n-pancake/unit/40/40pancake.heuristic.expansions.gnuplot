@@ -3,7 +3,7 @@
 #
 # results/n-pancake/unit/40/40pancake.heuristic.expansions.gnuplot
 #
-# Started on 04/09/2024 14:21:24
+# Started on 04/11/2024 16:45:02
 # Author: Carlos Linares López
 set grid
 set xlabel "k"
