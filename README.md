@@ -9,10 +9,17 @@ test the performance of these algorithms
 
 Tests have been created using the [Google Test
 Framework](https://github.com/google/googletest) which is necessary for both
-compiling and runing the tests, see below.designed using
+compiling and runing the tests, see below.
 
 In addition, a number of scripts are provided for various purposes. They all
 have been implemented in python 3.8.
+
+# Publications #
+
+* Linares López, Carlos; Herman, Ian, 2024. Evolving A* to Efficiently Solve the
+  k Shortest-Path Problem. Proceedings of the Twenty-Seventh European Conference
+  on Artificial Intelligence (ECAI 2024). Santiago de Compostela (Spain). To
+  appear.
 
 # Install #
 
