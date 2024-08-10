@@ -225,7 +225,7 @@ function create_heuristic_tables() {
                                 --y runtime \
                                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
                                 --title "Runtime (seconds) - ${SIZE}-Pancake ${VARIANT}" \
-                                --k "1;2;3;4;5;10;20;40;50;100;500;900;1000;5000;10000" \
+                                --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                                 --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.heuristic.runtime \
                                 --table
 
@@ -233,7 +233,7 @@ function create_heuristic_tables() {
                                 --y mem \
                                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
                                 --title "Memory (Mbytes) - ${SIZE}-Pancake ${VARIANT}" \
-                                --k "1;2;3;4;5;10;20;40;50;100;500;900;1000;5000;10000" \
+                                --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                                 --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.heuristic.mem \
                                 --table
 
@@ -241,7 +241,7 @@ function create_heuristic_tables() {
                                 --y expansions \
                                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
                                 --title "Number of expansions - ${SIZE}-Pancake ${VARIANT}" \
-                                --k "1;2;3;4;5;10;20;40;50;100;500;900;1000;5000;10000" \
+                                --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                                 --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.heuristic.expansions \
                                 --table
 
@@ -249,7 +249,7 @@ function create_heuristic_tables() {
                                 --y nbcentroids \
                                 --series "BELA\$^*\$:re.match('BELA\*', solver)" "K\$^*\$:re.match('K\*', solver)" "mA\$^*\$:re.match('mA\*', solver)" \
                                 --title "Number of centroids - ${SIZE}-Pancake ${VARIANT}" \
-                                --k "1;2;3;4;5;10;20;40;50;100;500;900;1000;5000;10000" \
+                                --k "1;2;3;4;5;10;40;50;100;500;900;1000;5000;10000" \
                                 --output results/n-pancake/${VARIANT}/${SIZE}/${SIZE}pancake.heuristic.nbcentroids \
                                 --table
                 done
