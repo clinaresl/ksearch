@@ -26,7 +26,7 @@ have been implemented in python 3.8.
 To download the code type the following:
 
 ``` sh
-    $ git clone https://github.com/clinaresl/libksearch.git
+    $ git clone https://github.com/clinaresl/ksearch.git
 ```
 
 To compile the source code, create first the `Makefile` with:
@@ -36,7 +36,7 @@ To compile the source code, create first the `Makefile` with:
     $ make
 ```
 
-from the `libksearch/` directory created after the clone. It will build the
+from the `ksearch/` directory created after the clone. It will build the
 library, a solver for every domain defined under `domains/`, along with a random
 generator for it , and all the unit tests.
 
@@ -68,7 +68,7 @@ in your computer, then you can compile and run the tests with:
     $ tests/gtest
 ```
 
-from the `libksearch/` directory created after the clone.
+from the `ksearch/` directory created after the clone.
 
 # Search algorithms #
 
