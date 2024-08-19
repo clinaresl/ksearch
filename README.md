@@ -14,13 +14,6 @@ compiling and runing the tests, see below.
 In addition, a number of scripts are provided for various purposes. They all
 have been implemented in python 3.8.
 
-# Publications #
-
-* Linares López, Carlos; Herman, Ian, 2024. Evolving A* to Efficiently Solve the
-  k Shortest-Path Problem. Proceedings of the Twenty-Seventh European Conference
-  on Artificial Intelligence (ECAI 2024). Santiago de Compostela (Spain). To
-  appear.
-
 # Install #
 
 To download the code type the following:
@@ -123,6 +116,21 @@ not in a default location, a path can be provided through the following CMake op
 * `-D7ZIP_LOCATION`: Path to 7zip executable
 * `-DGUNZIP_LOCATION`: Path to Gunzip executable
 * `-DGZIP_LOCATION`: Path to gzip executable
+
+# Publications #
+
+* Linares López, Carlos; Herman, Ian, 2024. Evolving A* to Efficiently Solve the
+  k Shortest-Path Problem. Proceedings of the Twenty-Seventh European Conference
+  on Artificial Intelligence (ECAI 2024). Santiago de Compostela (Spain). To
+  appear.
+  
+An extended version of the same paper with an example of BELA0 and the results
+of all the empirical evaluation can be found at:
+
+* Linares López, Carlos; Herman, Ian, 2024. Evolving A* to Efficiently Solve the
+  k Shortest-Path Problem (Extended Version). arXiv 2024. eprint
+  [2408.08227](https://arxiv.org/abs/2408.08227).
+  
 
 # License #
 
