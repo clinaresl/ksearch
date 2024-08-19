@@ -50,19 +50,6 @@ Finally, all domains (but *grid*) come with their own random generator of
 instances. To generate them execute `make gen-domain` where *domain* can be any
 of the following: `map`, `npancake`, `npuzzle` or `roadmap`.
 
-# Tests #
-
-This library comes with a number of unit tests that have been implemented with
-[Google Test](https://github.com/google/googletest). If Google Test is available
-in your computer, then you can compile and run the tests with:
-
-``` sh
-    $ make gtest
-    $ tests/gtest
-```
-
-from the `ksearch/` directory created after the clone.
-
 ## Additional CMake Options
 
 Various CMake options are available that automatically download datafiles for some domains.
@@ -86,6 +73,20 @@ not in a default location, a path can be provided through the following CMake op
 * `-D7ZIP_LOCATION`: Path to 7zip executable
 * `-DGUNZIP_LOCATION`: Path to Gunzip executable
 * `-DGZIP_LOCATION`: Path to gzip executable
+
+
+# Tests #
+
+This library comes with a number of unit tests that have been implemented with
+[Google Test](https://github.com/google/googletest). If Google Test is available
+in your computer, then you can compile and run the tests with:
+
+``` sh
+    $ make gtest
+    $ tests/gtest
+```
+
+from the `ksearch/` directory created after the clone.
 
 # Search algorithms #
 
