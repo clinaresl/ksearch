@@ -131,6 +131,10 @@ of all the empirical evaluation can be found at:
 * Linares López, Carlos; Herman, Ian, 2024. Evolving A* to Efficiently Solve the
   k Shortest-Path Problem (Extended Version). arXiv 2024. eprint
   [2408.08227](https://arxiv.org/abs/2408.08227).
+
+In addition, all the data used in the experimentation is available in Zenodo:
+
+* Linares López, C., & Herman, I. (2024). Experimental evaluation of BELA0/BELA* (ECAI 2024) (Data set). Evolving A* to Efficiently Solve the k Shortest-Path Problem (ECAI), Santiago de Compostela (Spain). Zenodo. https://doi.org/10.5281/zenodo.13293103
   
 
 # License #
