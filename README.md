@@ -123,8 +123,7 @@ above. For further details, check out the documentation under `domains/`
 
 * Linares López, Carlos; Herman, Ian, 2024. Evolving A* to Efficiently Solve the
   k Shortest-Path Problem. Proceedings of the Twenty-Seventh European Conference
-  on Artificial Intelligence (ECAI 2024). Santiago de Compostela (Spain). To
-  appear.
+  on Artificial Intelligence (ECAI 2024), pages 4352-4359. Santiago de Compostela (Spain).
   
 An extended version of the same paper with an example of BELA0 and the results
 of all the empirical evaluation can be found at:
