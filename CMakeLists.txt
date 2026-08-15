@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16.1)
 
 # Declaration
-project(ksearch VERSION 2.1 LANGUAGES C CXX)
+project(ksearch VERSION 2.2 LANGUAGES C CXX)
 
 # some extensions of c++20 are used
 set(CMAKE_CXX_STANDARD 20)
