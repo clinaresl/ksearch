@@ -69,6 +69,9 @@ above under the heavy-cost variant is shown next:
  ⏵       10      10   6 4 3 7 10 8 2 5 1 9   1 2 3 4 5 6 7 8 9 10       37         52120          10       0    622.000     0.145       BELA*    ✔ No error  ijcai-g133903f
  ⏵       11      10   1 7 9 4 2 5 6 3 10 8   1 2 3 4 5 6 7 8 9 10       38         69085          10       0    622.000     0.200       BELA*    ✔ No error  ijcai-g133903f
 ...
+ ⏵       98      10   10 4 7 1 8 6 2 9 3 5   1 2 3 4 5 6 7 8 9 10       31        355465           7       0    901.000     1.354       BELA*    ✔ No error  ijcai-g133903f
+ ⏵       99      10   6 9 5 8 2 7 3 1 4 10   1 2 3 4 5 6 7 8 9 10       29         32190           7       0    901.000     0.093       BELA*    ✔ No error  ijcai-g133903f
+ 
    🕒 (k=10) CPU time: 75.6722 seconds
 
    🕒 (BELA*) CPU time: 75.6723 seconds

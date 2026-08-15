@@ -47,7 +47,7 @@ An example for the computation of one million distinct paths for every case
 specified above is shown next:
 
 ``` sh
-./grid --size 10 --solver "BELA0" --file test-10 --variant unit --k 1000000 --no-doctor
+./grid --size 10 --solver "BELA0" --file benchmark/grid-10.test --variant unit --k 1000000 --no-doctor
     
  size         : 10
  solver       : BELA0 ijcai-g133903f
