@@ -42,8 +42,10 @@ constexpr int NB_DISCS = 20;
 // maximum length of paths
 constexpr int MAX_PATH_LENGTH = 100;
 
-// length of the simple grid used in the tests
+// length of simple grids and grids used in the tests
 constexpr int SIMPLE_GRID_LENGTH = 10;
+constexpr int SMALL_GRID_LENGTH = 8;
+constexpr int VERY_SMALL_GRID_LENGTH = 4;
 
 // Definition of a simple domain for testing search algorithms which is
 // characterized because: it is a directed graph; second, it has edges with
@@ -98,14 +100,13 @@ public:
         return _x == _n && _y == 0;
     }
 
-    // return the children of this state which is known to have the given
-    // heuristic value as a vector of tuples, each containing: first, the cost
-    // of the operator; secondly, its heuristic value; thirdly, the successor
-    // state.
-    void children (int h, const simplegrid_t& goal,
-                   std::vector<std::tuple<int, int, simplegrid_t>>& successors) {
-
-        // Heuristic values are ignored!
+    // process each child separately through the use of a callable that has to
+    // receive exactly three arguments: cost_t g, cost_t h and the successor
+    // state. It is the responsibility of the caller to provide the right
+    // callable at the calling site.
+    template<typename F>
+    requires std::invocable<F&, int, int, simplegrid_t&&>
+    void children (int h, simplegrid_t const& goal, F&& callable) const {
 
         // Note there are no back edges, and that children are generated forward
         // only
@@ -113,28 +114,28 @@ public:
         // if this is the lower left corner, i.e., (0, 0) then it has two
         // children with the same cost, 1
         if (_x == 0 && _y == 0) {
-            successors.push_back (std::make_tuple (1, 0, simplegrid_t (_n, 1, 0)));
-            successors.push_back (std::make_tuple (1, 0, simplegrid_t (_n, 1, 1)));
+            callable (1, 0, simplegrid_t (_n, 1, 0));
+            callable (1, 0, simplegrid_t (_n, 1, 1));
         } else if (_x!=_n || _y!=0) {
 
             // in case this is not the lower right corner, i.e., (N, 0) then
             // compute its children. Nodes in the lower line have only one child
             if (_y == 0) {
-                successors.push_back (std::make_tuple (1, 0, simplegrid_t (_n, _x+1, _y)));
+                callable (1, 0, simplegrid_t (_n, _x+1, _y)); 
             } else {
 
                 // nodes in the upper line have two children unless _x = _n-1 in
                 // which case, it only has the child (N, 0)
                 if (_x < _n-1) {
-                    successors.push_back (std::make_tuple (1, 0, simplegrid_t (_n, _x+1, _y)));
+                    callable (1, 0, simplegrid_t (_n, _x+1, _y));
                 }
-                successors.push_back (std::make_tuple (2, 0, simplegrid_t (_n, _x+1, _y-1)));
+                callable (2, 0, simplegrid_t (_n, _x+1, _y-1));
             }
         }
 
         // and return. Note that the goal state, i.e, the lower right corner,
-        // (N, 0) has no children.
-    }
+        // (N, 0) has no children.        
+    }    
 
     // return the heuristic distance to get from this permutation to the
     // location (N, 0), i.e., the given goal is ignored
@@ -143,9 +144,7 @@ public:
         // currently no heuristics are implemented
         return 0;
     }
-
-
-}; // class grid_t
+}; // class simplegrid_t
 
 // Definition of a domain for testing search algorithms which is characterized
 // because: first, it is an undirected graph; second, the number of paths grows
@@ -196,36 +195,37 @@ public:
         return _x == _n-1 && _y == _n-1;
     }
 
-    // return the children of this state which is known to have the given
-    // heuristic value as a vector of tuples, each containing: first, the cost
-    // of the operator; secondly, its heuristic value; thirdly, the successor
-    // state.
-    void children (int h, const grid_t& goal,
-                   std::vector<std::tuple<int, int, grid_t>>& successors) {
+    // process each child separately through the use of a callable that has to
+    // receive exactly three arguments: cost_t g, cost_t h and the successor
+    // state. It is the responsibility of the caller to provide the right
+    // callable at the calling site.
+    template<typename F>
+    requires std::invocable<F&, int, int, grid_t&&>
+    void children (int h, grid_t const& goal, F&& callable) const {
 
         // Heuristic values are ignored!
 
         // east
         if (_x < _n-1) {
-            successors.push_back (std::make_tuple (1, 0, grid_t (_n, _x+1, _y)));
+            callable (1, 0, grid_t (_n, _x+1, _y));
         }
 
         // north
         if (_y < _n-1) {
-            successors.push_back (std::make_tuple (1, 0, grid_t (_n, _x, _y+1)));
+            callable (1, 0, grid_t (_n, _x, _y+1));
         }
 
         // west
         if (_x > 0) {
-            successors.push_back (std::make_tuple (1, 0, grid_t (_n, _x-1, _y)));
+            callable (1, 0, grid_t (_n, _x-1, _y));
         }
 
         // south
         if (_y > 0) {
-            successors.push_back (std::make_tuple (1, 0, grid_t (_n, _x, _y-1)));
+            callable (1, 0, grid_t (_n, _x, _y-1));
         }
     }
-
+    
     // return the heuristic distance to get from this permutation to the
     // location (N, 0), i.e., the given goal is ignored
     int h (const grid_t& goal) const {
@@ -233,8 +233,6 @@ public:
         // currently no heuristics are implemented
         return 0;
     }
-
-
 }; // class grid_t
 
 namespace std {

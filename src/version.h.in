@@ -1,0 +1,19 @@
+// -*- coding: utf-8 -*-
+// version.hh
+// -----------------------------------------------------------------------------
+//
+// Started on <jue 30-07-2026 15:03:26.049824753 (1785416606)>
+// Carlos Linares López <carlos.linares@uc3m.es>
+//
+
+//
+// Git version information
+//
+#pragma once
+
+// definitions
+
+// project and git version numbers
+#define KSEARCH_VERSION "@CMAKE_PROJECT_VERSION@"
+#define KSEARCH_GIT_VERSION "@KSEARCH_GIT_VERSION@"
+

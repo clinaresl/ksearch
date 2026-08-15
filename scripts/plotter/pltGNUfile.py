@@ -16,7 +16,9 @@ Generation of GNUplot images from data given in different series
 # imports
 # -----------------------------------------------------------------------------
 from datetime import datetime
+from string import Template
 
+import pltconf
 import pltkserie
 import pltserie
 import utils
@@ -130,49 +132,44 @@ class PLTGNUfile:
 
         self._title = value
 
-    def write_gnuplot(self):
+    def write(self):
         """Creates a gnuplot file with the data of all series"""
 
-        # open the file
-        gnustream = open(self._filename, "w")
+        # create a template with the contents of GNUplot files
+        tpl = Template(pltconf.TEMPLATE_GNUPLOT)
 
-        # write the header
-        gnustream.write("#!/usr/bin/gnuplot\n")
-        gnustream.write("# -*- coding: utf-8 -*-\n")
-        gnustream.write("#\n")
-        gnustream.write("# " + self._filename + "\n")
-        gnustream.write("#\n")
-        gnustream.write("# Started on " + datetime.now().strftime("%m/%d/%Y %H:%M:%S") + "\n")
-        gnustream.write("# Author: " + version.__author__ + "\n")
+        # compute the titles of all series and the data to be shown in gnuplot
+        # format
+        data = ""
+        title_series = ""
 
-        # write the options
-        gnustream.write("set grid\n")
-        gnustream.write('set xlabel "{}"\n'.format(self._xtitle))
-        gnustream.write('set ylabel "{}"\n'.format(self._ytitle))
-        gnustream.write("\n")
-
-        # in case a title was given add it
-        if self._title is not None and len(self._title) > 0:
-            gnustream.write('set title "{}"\n\n'.format(self._title))
-
-        # in case a png file was given add it
-        if self._png is not None and len(self._png) > 0:
-            gnustream.write('set terminal png enhanced font "Ariel,10"\n')
-            gnustream.write(f"set output '{self._png}'\n\n")
-
-        # next, add the gnuplot commands to plot the series
-        gnustream.write("plot ")
+        # and also the marker to use, if there are any instance of PLTSerie then
+        # use points; otherwise use linesp
+        marker = "points" if any(map(lambda x: isinstance(x, pltserie.PLTSerie), self._data)) else "linesp"
         for idx, iserie in enumerate(self._data):
 
+            # add the title of this serie
             if idx < len(self._data)-1:
-                gnustream.write('"-" title "{}"      with linesp, '.format(iserie.get_legend()))
+                title_series += '"-" using 1:2:xtic(1) title "{}", '.format(iserie.get_legend())
             else:
-                gnustream.write('"-" title "{}"      with linesp\n\n'.format(iserie.get_legend()))
+                title_series += '"-" using 1:2:xtic(1) title "{}"'.format(iserie.get_legend())
 
-        # add the datapoints of each serie
-        for iserie in self._data:
-            gnustream.write("{}".format(iserie))
-            gnustream.write("end\n")
+            # and the data column in the same order
+            data += f"{iserie:gnuplot}end\n"
+                
+        
+        # and now process to substitute the template
+        output = tpl.substitute(xlabel=self._xtitle,
+                                ylabel=self._ytitle,
+                                title=self._title,
+                                output=self._png,
+                                style=marker,
+                                title_series=title_series,
+                                data=data)
+
+        # open the file and write the contents
+        gnustream = open(self._filename, "w")
+        gnustream.write(output)
 
 
 # Local Variables:

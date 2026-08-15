@@ -14,13 +14,11 @@
 
 #include "npuzzle_t.h"
 
-using namespace std;
-
 // Static vars
 int npuzzle_t::_n = 0;
-string npuzzle_t::_variant = "unit";
-vector<vector<int>> npuzzle_t::_oprs;
-vector<vector<vector<int>>> npuzzle_t::_increment;
+std::string npuzzle_t::_variant = "unit";
+std::vector<std::vector<int>> npuzzle_t::_oprs;
+std::vector<std::vector<std::vector<int>>> npuzzle_t::_increment;
 
 // A puzzle can be constructed from a vector of integers. This constructor
 // assumes the sliding-tile puzzle is squared and also correct, i.e., there are
@@ -58,25 +56,6 @@ void npuzzle_t::_swap (int i, int j)
 
     // next, update the contents of the permutation
     std::swap (_perm[i], _perm[j]);
-}
-
-// return the children of this state which is known to have the given heuristic
-// value as a vector of tuples, each containing: first, the cost of the
-// operator; secondly, its heuristic value; thirdly, the successor state. Note
-// the goal is also given in case that incremental policies of the computation
-// of the heuristic value are not used
-void npuzzle_t::children (int h, const npuzzle_t& goal,
-                          vector<tuple<int, int, npuzzle_t>>& successors) {
-
-    // use the precomputed table for generating the descendants
-    for (auto newblank : _oprs[_blank]) {
-        npuzzle_t successor (*this);
-        successor._swap (_blank, newblank);
-        successors.push_back (tuple<int, int, npuzzle_t>{
-            (_variant == "unit") ? 1 : _perm[newblank],
-            h + _increment[_perm[newblank]][newblank][_blank],
-            successor});
-    }
 }
 
 // return the heuristic distance to get from this permutation to the identity

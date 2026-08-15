@@ -38,11 +38,18 @@ namespace khs {
         // INVARIANT: Any solver of the k shortest-path problem must be able to
         // find k solution paths from a start state with a given heuristic value
         // after expanding a number of nodes and, in case BELA* is used,
-        // considering a number of centroids
+        // considering a number of centroids.
         int _k;                                      // number of paths to find
         int _h0;                       // heuristic distance of the start state
         std::size_t _expansions;                        // number of expansions
         int _nbcentroids;                           // number of centroids used
+
+        // Also, and only in the context of bBELA we are interested in computing
+        // the *extra* number of paths that are necessary to get k paths, i.e.,
+        // the number of non-simple paths generated while looking for k simple
+        // paths. This parameter is reported with value 0 for all the other
+        // "simple algorithms"
+        int _nbpaths;
 
         // high-precision measuring time
         std::chrono::time_point<std::chrono::system_clock> _tstart, _tend;
@@ -57,27 +64,30 @@ namespace khs {
             _k { k },
             _h0 { 0 },
             _expansions { 0 },
-            _nbcentroids { 0 }
+            _nbcentroids { 0 },
+            _nbpaths { 0 }
             {}
 
         // Destructor
         virtual ~bsolver () = default;
 
         // getters
-        const int get_k () const
+        int get_k () const
             { return _k; }
-        const int get_h0 () const
+        int get_h0 () const
             { return _h0; }
-        const size_t get_expansions () const
+        size_t get_expansions () const
             { return _expansions; }
-        const int nb_centroids () const
+        int nb_centroids () const
             { return _nbcentroids; }
-        const double get_cpu_time () const
-            { return 1e-9*chrono::duration_cast<chrono::nanoseconds>(_tend - _tstart).count(); }
+        int nb_paths () const
+            { return _nbpaths; }
+        double get_cpu_time () const
+            { return 1e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(_tend - _tstart).count(); }
 
         // Every solver must be uniquely identified by a signature used for
         // reporting purposes
-        virtual const string signature () const = 0;
+        virtual const std::string signature () const = 0;
 
         // the main service of any solver consists of computing the solution of
         // the k-shortest path problem which is returned as a container of k

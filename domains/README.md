@@ -1,26 +1,63 @@
 # Domain-dependent solvers #
 
 This directory contains a number of domain-dependent solvers that test the
-different search algorithms implemented in `libksearch`
+different search algorithms implemented in `ksearch`
 
 # Usage #
 
 All solvers acknowledge the flags `--version` and `--help`. Other than these,
-they also honour a number of mandatory and optional directives.
+they also honour a number of mandatory and optional directives. The combination
+of the following arguments enables the execution of several algorithms at once
+with an arbitrary collection of values of *k* over a specific set of instances.
 
 Typically, the mandatory arguments are the following:
 
-* `--solvers:` Every domain-dependent solver provides a collection of solvers to
+* `--solver`: Every domain-dependent solver provides a collection of solvers to
   choose from:
   
-  - **belA0**: Brute-force Bidirectional Edge-labelling A* search algorithm
-  - **mDijkstra**: Brute-force mA* search algorithm 
-  - **K0**: Brute-force K* search algorithm
-  - **belA***: Informed implementation of the Bidirectional Edge-labelling A*
-    search algorithm
-  - **mA***: A* search algorithm which expands nodes as many times as paths are
+  + `mDijkstra`: Brute-force mA* search algorithm
+  + `K0`: Brute-force K* search algorithm. It can take parameters explained in
+    the heuristic variant.
+  + `BELA0`: Brute-force Bidirectional Edge-labelling A* search algorithm
+  + `bBELA0`: Brute-force variant of bBELA*.
+  + `sBELA0`: Brute-force variant of sBELA*.
+  
+  + `mA*`: A* search algorithm which expands nodes as many times as paths are
     required to be found
-  - **K**: Informed K* search algorithm
+  + `K*`: Informed K* search algorithm. Both **K0** & **K*** can take parameters
+      using this syntax: `<[alb],[aub],[sog],[rsEA]>`. Each parameter is
+      optional. When not included, the solver will take default values. The
+      commas must be included regardless of if all parameters are used
+      
+    - `alb`: The *lower* bound of iterations of A* before switching to Epstein's Algorithm. Default value is `20`
+    - `aub`: The *upper* bound of iterations of A* before switching to Epstein's Algorithm. Default value is `20`
+    - `sog`: Boolean value (either `0` or `1`) indicating whether K* should switch to Epstein's Algorithm. immediately after expanding the goal state. Default value is `false`.
+    - `rsEA`: Boolean value (either `0` or `1`) that determines whether K* will completely reset its path graph before switching to Epstein's Algorithm. Always `true`, alternative not implemented.
+
+  + `BELA*`: Informed implementation of the Bidirectional Edge-labelling A*
+    search algorithm
+  + `bBELA*`: Baseline heuristic algorithm used for experimental purposes. It
+    computes as many paths as necessary discarding all *non-simple* paths using
+    BELA* until *k* *simple* shortest paths have been produced. This algorithm
+    accepts a default parameter using the sytanx: `<n>`. If it is not given,
+    then 0 is used by default.
+    
+    - `n`: By default, bBELA computes all prefixes and suffixes because it can
+      not know in advance how many paths have to be discarded to get *k* simple
+      shortest paths. However, this behaviour slows down the algorithm
+      significantly. Instead, bBELA accepts a parameter *n* which is used to
+      compute an upper bound on the number of prefixes or suffixes to compute
+      and it is equal to *k^n*. However, this might result in the loss of paths.
+      In case this bound is reached and still there are paths to find, execution
+      is halted.
+    
+  + `sBELA*`: Compute *k* *simple* shortest paths on the fly by discarding all
+    *non-simple* suffixes and combining prefixes only with those they do not
+    intersect with.
+
+  It is allowed to provide an arbitrary collection of solvers with a blank
+  separated list, e.g., `"mA* K* BELA*" runs those algorithms in precisely that
+  order.
 
 * `--file`: File with the description of the test set to solve. Details might be
   different among solvers but, in general, they consist of several lines with
@@ -30,22 +67,21 @@ Typically, the mandatory arguments are the following:
   
 * `--variant`: All domains provide, at least, two different variants. One
   considers all edge costs to be the same and always equal to one. Other
-  variants might be given for implementing arbitrary cost domains with null-cost
-  edges or not.
+  variants might be given for implementing arbitrary cost domains.
   
-* `--k`: Basically, this flag expects the number of paths to compute, e.g., `--k
-  1000` would request the computation of one thousand shortest paths. However,
-  it can be used also to automate experiments and thus, to provide an arbitrary
-  collection of *k* values. A *full specification* consists of a semicolon
-  separated list of *single specifications*, where a *single specification*
-  consists of three digits: the first represents the initial value of *k*; the
-  second is the last values of *k* to consider and the third is the step between
-  successive values of *k*. In case the third value is not given, then 1 is
-  assumed by default and, in case only one value is given then the second value
-  equals the first one by default. For example: `--k "1 5; 10 50 10; 100"` will
-  run every solver selected with the following values of *k*: 1, 2, 3, 4 and 5
-  (according to the first *single specification*), 10, 20, 30, 40, 50 (as given
-  in the second *single specification*) and finally 100.
+* `--k`: The number of paths to compute, e.g., `--k 1000` would request the
+  computation of one thousand shortest paths. However, it can be used also to
+  automate experiments and thus, to provide an arbitrary collection of *k*
+  values. A *full specification* consists of a semicolon separated list of
+  *single specifications*. A *single specification* consists of three digits:
+  the first represents the initial value of *k*; the second is the last value
+  of *k* to consider and the third is the step between successive values of *k*.
+  In case the third value is not given, then 1 is assumed by default and, in
+  case only one value is given then the second value equals the first one by
+  default. For example: `--k "1 5; 10 50 10; 100"` will run every solver
+  selected with the following values of *k*: 1, 2, 3, 4 and 5 (according to the
+  first *single specification*), 10, 20, 30, 40, 50 (as given in the second
+  *single specification*) and finally 100.
 
 The typical optional arguments are shown next:
 
@@ -54,15 +90,23 @@ The typical optional arguments are shown next:
   
 * `--summary`: Used in conjunction with `--csv`. If given, only the information
   of the last solution path is written to the csv file; otherwise, information
-  about every solution path is stored, resulting in much larger csv files.
+  about every solution path is stored, resulting in much larger csv files. This
+  option automatically enables `--no-doctor`, i.e., it disables the automated
+  verification of the solution paths generated.
   
 * `--no-doctor`: Once every optimization task is finished, the solver
   automatically check it for correctness ---see the following section.
   Sometimes, if the number of paths generated is too large, this might take a
   very long time. This directive suppress the automated verification.
 
-* `--verbose`: Provides additional information, typically consisting of every
-  single solution to every instance of the *k* shortest-path problem
+* `--no-color`: Disables color output. 
+
+* `--show-solution`: It shows all the solutions of every instance. It has to be
+  given with `--verbose`. Otherwise, a warning is issued.
+
+* `--verbose`: Provides additional information of every single solution to every
+  instance of the *k* shortest-path problem. If `--show-solution` is given also
+  then every specific solution is shown.
   
 However, some specific solvers might have a different selection of directives.
 For a detailed description of them, see the corresponding directories listed at
@@ -104,6 +148,13 @@ shortest-path problem ---which consists of *k* single solution paths:
   that this might not be an error and in some **directed** graphs, the number of
   paths between two designated vertices is bounded.
 
+In case an algorithm solving the *k* simple shortest-path problem has been used,
+it also verifies whether every solution path is simple, i.e., loopless.
+
+If various algorithms are given to `--solver` then a cross-verification is
+conducted also to verify that the distribution of solution costs is the same in
+algorithms.
+
 # Reporting #
 
 As noted above, when using the directive `--csv` a full report with the solution
@@ -112,22 +163,23 @@ of every task is automatically created. The following information is given:
 * *Domain*: Name of the domain, e.g., `n-pancake`
 * *Variant*: Name of the variant used, e.g., `unit`, `heavy-cost`, etc.
 * *Id*: every id consists of two identifiers separated by a slash. The first one
-  is the task id, and the second one is the path id of the path solution found,
-  e.g., `013/092` refers to the stats of the 92-th solution path found in task
-  `013`.
+  is the task id, and the second one is the solution path id of the path
+  solution found, e.g., `013/092` refers to the 92-th solution path found in
+  task `013`.
 * *k*: requested number of paths to compute. This value serves as an upper bound
   in the second id given in the previous column.
 * *start*: explicit representation of the start state
 * *goal*: explicit representation of the goal state
 * *h0*: heuristic value of the start state
 * *length*: number of transitions in the solution path
-* *cost*: cost of the solution path. Note that *length* and +cost* must be equal
+* *cost*: cost of the solution path. Note that *length* and *cost* must be equal
   in unit cost domains, but maybe different in arbitrary cost domains.
 * *expansions*: number of expanded nodes for finding one specific solution path.
-  One solving a *k* shortest-path problem, this value might be increasing
-  between successive solution paths, but this is not necessarily true always.
-* *nbcentroids*: number of centroids used for computing the *k* shortest paths
-  when using an algorithm from the BELA* family
+  This value might be increasing between successive solution paths, but this is
+  not necessarily true always.
+* *nbcentroids*: number of expanded centroids for computing the *k* shortest
+  paths when using an algorithm from the BELA* family
+* *nbpaths*: number of paths discarded when using bBELA0/bBELA*.
 * *mem*: memory usage in Megabytes. The measurement combines both the virtual
   memory and resident set size. The first should not be very relevant, whereas
   the second might include some values which are not directly related to the
@@ -136,20 +188,20 @@ of every task is automatically created. The following information is given:
   memory usage.
 * *runtime*: CPU runtime until this solution path is found. Also, this value
   might be monotonically increasing between successive solutions of the same *k*
-  shortest-path problem, but it is not necessarily true.  
-* *expansions/sec*: it is just the quotient of the two previous columns. This
-  value is given only to provide an overall idea of the efficiency of the
-  implementations provided.
+  shortest-path problem, but it is not necessarily true.
+* *expansions/sec*: it is just the quotient of the number of expansions and the
+  overall running time. This value is given only to provide an overall idea of
+  the efficiency of the implementations provided.
 * *solver*: signature of the solver used for computing this solution
 * *doctor*: output of the automated error checking process. See the previous section
 * *version*: output of the command `git describe` which informs of the exact
-  version of `libksearch` used for running an algorithm.
+  version of `ksearch` used for running an algorithm.
 
 # License #
 
 MIT License
 
-Copyright (c) 2016, 2023, Carlos Linares López, Ian Herman 
+Copyright (c) 2016, 2025, 2026, Carlos Linares López, Ian Herman 
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -176,6 +228,6 @@ Carlos Linares Lopez <carlos.linares@uc3m.es>
 Computer Science and Engineering Department <https://www.inf.uc3m.es/en>  
 Universidad Carlos III de Madrid <https://www.uc3m.es/home>
 
-Ian Herman <iankherman@gmail.com>
-Computer Science and Engineering Department https://www.inf.uc3m.es/en
+Ian Herman <iankherman@gmail.com>  
+Computer Science and Engineering Department https://www.inf.uc3m.es/en  
 Universidad Carlos III de Madrid https://www.uc3m.es/home

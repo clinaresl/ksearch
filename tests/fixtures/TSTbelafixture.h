@@ -47,46 +47,41 @@ protected:
                             T& ancestor,
                             int cost) {
 
-        // expand the ancestor and get all its children
-        std::vector<std::tuple<int, int, T>> successors;
-        ancestor.children (0, ancestor, successors);
+        // Now, expand this node and verify if the given descendant is found
+        // among them with the application of an operator that has exactly the
+        // given cost. Admittedly, the following approach forces all descendants
+        // to be verified, even if the descendant of interest was found early,
+        // but my current implementation of the children does not allow stopping
+        // the generation of successor.
+        bool found = false;
+        ancestor.children (
+            0,
+            ancestor,
+            [&] (int g, int h, T&& successor) {
 
-        // and now look among all descendants to see if the given one appears
-        // among them
-        for (auto& successor: successors) {
+                // if the given descendant is found, then verify the cost is correct
+                // and return
+                if (successor == descendant) {
 
-            // if the given descendant is found, then verify the cost is correct
-            // and return
-            if (std::get<2> (successor) == descendant) {
+                    // verify the cost is correct
+                    found = (cost == g);
+                }                
+            });
 
-                // verify the cost is correct
-                return cost == std::get<0> (successor);
-            }
-        }
-
-        // at this point, the successor has not been found, ...
-        return false;
+        // and return whether it was found or not
+        return found;
     }
 
-    // show a solution path on the console
-    template<typename T>
-    void show_solution (std::vector<T>& path) {
+    // update the backward g-value of a node in closed
+    template <template <typename> class T, typename D>
+    void update_gbvalue (const T<D>& node, const int gb, khs::closed_t<T<D>>& closed) {
 
-        // show the solution path
-        for (auto& node: path) {
-            std::cout << node << " ";
-        }
-    }
+        // First, look for this node in closed
+        size_t ptr = closed.find (node);
 
-    // show a bunch of solutions
-    template<typename T>
-    void show_solutions (std::vector<std::vector<T>> paths) {
-
-        // show the solution paths after telling the user the number of paths found
-        std::cout << " # paths: " << paths.size () << std::endl;
-        for (auto& path: paths) {
-            show_solution (path);
-            std::cout << std::endl;
+        // and add the given backward g-value unless it is already stored
+        if (not closed[ptr].find_gb (gb)) {
+            closed[ptr] += gb;
         }
     }
 };

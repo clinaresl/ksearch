@@ -24,13 +24,9 @@
 
 #include "../solver.h"
 #include "../../src/ksearch.h"
+#include "../../src/version.h"
 
 #include "map_t.h"
-
-#define EXIT_OK 0
-#define EXIT_FAILURE 1
-
-using namespace std;
 
 extern "C" {
     char *xstrdup (char *p);
@@ -47,48 +43,52 @@ static struct option const long_options[] =
     {"variant", required_argument, 0, 'r'},
     {"k", required_argument, 0, 'k'},
     {"csv", required_argument, 0, 'C'},
+    {"no-color", no_argument, 0, 'X'},
     {"no-doctor", no_argument, 0, 'D'},
     {"summary", no_argument, 0, 'S'},
+    {"show-solution", no_argument, 0, 'P'},
     {"verbose", no_argument, 0, 'v'},
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'V'},
     {NULL, 0, NULL, 0}
 };
 
-const string get_domain ();
-const string get_variant ();
+const std::string get_domain ();
+const std::string get_variant ();
 const bool verify_state (const int x, const int y,
                          const int width, const int height);
 static int decode_switches (int argc, char **argv,
-                            string& mapname, string& solver_name, string& filename, string& variant,
-                            string& k_params, string& csvname, bool& no_doctor, bool& want_summary,
-                            bool& want_verbose);
+                            std::string& mapname, std::string& solver_name, std::string& filename, std::string& variant,
+                            std::string& k_params, std::string& csvname, bool& no_color, bool& no_doctor, bool& want_summary,
+                            bool& show_solution, bool& want_verbose);
 static void usage (int status);
 
 // main entry point
 int main (int argc, char** argv) {
 
-    string mapname;                    // name of the file with the map to load
-    string solver_name;                            // user selection of solvers
-    string filename;                            // file with all cases to solve
-    string variant;                                    // variant of the domain
-    string k_params;                       // user selection of the values of k
-    string csvname;                          // name of the output csv filename
+    std::string mapname;                    // name of the file with the map to load
+    std::string solver_name;                            // user selection of solvers
+    std::string filename;                            // file with all cases to solve
+    std::string variant;                                    // variant of the domain
+    std::string k_params;                       // user selection of the values of k
+    std::string csvname;                          // name of the output csv filename
+    bool no_color;         // whether colour output has to be suppressed or not
     bool no_doctor;                    // whether the doctor is disabled or not
     bool want_summary;      // whether a summary of results is requested or not
+    bool want_solution;        // whether solution paths should be shown or not
     bool want_verbose;                  // whether verbose output was requested
-    chrono::time_point<chrono::system_clock> tstart, tend;          // CPU time
+    std::chrono::time_point<std::chrono::system_clock> tstart, tend;          // CPU time
 
     // variables
     program_name = argv[0];
-    vector<string> variant_choices = {"unit", "octile"};
+    std::vector<std::string> variant_choices = {"unit", "octile"};
 
     // arg parse
-    decode_switches (argc, argv, mapname, solver_name, filename, variant, k_params, csvname, no_doctor, want_summary, want_verbose);
+    decode_switches (argc, argv, mapname, solver_name, filename, variant, k_params, csvname, no_color, no_doctor, want_summary, want_solution, want_verbose);
 
     // process the solver names and get a vector with the signatures of all
     // solvers to execute
-    vector<string> solvers = split_solver (solver_name);
+    std::vector<std::string> solvers = split_option (solver_name, ack_solvers);
 
     // and also process the user selection of the K values
     auto kspec = split_ks (k_params);
@@ -97,22 +97,22 @@ int main (int argc, char** argv) {
 
     // --mapname
     if (mapname == "") {
-        cerr << "\n Please, provide a file with the contents of the map to load" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a file with the contents of the map to load" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --file
     if (filename == "") {
-        cerr << "\n Please, provide a file with the information of all start states to solve" << endl;
-        cerr << " wrt the identity permutation" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a file with the information of all start states to solve" << std::endl;
+        std::cerr << " wrt the identity permutation" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     if (!get_choice (variant, variant_choices)) {
-        cerr << "\n Please, provide a correct name for the variant with --variant" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a correct name for the variant with --variant" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -124,18 +124,18 @@ int main (int argc, char** argv) {
     map_t::init (mapname, variant);
 
     // open the given file and retrieve all cases from it
-    vector<string> names;
-    vector<vector<string>> instances;
+    std::vector<std::string> names;
+    std::vector<std::vector<std::string>> instances;
     get_problems (filename, names, instances);
     if (!instances.size ()) {
-        cerr << endl;
-        cerr << " Error: The file '" << filename << "' contains no instances to solve!" << endl;
-        cerr << endl;
+        std::cerr << std::endl;
+        std::cerr << " Error: The file '" << filename << "' contains no instances to solve!" << std::endl;
+        std::cerr << std::endl;
         exit (EXIT_FAILURE);
     }
 
     // and now create a vector of tasks to solve
-    vector<instance_t<map_t>> tasks;
+    std::vector<instance_t<map_t>> tasks;
     for (auto i = 0 ; i < instances.size () ; i++) {
 
         // verify the start and goal state
@@ -144,13 +144,13 @@ int main (int argc, char** argv) {
         int tx = stoi (instances[i][2]);
         int ty = stoi (instances[i][3]);
         if (!verify_state (sx, sy, map_t::get_width (), map_t::get_height ())) {
-            cerr << "\n The x and y coordinates of the start state should be within the bounds of the map (" << map_t::get_width () << "x" << map_t::get_height () << ")" << endl;
-            cerr << " (" << sx << "," << sy << ") found in problem id " << names[i] << endl << endl;
+            std::cerr << "\n The x and y coordinates of the start state should be within the bounds of the map (" << map_t::get_width () << "x" << map_t::get_height () << ")" << std::endl;
+            std::cerr << " (" << sx << "," << sy << ") found in problem id " << names[i] << std::endl << std::endl;
             exit (EXIT_FAILURE);
         }
         if (!verify_state (tx, ty, map_t::get_width (), map_t::get_height ())) {
-            cerr << "\n The x and y coordinates of the goal state should be within the bounds of the map (" << map_t::get_width () << "x" << map_t::get_height () << ")" << endl;
-            cerr << " (" << tx << "," << ty << ") found in problem id " << names[i] << endl << endl;
+            std::cerr << "\n The x and y coordinates of the goal state should be within the bounds of the map (" << map_t::get_width () << "x" << map_t::get_height () << ")" << std::endl;
+            std::cerr << " (" << tx << "," << ty << ") found in problem id " << names[i] << std::endl << std::endl;
             exit (EXIT_FAILURE);
         }
 
@@ -163,57 +163,57 @@ int main (int argc, char** argv) {
 
     /* !-------------------------------------------------------------------! */
 
-    cout << endl;
-    cout << " map          : " << mapname << endl;
-    cout << "    width     : " << map_t::get_width () << endl;
-    cout << "    height    : " << map_t::get_height () << endl;
-    cout << " solver       : " << solver_name << " " << git_describe () << endl;
-    cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
-    cout << " variant      : " << map_t::get_variant () << endl;
-    cout << " K            : ";
+    std::cout << std::endl;
+    std::cout << " map          : " << mapname << std::endl;
+    std::cout << "    width     : " << map_t::get_width () << std::endl;
+    std::cout << "    height    : " << map_t::get_height () << std::endl;
+    std::cout << " solver       : " << solver_name << " " << KSEARCH_GIT_VERSION << std::endl;
+    std::cout << " file         : " << filename << " (" << instances.size () << " instances)" << std::endl;
+    std::cout << " variant      : " << map_t::get_variant () << std::endl;
+    std::cout << " K            : ";
     for (auto& ispec: kspec) {
-        cout << "[" << get<0>(ispec) << ", " << get<1>(ispec) << ", " << get<2> (ispec) << "] ";
+        std::cout << "[" << get<0>(ispec) << ", " << get<1>(ispec) << ", " << get<2> (ispec) << "] ";
     }
-    cout << endl;
+    std::cout << std::endl;
 
     /* !----------------------------- SEARCH ------------------------------! */
 
     // start the clock
-    tstart = chrono::system_clock::now ();
+    tstart = std::chrono::system_clock::now ();
 
     // create an instance of the "generic" domain-dependent solver
     solver<map_t> manager (get_domain (), variant,
                            tasks, k_params);
 
     // solve all the instances with each solver selected by the user and in the
-    // same order given
+    // same order given. Note that a consistent heuristic function is used
     for (auto isolver : solvers) {
-        manager.run (isolver, no_doctor, want_summary, want_verbose);
+        manager.run (isolver, no_doctor, want_summary, want_verbose, not no_color, want_solution);
     }
 
     // and stop the clock
-    tend = chrono::system_clock::now ();
+    tend = std::chrono::system_clock::now ();
 
     // to conclude, show an error summary and store all the results in a csv
     // file in case any was given
     manager.show_error_summary (no_doctor);
     manager.write_csv (csvname);
-    cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
-    cout << endl;
+    std::cout << " 🕒 CPU time: " << 1e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(tend - tstart).count() << " seconds" << std::endl;
+    std::cout << std::endl;
 
     /* !-------------------------------------------------------------------! */
 
     // Well done! Keep up the good job!
-    return (EXIT_OK);
+    return (EXIT_SUCCESS);
 }
 
 // return the domain of this solver
-const string get_domain () {
+const std::string get_domain () {
     return "maps";
 }
 
 // return the variant of the domain of this solver
-const string get_variant () {
+const std::string get_variant () {
     return "unit";
 }
 
@@ -229,9 +229,9 @@ const bool verify_state (const int x, const int y,
 // index of the first non-option argument
 static int
 decode_switches (int argc, char **argv,
-                 string& mapname, string& solver_name, string& filename, string& variant,
-                 string& k_params, string& csvname, bool& no_doctor, bool& want_summary,
-                 bool& want_verbose) {
+                 std::string& mapname, std::string& solver_name, std::string& filename, std::string& variant,
+                 std::string& k_params, std::string& csvname, bool& no_color, bool& no_doctor, bool& want_summary,
+                 bool& want_solution, bool& want_verbose) {
 
     int c;
 
@@ -242,8 +242,10 @@ decode_switches (int argc, char **argv,
     variant = "unit";
     k_params = "";
     csvname = "";
+    no_color = false;
     no_doctor = false;
     want_summary = false;
+    want_solution = false;
     want_verbose = false;
 
     while ((c = getopt_long (argc, argv,
@@ -253,8 +255,10 @@ decode_switches (int argc, char **argv,
                              "r"  /* variant */
                              "k"  /* k */
                              "C"  /* csv */
+                             "X"  /* no-color */
                              "D"  /* no-doctor */
                              "S"  /* summary */
+                             "P"  /* show-solution */
                              "v"  /* verbose */
                              "h"  /* help */
                              "V", /* version */
@@ -278,28 +282,34 @@ decode_switches (int argc, char **argv,
         case 'C':  /* --csv */
             csvname = optarg;
             break;
+        case 'X':  /* --no-color */
+            no_color = true;
+            break;
         case 'D':  /* --no-doctor */
             no_doctor = true;
             break;
         case 'S':  /* --summary */
             want_summary = true;
             break;
+        case 'P':  /* --show-solution */
+            want_solution = true;
+            break;
         case 'v':  /* --verbose */
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (maps) " << CMAKE_VERSION << endl;
-            cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl << endl;
+            std::cout << " khs (maps) " << KSEARCH_VERSION << " (" << KSEARCH_GIT_VERSION << ")" << std::endl;
+            std::cout << " " << CMAKE_BUILD_TYPE << " Build Type" << std::endl << std::endl;
 
             // show cpu and mem info
-            cout << get_cpu_info() << endl;
-            cout << get_mem_info() << endl;
+            std::cout << get_cpu_info() << std::endl;
+            std::cout << get_mem_info() << std::endl;
 
-            exit (EXIT_OK);
+            exit (EXIT_SUCCESS);
         case 'h':
-            usage (EXIT_OK);
+            usage (EXIT_SUCCESS);
         default:
-            cout << endl << " Unknown argument!" << endl;
+            std::cout << std::endl << " Unknown argument!" << std::endl;
             usage (EXIT_FAILURE);
         }
     }
@@ -310,23 +320,32 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the Map domain" << endl << endl;
-    cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
-    cout << "\
+    std::cout << std::endl << " " << program_name << " implements various K shortest-path search algorithms in the Map domain" << std::endl << std::endl;
+    std::cout << " Usage: " << program_name << " [OPTIONS]" << std::endl << std::endl;
+    std::cout << "\
  Mandatory arguments:\n\
       -m, --map [STRING]         filename with the map to load. The file contents should be arranged according to the file format\n\
                                  given in movingai. See the documentation for additional help\n\
       -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are:\n\
-                                    + Brute-force search algorithms:\n\
-                                       > 'mDijkstra': brute-force variant of mA*\n\
-                                       > 'K0': brute-force variant of K*\n\
-                                       > 'belA0': brute-force variant of belA*\n\
-                                    + Heuristic search algorithms:\n\
-                                       > 'mA*': mA*\n\
-                                       > 'K*': K*\n\
-                                       > 'belA*': BELA*\n\
+                                    * (non-simple) shortest-path:\n\
+                                       + Brute-force search algorithms:\n\
+                                          > 'mDijkstra': brute-force variant of mA*\n\
+                                          > 'K0': brute-force variant of K*\n\
+                                          > 'BELA0': brute-force variant of BELA*\n\
+                                       + Heuristic search algorithms:\n\
+                                          > 'mA*': mA*\n\
+                                          > 'K*': K*\n\
+                                          > 'BELA*': BELA*\n\
+                                    * (simple) shortest-path:\n\
+                                       + Brute-force search algorithms:\n\
+                                          > 'bBELA0': brute-force variant of bBELA*\n\
+                                          > 'sBELA0': brute-force variant of sBELA*\n\
+                                       + Heuristic search algorithms:\n\
+                                          > 'bBELA*': baseline simplistic BELA*\n\
+                                          > 'sBELA*': simple BELA*\n\
                                  It is possible to provide as many as desired in a blank separated list between double quotes,\n\
-                                 e.g., \"mDijkstra belA0\"\n\
+                                 e.g., \"mDijkstra belA0\". If non-simple and simple paths are used in the same invocation the cross\n\
+                                 verification will likely fail unless it is disabled with --no-doctor\n\
       -f, --file [STRING]        filename with a line for each instance to solve. Each line consists of five digits: the first\n\
                                  one is the problem id, which has to be unique; the second and third digits are the x- and\n\
                                  y-coordinates of the start state; the last two digits are the x- andy-coordinates of the goal\n\
@@ -342,11 +361,16 @@ usage (int status)
 \n\
  Optional arguments:\n\
       -C, --csv [STRING]         name of the csv output files for storing results. If none is given, no file is generated\n\
+      -X, --no-color             If given, the output is not coloured. It is recommended to use it when running the experiments\n\
+                                 in batch mode and saving the output to files.\n\
       -D, --no-doctor            If given, the automated error checking is disabled. Otherwise, all solutions are automatically\n\
                                  checked for correctness\n\
       -S, --summary              If given, only the results of the last solution path found for every instance are shown. Otherwise,\n\
                                  the results of every single solution path are shown in the output csv file. It has no effect if\n\
                                  --csv is not given\n\
+      -P, --show-solution        If given, every solution path from the start state to the goal state is shown on the standard output\n\
+                                 It applies only, if --verbose (see below) is given. Otherwise, it has no effect\n\
+\n\
  Misc arguments:\n\
       --verbose                  print more information\n\
       -h, --help                 display this help and exit\n\

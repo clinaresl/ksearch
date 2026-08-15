@@ -34,15 +34,20 @@ def createPrgArgParser():
 
     # Group of mandatory arguments
     parser_mandatory = parser.add_argument_group("Mandatory arguments", "The following arguments are required")
+    parser_mandatory.add_argument('-p', '--project',
+                                  required=True,
+                                  type=str,
+                                  choices=cndconf.VALID_PROJECTS,
+                                  help="Name of the project to use. They refer to the name of github projects which are used for automating the experiments. The choice affects the type of .sh file to generate, and thus to the condor configuration file as well.")
     parser_mandatory.add_argument('-d', '--domain',
                                   required=True,
                                   type=str,
                                   choices=cndconf.VALID_DOMAINS,
-                                  help="Name of the domain to be used.")
+                                  help="Name of the domain to use.")
     parser_mandatory.add_argument('-v', '--variant',
                                   required=True,
                                   type=str,
-                                  help="Name of the variant to be used under the selected domain. It must be a valid variant for the selected domain")
+                                  help="Name of the variant to use under the selected domain. It must be a valid variant for the selected domain")
     parser_mandatory.add_argument('-a', '--algorithm',
                                   required=True,
                                   type=str,
@@ -52,20 +57,25 @@ def createPrgArgParser():
                                   required=True,
                                   type=str,
                                   help="Number of paths to find. The specification of k follows the specification of k for any solver implemented in this library, i.e., it consists of a semicolon separated specification of values of k. Each part might consist of up to three different numbers: <first-k> <last-k> <step>. If only one value is given, only that value of k is considered; if two values are given, the step is assumed by default equal to one.")
+    parser_mandatory.add_argument('-t', '--testfile',
+                                  required=True,
+                                  type=str,
+                                  help="Filename with the test cases to solve. In case it is given with a path to it, only the basename is used")
 
     # Group of optional arguments
     parser_optional = parser.add_argument_group('Optional', 'The following arguments are optional')
+    parser_optional.add_argument('-P', '--parameters',
+                                 type=str,
+                                 default=None,
+                                 help="If given, they are attached to the algorithm given with --algorithm between parenthesis, e.g., \"--algorithm 'bBELA0' --params '0'\" yields \"bBELA(0)\".")
     parser_optional.add_argument('-m', '--map',
                                  type=str,
                                  default=None,
-                                 help="name of the map to be used in the domains 'map' or 'roadmap' without the suffix, e.g., 'USA-road-d.BAY' or 'random512-15-0'. It serves also to identify the test file with the instances to solve, and thus it is not necessary in the domains 'n-pancake' and 'n-puzzle'")
+                                 help="name of the map to be used in the domains 'map', 'roadmap' or 'roadmap-maps' without the suffix, e.g., 'USA-road-d.BAY' or 'random512-15-0'. In case it is given with a path to it, only the basename is used. It serves also to identify the test file with the instances to solve, and thus it is not necessary in the domains 'n-pancake' and 'n-puzzle'")
     parser_optional.add_argument('-s', '--size',
                                  type=int,
                                  default=0,
                                  help="Length of the permutations in the N-Pancake or the side of the square N-puzzle.")
-    parser_mandatory.add_argument('-t', '--testfile',
-                                  type=str,
-                                  help="Filename with the test cases to solve. It should not contain any path, and it is necessary in the domains 'n-puzzle' and 'n-pancake'")
     parser_optional.add_argument('-r', '--requirements',
                                  type=str,
                                  default=None,

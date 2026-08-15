@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -102,14 +103,14 @@ public:
     }
 
     friend std::ostream& operator<< (std::ostream& stream, map_t state) {
-        stream << state.get_x () << " " << state.get_y ();
+        stream << std::setw (3) << state.get_x () << " " << std::setw (3) << state.get_y ();
         return stream;
     }
 
     // methods
 
     // returns whether a position is blocked or not
-    bool blocked (int x,  int y) {
+    bool blocked (int x,  int y) const {
         return !_map [y*_width+x];
     }
 
@@ -195,12 +196,92 @@ public:
         map_t::set_variant (variant);
     }
 
-    // return the children of this state as a vector of tuples, each containing:
-    // first, the cost of the operator, secondly, its heuristic value; thirdly,
-    // the successor state.
-    void children (int h, const map_t& goal,
-                   std::vector<std::tuple<int, int, map_t>>& successors);
+    // process each child separately through the use of a callable that has to
+    // receive exactly three arguments: cost_t g, cost_t h and the successor
+    // state. It is the responsibility of the caller to provide the right
+    // callable at the calling site.
+    template<typename F>
+    requires std::invocable<F&, int, int, map_t&&>
+    void children (int h, map_t const& goal, F&& callable) const {
 
+        // first, consider the moves of the unit variant where the only difference
+        // is the cost of the operators. In the unit variant only the four adjacent
+        // locations are considered, all with the same cost. In the octile variant,
+        // nodes diagonally adjacent are also considered but this time the cost
+        // differs and while horizontal and vertical moves have a cost equal to 10
+        // units, diagonal moves are 14 units worth ---roughly approximating the
+        // square root of 2
+
+        // --west
+        if (_x > 0 && !blocked (_x-1, _y)) {
+            map_t successor {_x-1, _y};
+            callable ((_variant == "unit") ? 1 : 10,
+                      successor.h (goal),
+                      std::move (successor));
+        }
+
+        // --east
+        if (_x < _width-1 && !blocked (_x+1, _y)) {
+            map_t successor {_x+1, _y};
+            callable ((_variant == "unit") ? 1 : 10,
+                      successor.h (goal),
+                      std::move (successor));
+        }
+
+        // --south
+        if (_y > 0 && !blocked (_x, _y-1)) {
+            map_t successor {_x, _y-1};
+            callable ((_variant == "unit") ? 1 : 10,
+                      successor.h (goal),
+                      std::move (successor));
+        }
+
+        // --north
+        if (_y < _height-1 && !blocked (_x, _y+1)) {
+            map_t successor {_x, _y+1};
+            callable ((_variant == "unit") ? 1 : 10,
+                      successor.h (goal),
+                      std::move (successor));
+        }
+
+        // now, in case the octile variant is being used, consider also the diagonal
+        // moves
+        if (_variant == "octile") {
+
+            // --southwest
+            if (_x > 0 && _y > 0 && !blocked (_x-1, _y-1)) {
+                map_t successor {_x-1, _y-1};
+                callable (14,
+                          successor.h (goal),
+                          std::move (successor));
+            }
+
+            // --southeast
+            if (_x < _width-1 && _y > 0 && !blocked (_x+1, _y-1)) {
+                map_t successor {_x+1, _y-1};
+                callable (14,
+                          successor.h (goal),
+                          std::move (successor));
+            }
+
+            // --northeast
+            if (_x < _width-1 && _y < _height-1 && !blocked (_x+1, _y+1)) {
+                map_t successor {_x+1, _y+1};
+                callable (14,
+                          successor.h (goal),
+                          std::move (successor));
+            }
+
+            // --northwest
+            if (_x > 0 && _y < _height-1 && !blocked (_x-1, _y+1)) {
+                map_t successor {_x-1, _y+1};
+                callable (14,
+                          successor.h (goal),
+                          std::move (successor));
+            }
+        }
+    }
+    
     // return the heuristic distance to get from this state to the given goal
     // state. The heuristic function implemented takes into account the variant
     // considered: The unit variant returns the Manhattan distance while the

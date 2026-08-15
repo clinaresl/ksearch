@@ -26,13 +26,9 @@
 #include "../helpers.h"
 #include "../solver.h"
 #include "../../src/ksearch.h"
+#include "../../src/version.h"
 
 #include "npuzzle_t.h"
-
-#define EXIT_OK 0
-#define EXIT_FAILURE 1
-
-using namespace std;
 
 extern "C" {
     char *xstrdup (char *p);
@@ -56,10 +52,10 @@ static struct option const long_options[] =
 
 bool solvable (const npuzzle_t& npuzzle);
 int get_instances (int size, int num_instances, int distance,
-                   vector<instance_t<npuzzle_t>>& instances);
-void write_instances (const vector<instance_t<npuzzle_t>>& instances, string filename);
+                   std::vector<instance_t<npuzzle_t>>& instances);
+void write_instances (const std::vector<instance_t<npuzzle_t>>& instances, std::string filename);
 static int decode_switches (int argc, char **argv,
-                            int& size, int& number, string& filename, int& distance, string& variant,
+                            int& size, int& number, std::string& filename, int& distance, std::string& variant,
                             bool& want_verbose);
 static void usage (int status);
 
@@ -68,15 +64,15 @@ int main (int argc, char** argv) {
 
     int size;                         // length of the permutations to generate
     int number;                              // number of instances to generate
-    string filename;                            // file with all cases to solve
+    std::string filename;                       // file with all cases to solve
     int distance;              // minimum distance between start and goal state
-    string variant;      // variant of the n-puzzle, either unit or heavy-cost
+    std::string variant;  // variant of the n-puzzle, either unit or heavy-cost
     bool want_verbose;                  // whether verbose output was requested
-    chrono::time_point<chrono::system_clock> tstart, tend;          // CPU time
+    std::chrono::time_point<std::chrono::system_clock> tstart, tend;// CPU time
 
     // variables
     program_name = argv[0];
-    vector<string> variant_choices = {"unit", "heavy-cost"};
+    std::vector<std::string> variant_choices = {"unit", "heavy-cost"};
 
     // arg parse
     decode_switches (argc, argv, size, number, filename, distance, variant, want_verbose);
@@ -85,36 +81,36 @@ int main (int argc, char** argv) {
 
     // --size
     if (size == 0) {
-        cerr << "\n Please, provide the length of the side of the N-Puzzle" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide the length of the side of the N-Puzzle" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --number
     if (number < 0) {
-        cerr << "\n Please, provide a valid number of instances to generate" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a valid number of instances to generate" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --file
     if (filename == "") {
-        cerr << "\n Please, provide the filename where instances must be stored" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide the filename where instances must be stored" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --distance
     if (distance < 0) {
-        cerr << "\n Please, provide a valid distance between the start and goal states" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a valid distance between the start and goal states" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --variant
     if (!get_choice (variant, variant_choices)) {
-        cerr << "\n Please, provide a correct name for the variant with --variant" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a correct name for the variant with --variant" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -128,31 +124,31 @@ int main (int argc, char** argv) {
 
     /* !-------------------------------------------------------------------! */
 
-    cout << endl;
-    cout << " side           : " << size << " / N: " << size*size << endl;
-    cout << " file           : " << filename << " (" << number << " instances)" << endl;
-    cout << " distance       : " << distance << endl;
-    cout << " variant        : " << variant << endl << endl;
+    std::cout << std::endl;
+    std::cout << " side           : " << size << " / N: " << size*size << std::endl;
+    std::cout << " file           : " << filename << " (" << number << " instances)" << std::endl;
+    std::cout << " distance       : " << distance << std::endl;
+    std::cout << " variant        : " << variant << std::endl << std::endl;
 
     /* !--------------------------- GENERATION ----------------------------! */
 
     // start the clock
-    tstart = chrono::system_clock::now ();
+    tstart = std::chrono::system_clock::now ();
 
     // generate the random instances
-    vector<instance_t<npuzzle_t>> tasks;
+    std::vector<instance_t<npuzzle_t>> tasks;
     get_instances (size*size, number, distance, tasks);
 
     // and write them in the specified file
     write_instances (tasks, filename);
 
     // end the clock
-    tend = chrono::system_clock::now ();
+    tend = std::chrono::system_clock::now ();
 
     /* !-------------------------------------------------------------------! */
 
     // Well done! Keep up the good job!
-    return (EXIT_OK);
+    return (EXIT_SUCCESS);
 }
 
 // return whether the given instance of the n-puzzle is solvable or not
@@ -160,7 +156,7 @@ bool solvable (const npuzzle_t& npuzzle) {
 
     int inversions = 0;
     int blank_row = 0;
-    vector<int> permutation = npuzzle.get_perm ();
+    std::vector<int> permutation = npuzzle.get_perm ();
 
     // count the number of inversions of the permutation
     for (auto i = 0 ; i < permutation.size () ; i++) {
@@ -206,20 +202,20 @@ bool solvable (const npuzzle_t& npuzzle) {
 //
 // Return the number of instances generated
 int get_instances (int size, int num_instances, int distance,
-                   vector<instance_t<npuzzle_t>>& instances) {
+                   std::vector<instance_t<npuzzle_t>>& instances) {
 
     // random generator
     auto rng = std::default_random_engine {};
 
     // create the identity permutation which is used as the goal state
-    vector<int> identity;
+    std::vector<int> identity;
     for (auto i = 0 ; i < size ; identity.push_back (i++));
     npuzzle_t goal {identity};
 
     while (instances.size () < num_instances) {
 
         // create a random instance just by shuffling a copy of the goal state
-        vector<int> n (identity);
+        std::vector<int> n (identity);
         shuffle (n.begin (), n.end (), rng);
         npuzzle_t start {n};
 
@@ -229,7 +225,7 @@ int get_instances (int size, int num_instances, int distance,
         if (solvable (n) && start.h (goal) >= distance) {
 
             // add this instance to the vector to return
-            instances.push_back (instance_t<npuzzle_t>{to_string (instances.size ()),
+            instances.push_back (instance_t<npuzzle_t>{std::to_string (instances.size ()),
                     start, goal});
         }
     }
@@ -239,13 +235,13 @@ int get_instances (int size, int num_instances, int distance,
 }
 
 // write all the given instances in the specified filename
-void write_instances (const vector<instance_t<npuzzle_t>>& instances, string filename) {
+void write_instances (const std::vector<instance_t<npuzzle_t>>& instances, std::string filename) {
 
-    std::ofstream istream (filename, ios::out);
+    std::ofstream istream (filename, std::ios::out);
 
     // verify I/O operations are available
     if (!istream.good ()) {
-        throw runtime_error ("[write_instances] Error opening file!");
+        throw std::runtime_error ("[write_instances] Error opening file!");
     }
 
     // write all instances in the given file
@@ -253,7 +249,7 @@ void write_instances (const vector<instance_t<npuzzle_t>>& instances, string fil
 
         // do not show the goal, as it is always assumed to be the identity
         // permutation
-        istream << instance.get_name () << " " << instance.get_start () << endl;
+        istream << instance.get_name () << " " << instance.get_start () << std::endl;
     }
 }
 
@@ -261,7 +257,7 @@ void write_instances (const vector<instance_t<npuzzle_t>>& instances, string fil
 // index of the first non-option argument
 static int
 decode_switches (int argc, char **argv,
-                 int& size, int& number, string& filename, int& distance, string& variant,
+                 int& size, int& number, std::string& filename, int& distance, std::string& variant,
                  bool& want_verbose) {
 
     int c;
@@ -286,16 +282,16 @@ decode_switches (int argc, char **argv,
                              long_options, (int *) 0)) != EOF) {
         switch (c) {
         case 's':  /* --size */
-            size = stoi (optarg);
+            size = std::stoi (optarg);
             break;
         case 'n':  /* --solver */
-            number = stoi (optarg);
+            number = std::stoi (optarg);
             break;
         case 'f':  /* --file */
             filename = optarg;
             break;
         case 'D': /* --distance */
-            distance = stoi (optarg);
+            distance = std::stoi (optarg);
             break;
         case 'X':  /* --variant */
             variant = optarg;
@@ -304,13 +300,13 @@ decode_switches (int argc, char **argv,
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (npuzzle generator) " << CMAKE_VERSION << " (" << git_describe () << ")" << endl;
-            cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl;
-            exit (EXIT_OK);
+            std::cout << " khs (n-puzzle generator) " << KSEARCH_VERSION << " (" << KSEARCH_GIT_VERSION << ")" << std::endl;
+            std::cout << " " << CMAKE_BUILD_TYPE << " Build Type" << std::endl;
+            exit (EXIT_SUCCESS);
         case 'h':
-            usage (EXIT_OK);
+            usage (EXIT_SUCCESS);
         default:
-            cout << endl << " Unknown argument!" << endl;
+            std::cout << std::endl << " Unknown argument!" << std::endl;
             usage (EXIT_FAILURE);
         }
     }
@@ -321,9 +317,9 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " Random generator of instances for the N-Puzzle domain" << endl << endl;
-    cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
-    cout << "\
+    std::cout << std::endl << " " << program_name << " Random generator of instances for the N-Puzzle domain" << std::endl << std::endl;
+    std::cout << " Usage: " << program_name << " [OPTIONS]" << std::endl << std::endl;
+    std::cout << "\
  Mandatory arguments:\n\
       -s, --size [NUMBER]        length of the side of the sliding-tile puzzle\n\
       -n, --number [NUMBER]      Number of instances to generate. By default, 100]\n\

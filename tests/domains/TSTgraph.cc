@@ -15,8 +15,6 @@
 #include "../TSTdefs.h"
 #include "../fixtures/TSTgraphfixture.h"
 
-using namespace std;
-
 // Check that empty graphs are correctly created
 TEST_F (GraphFixture, NullGraph) {
 
@@ -40,7 +38,7 @@ TEST_F (GraphFixture, AddNbEdges) {
     for (auto i = 0 ; i < NB_TESTS ; i++) {
 
         // create a couple of random nodes identified by their numbers and also the cost
-        vector<int> vertices = randVectorInt (2, MAX_VALUES*MAX_VALUES*MAX_VALUES);
+        std::vector<int> vertices = randVectorInt (2, MAX_VALUES*MAX_VALUES*MAX_VALUES);
         int cost = rand () % MAX_VALUES;
 
         // and add this edge
@@ -58,16 +56,16 @@ TEST_F (GraphFixture, AddEdges) {
     graph_t graph;
 
     // create a vector of tuples with all edges randomly added to the graph
-    vector<tuple<int, int, int>> edges;
+    std::vector<std::tuple<int, int, int>> edges;
 
     for (auto i = 0 ; i < NB_TESTS ; i++) {
 
         // create a couple of random nodes identified by their numbers and also the cost
-        vector<int> vertices = randVectorInt (2, MAX_VALUES*MAX_VALUES*MAX_VALUES);
+        std::vector<int> vertices = randVectorInt (2, MAX_VALUES*MAX_VALUES*MAX_VALUES);
         int cost = rand () % MAX_VALUES;
 
         // add it to the collection of edges randomly generated
-        edges.push_back (make_tuple (vertices[0], vertices[1], cost));
+        edges.push_back (std::make_tuple (vertices[0], vertices[1], cost));
 
         // and add this edge
         graph.add_edge (size_t (vertices[0]), size_t (vertices[1]), cost);

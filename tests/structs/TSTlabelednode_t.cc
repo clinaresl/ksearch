@@ -12,8 +12,6 @@
 
 #include "../fixtures/TSTlabelednodefixture.h"
 
-using namespace std;
-
 // Checks the creation of int nodes with default values
 // ----------------------------------------------------------------------------
 TEST_F (LabeledNodeFixture, DefaultValuesInt) {
@@ -23,7 +21,7 @@ TEST_F (LabeledNodeFixture, DefaultValuesInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::labelednode_t<vector<int>> n {values};
+        khs::labelednode_t<std::vector<int>> n {values};
 
         // next, verify that all attributes of this node take the default values
         ASSERT_EQ (n.get_g (), 0);
@@ -32,7 +30,7 @@ TEST_F (LabeledNodeFixture, DefaultValuesInt) {
 
         // make sure also the stable "pointers" in closed are initialized to
         // an impossible value
-        ASSERT_EQ (n.get_pointer (), string::npos);
+        ASSERT_EQ (n.get_pointer (), std::string::npos);
         ASSERT_EQ (n.get_backpointers ().size (), 0);
 
         // also, ensure there are no backward g-values in this node
@@ -48,7 +46,7 @@ TEST_F (LabeledNodeFixture, DefaultValuesString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // next, verify that all attributes of this node take the default values
         ASSERT_EQ (n.get_g (), 0);
@@ -57,7 +55,7 @@ TEST_F (LabeledNodeFixture, DefaultValuesString) {
 
         // make sure also the stable "pointers" in closed are initialized to an
         // impossible value
-        ASSERT_EQ (n.get_pointer (), string::npos);
+        ASSERT_EQ (n.get_pointer (), std::string::npos);
         ASSERT_EQ (n.get_backpointers ().size (), 0);
 
         // also, ensure there are no backward g-values in this node
@@ -74,7 +72,7 @@ TEST_F (LabeledNodeFixture, SetValuesInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::labelednode_t<vector<int>> n {values};
+        khs::labelednode_t<std::vector<int>> n {values};
 
         // verify next that the state of this node is precisely the one given
         ASSERT_EQ (n.get_state (), values);
@@ -89,7 +87,7 @@ TEST_F (LabeledNodeFixture, SetValuesString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // verify next that the state of this node is precisely the one given
         ASSERT_EQ (n.get_state (), value);
@@ -104,7 +102,7 @@ TEST_F (LabeledNodeFixture, EqualString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // create another node using two different methods: copy constructor and
         // assignment
@@ -126,7 +124,7 @@ TEST_F (LabeledNodeFixture, NotEqualString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // randomly choose a location and change its content. A while statement
         // is used because we ensure that the previous string is effectively
@@ -143,6 +141,9 @@ TEST_F (LabeledNodeFixture, NotEqualString) {
         // equal
         auto n1 {value};
         ASSERT_NE (n, n1);
+
+        auto n2 = value;
+        ASSERT_NE (n, n2);
     }
 }
 
@@ -154,7 +155,7 @@ TEST_F (LabeledNodeFixture, LessThanString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // randomly choose a location and change its content. A while statement
         // is used because we ensure that the previous string is effectively
@@ -185,7 +186,7 @@ TEST_F (LabeledNodeFixture, SetgInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::labelednode_t<vector<int>> n {values};
+        khs::labelednode_t<std::vector<int>> n {values};
 
         // set the g-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -213,7 +214,7 @@ TEST_F (LabeledNodeFixture, SetgString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // set the g-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -242,7 +243,7 @@ TEST_F (LabeledNodeFixture, SethInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::labelednode_t<vector<int>> n {values};
+        khs::labelednode_t<std::vector<int>> n {values};
 
         // set the h-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -270,7 +271,7 @@ TEST_F (LabeledNodeFixture, SethString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // set the h-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -299,7 +300,7 @@ TEST_F (LabeledNodeFixture, SetBackPointersInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::labelednode_t<vector<int>> n {values};
+        khs::labelednode_t<std::vector<int>> n {values};
 
         // randomly determine the number of backpointers to set ---to be at
         // least one
@@ -329,7 +330,7 @@ TEST_F (LabeledNodeFixture, SetBackPointersString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // randomly determine the number of backpointers to set ---to be at
         // least one
@@ -360,7 +361,7 @@ TEST_F (LabeledNodeFixture, SetgBackwardInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::labelednode_t<vector<int>> n {values};
+        khs::labelednode_t<std::vector<int>> n {values};
 
         // randomly determine the number of backward g-values to set ---to be at
         // least one. Make'em all different even if that does not mind, but the
@@ -391,7 +392,7 @@ TEST_F (LabeledNodeFixture, SetgBackwardString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // randomly determine the number of backward g-values to set ---to be at
         // least one. Make'em all different even if that does not mind, but the
@@ -423,7 +424,7 @@ TEST_F (LabeledNodeFixture, FindgBackwardInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::labelednode_t<vector<int>> n {values};
+        khs::labelednode_t<std::vector<int>> n {values};
 
         // randomly determine the number of backward g-values to set ---even
         // zero. Make'em all different even if that does not mind, but the true
@@ -451,7 +452,7 @@ TEST_F (LabeledNodeFixture, FindNotgBackwardInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::labelednode_t<vector<int>> n {values};
+        khs::labelednode_t<std::vector<int>> n {values};
 
         // randomly determine MAX_VALUES g-values to set. Make'em all different
         // so that inserting the first half will ensure that no item in the
@@ -485,7 +486,7 @@ TEST_F (LabeledNodeFixture, FindgBackwardString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // randomly determine the number of backward g-values to set ---even
         // zero. Make'em all different even if that does not mind, but the true
@@ -512,7 +513,7 @@ TEST_F (LabeledNodeFixture, FindNotgBackwardString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::labelednode_t<string> n {value};
+        khs::labelednode_t<std::string> n {value};
 
         // randomly determine MAX_VALUES g-values to set. Make'em all different
         // so that inserting the first half will ensure that no item in the

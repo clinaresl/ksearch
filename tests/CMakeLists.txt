@@ -15,6 +15,7 @@ add_executable(gtest
   structs/TSTnode_t.cc
   structs/TSTbacknode_t.cc
   structs/TSTlabelednode_t.cc
+  structs/TSTidnode_t.cc
   structs/TSTbucket_t.cc
   ../domains/n-pancake/npancake_t.cc
   domains/TSTnpancake.cc
@@ -29,7 +30,10 @@ add_executable(gtest
   structs/TSTksolution_t.cc
   structs/TSTksolutions_t.cc
   algorithm/TSTmA.cc
-  algorithm/TSTbela.cc)
+  algorithm/TSTbela.cc
+  algorithm/TSTbbela.cc
+  algorithm/TSTsbela.cc
+)
 
 target_link_libraries(gtest LINK_PUBLIC ksearch GTest::gtest GTest::gtest_main)
 

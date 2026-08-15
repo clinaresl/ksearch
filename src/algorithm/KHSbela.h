@@ -13,11 +13,11 @@
 #ifndef _KHSBELA_H_
 #define _KHSBELA_H_
 
+#include<algorithm>
 #include<cmath>
 #include<stack>
 
-#include "KHSbsolver.h"
-#include "../structs/KHSlabelednode_t.h"
+#include "../ksearch.h"
 
 namespace khs {
 
@@ -50,18 +50,25 @@ namespace khs {
             return _start == other._start && _end == other._end &&
                 _cost == other._cost;
         }
+
+        friend std::ostream& operator<<(std::ostream& stream, const centroid_t& right) {
+            stream << "<(" << right.get_start ();
+            stream  << ", " << right.get_end ();
+            stream << "), " << right.get_cost () << ">";
+            return stream;
+        }
     }; // centroid_t
 
     template <typename T>
     class bela : public bsolver<T> {
 
-    private:
+    protected:
 
         // INVARIANT: a solver of the k-shortest path problem computes k paths
         // from a start to a goal. As a result, a number of stats such as the
-        // heuristic estimate of the start state, the number of expanded nodes
-        // the CPU and running time are reported for every single solution found
-        // along with the number of centroids used
+        // heuristic estimate of the start state, the number of expanded nodes,
+        // and the CPU time are reported for every single solution found along
+        // with the number of centroids used
         labelednode_t<T> _start;                                  // start node
         labelednode_t<T> _goal;                                    // goal node
 
@@ -76,18 +83,16 @@ namespace khs {
 
         // Explicit constructor. Note that the brute-force search variant is
         // used by default. To enable heuristic search use brute_force=false
-        bela (const int k, const T& start, const T& goal, const bool brute_force = true) :
+        bela (const int k, const T& start, const T& goal,
+              const bool brute_force = true) :
             bsolver<T>(k),
-            _start       { start },
-            _goal        { goal },
-            _brute_force { brute_force }
+            _start                  { start },
+            _goal                   { goal },
+            _brute_force            { brute_force }
         {
 
             // compute the heuristic estimate of the start state to the goal
             bsolver<T>::_h0 = start.h (goal);
-
-            // This implements BELA* with no heuristics and thus, the start node
-            // is not updated with the h value
         }
 
         // Destructor
@@ -118,25 +123,30 @@ namespace khs {
 
         // The following method provides a convenient wrapper to generate
         // solutions more comfortably
-        const solution_t<T, vector> generate_solution (const vector<T>& path,
-                                                       const int g) {
+        const solution_t<T, std::vector> generate_solution (const std::vector<T>& path,
+                                                            const int g) {
 
             // return a solution with this information
-            return solution_t<T, vector> (bsolver<T>::_k,
-                                          path,
-                                          _start.get_state (),
-                                          _goal.get_state (),
-                                          bsolver<T>::_nbcentroids,
-                                          bsolver<T>::_h0,
-                                          g,
-                                          bsolver<T>::_expansions,
-                                          bsolver<T>::get_cpu_time (),
-                                          signature ());
+            return solution_t<T, std::vector> (bsolver<T>::_k,
+                                               path,
+                                               _start.get_state (),
+                                               _goal.get_state (),
+                                               bsolver<T>::_nbcentroids,
+                                               bsolver<T>::_h0,
+                                               g,
+                                               bsolver<T>::_expansions,
+                                               bsolver<T>::get_cpu_time (),
+                                               0,
+                                               signature (),
+                                               false);
         }
 
         // every solver must be uniquely identified by a signature
-        const string signature () const {
-            return (_brute_force ? "BELA0" : "BELA*");
+        virtual const std::string signature () const {
+            if (_brute_force) {
+                return "BELA0";
+            }
+            return "BELA*";
         }
 
         // The following version of get_prefixes simply provides a wrapper for
@@ -165,7 +175,7 @@ namespace khs {
                           std::vector<int> &finishedMask,
                           const size_t bound = std::numeric_limits<size_t>::max());
 
-        // The following version of get_prefixes simply provides a wrapper for
+        // The following version of get_suffixes simply provides a wrapper for
         // the unit test cases and is not intended to be used by the search
         // algorithm
         std::vector<std::vector<size_t>> get_suffixes(closed_t<labelednode_t<T>> &closed,
@@ -192,28 +202,32 @@ namespace khs {
         // The process: first, needs to access the closed list; second, new
         // centroids might be discovered. This is why the closed list and the sorted
         // bucket of centroids must be specified as well
-        ksolution_t<T, vector> get_paths (const centroid_t& centroid,
-                                          closed_t<labelednode_t<T>>& closed,
-                                          bucket_t<centroid_t>& centroids,
-                                          size_t bound = std::numeric_limits<size_t>::max ());
+        //
+        // Note this method is virtual because derived classes of it might
+        // re-define the way paths are computed, e.g., to compute simple paths
+        virtual ksolution_t<T, std::vector> get_paths (const centroid_t& centroid,
+                                                  closed_t<labelednode_t<T>>& closed,
+                                                  bucket_t<centroid_t>& centroids,
+                                                  size_t bound = std::numeric_limits<size_t>::max ());
 
         // brute-force variant of BELA*, the so-called BELA0
-        ksolution_t<T, vector> solve0 ();
+        ksolution_t<T, std::vector> solve0 ();
 
-        // heuristic implementation of BELA*
-        ksolution_t<T, vector> solveStar ();
+        // heuristic implementation of BELA* with consistent heuristics
+        ksolution_t<T, std::vector> solveStar ();
 
         // the main service of this class computes a solution of the k-shortest
         // path problem from the start to the goal using one variant of BELA*:
         //
         //    * If brute_force is true, then BELA0*, i.e., with no heuristics is
         //      used
-        //    * If brute_force is false then the heuristic variant of BELA* is
-        //      employed
+        //      
+        //    * If brute_force is false then the heuristic variant of BELA* with
+        //      consistent heuristics is employed
         //
         // Importantly, the solutions shall be returned in the same order they
         // are generated!
-        ksolution_t<T, vector> solve ();
+        ksolution_t<T, std::vector> solve ();
 
     }; // class bela<T>
 
@@ -259,13 +273,11 @@ namespace khs {
         // prefix, including the start vertex of the centroid are updated
         // starting with a cost derived from the cost of the edge of the
         // centroid and the overall cost the centroid refers to
-
         struct params_t {
             int prefixIndex;
             size_t ptr;
             int cost;
         }; typedef struct params_t params_t;
-
 
         int gstart = closed[centroid.get_start ()].get_g ();
         std::stack<params_t> recursionStack;
@@ -333,23 +345,24 @@ namespace khs {
             // and consider all labeled backpointers
             bool firstChild = true;
             for (auto& ibp: bps) {
+
                 // if this backpointer leads to a parent on the optimal path
                 labelednode_t<T> parent = closed[ibp.get_pointer ()];
                 if (parent.get_g () + ibp.get_cost () == closed[ptr].get_g ()) {
                     if (firstChild) { // Continue with same prefix
                         recursionStack.push(params_t{prefixIndex, ibp.get_pointer(), cost + ibp.get_cost()});
+
                         firstChild = false;
                     } else { // Continue with new prefix
                         int nextPrefix = prefixes.size();
                         prefixes.emplace_back(prefixes[prefixIndex]);
                         recursionStack.push(params_t{nextPrefix, ibp.get_pointer(), cost + ibp.get_cost()});
                     }
-                }
-                else if (new_gb) {
+                } else if (new_gb) {
 
                     // in case this backpointer does not lead to a parent on the
-                    // optimal path, then a bridge has been discovered.
-                    // Moreover, this bridge becomes a centroid if and only if a
+                    // optimal path, then a sidetrack has been discovered.
+                    // Moreover, this sidetrack becomes a centroid if and only if a
                     // new backward g-value was added, which represents all
                     // paths with a cost equal to the g*-value of the parent,
                     // plus the cost of this operator and the backward g-value
@@ -364,6 +377,7 @@ namespace khs {
             }
         }
     }
+
 
     // The following version of get_prefixes simply provides a wrapper for the
     // unit test cases and is not intended to be used by the search algorithm
@@ -429,22 +443,10 @@ namespace khs {
         }
 
         // compute the cost of any optimal path getting to the start vertex of
-        // the centroid
+        // the centroid and also the backward g-value of the end vertex of the
+        // centroid
         int gstart = closed[centroid.get_start ()].get_g ();
-
-        // Before proceeding, set the backward g-value of the end vertex of this
-        // centroid. The initial cost of all suffixes is equal to the overall
-        // cost of the centroid minus the optimal cost of the start vertex of
-        // the centroid minus the cost of the operator.
-        //
-        // Centroids are discovered only once and they are used indeed only
-        // once. However, the same vertex might be the end vertex of several
-        // centroids with the same overall cost! Thus, it is necessary to check
-        // that this backward g-value has not been set previously
         int bg = centroid.get_cost () - gstart - edgeCost;
-        if (!closed[ptr].find_gb (bg)) {
-            closed[ptr] += bg;
-        }
 
         std::stack<params_t> recursionStack;
         int numFinishedSuffixes = 0;
@@ -473,34 +475,36 @@ namespace khs {
             // decrease accordingly. When expanding this node, both the
             // heuristic value and the true goal are dismished. We are
             // interested only in the true descendants.
-            T state = closed[ptr].get_state ();
-            vector<tuple<int, int, T>> successors;
-            state.children (0, state, successors);
-
-            // and consider all successors from this node
             bool firstChild = true;
-            for (auto& successor: successors) {
+            T state = closed[ptr].get_state ();
+            state.children (
+                0,
+                state,
+                [&] (int g, int h, T&& successor) {
+                    
+                    // look for this descendant in CLOSED and very importantly,
+                    // verify that (ptr) has been previously expanded to generate
+                    // (it) which has been also expanded. Avoiding this verification
+                    // leads to errors if the heuristic is inconsistent!
+                    auto it = closed.find (successor);
+                    if (it != std::string::npos && closed[it].find_bp (ptr)) {
 
-                // look for this node in CLOSED
-                auto it = closed.find (std::get<2>(successor));
-                if (it != std::string::npos) {
-
-                    // then verify whether this node has a backward g-value
-                    // which decreases accordingly, i.e, that it has a
-                    // g-backward value equal to cost minus the cost of the
-                    // operator that gets to it
-                    if (closed[it].find_gb (cost - std::get<0>(successor))) {
-                        if (firstChild) { // Continue with same suffix
-                            recursionStack.push(params_t{suffixIndex, it, cost - std::get<0>(successor)});
-                            firstChild = false;
-                        } else { // Continue with new suffix
-                            int nextPrefix = suffixes.size();
-                            suffixes.emplace_back(suffixes[suffixIndex]);
-                            recursionStack.push(params_t{nextPrefix, it, cost - std::get<0>(successor)});
+                        // then verify whether this node has a backward g-value
+                        // which decreases accordingly, i.e, that it has a
+                        // g-backward value equal to cost minus the cost of the
+                        // operator that gets to it
+                        if (closed[it].find_gb (cost - g)) {
+                            if (firstChild) { // Continue with same suffix
+                                recursionStack.push(params_t{suffixIndex, it, cost - g});
+                                firstChild = false;
+                            } else { // Continue with new suffix
+                                int nextPrefix = suffixes.size();
+                                suffixes.emplace_back(suffixes[suffixIndex]);
+                                recursionStack.push(params_t{nextPrefix, it, cost - g});
+                            }
                         }
                     }
-                }
-            }
+                });
         }
     }
 
@@ -512,10 +516,10 @@ namespace khs {
     // centroids might be discovered. This is why the closed list and the sorted
     // bucket of centroids must be specified as well
     template <typename T>
-    ksolution_t<T, vector> bela<T>::get_paths (const centroid_t& centroid,
-                                               closed_t<labelednode_t<T>>& closed,
-                                               bucket_t<centroid_t>& centroids,
-                                               size_t bound) {
+    ksolution_t<T, std::vector> bela<T>::get_paths (const centroid_t& centroid,
+                                                    closed_t<labelednode_t<T>>& closed,
+                                                    bucket_t<centroid_t>& centroids,
+                                                    size_t bound) {
 
         // Update the number of centroids that are used to compute solution
         // paths
@@ -531,7 +535,7 @@ namespace khs {
         std::vector<std::vector<size_t>> suffixes;
         std::vector<int> suffixMask;
         get_suffixes(closed, centroid, suffixes, suffixMask, size_t(ceil(double(bound) / double(prefixes.size()))));
-        ksolution_t<T, vector> solutions { bsolver<T>::_k, _start.get_state (), _goal.get_state () };
+        ksolution_t<T, std::vector> solutions { bsolver<T>::_k, _start.get_state (), _goal.get_state () };
         for (auto i : prefixMask) {
             for (auto j : suffixMask) {
 
@@ -554,7 +558,7 @@ namespace khs {
                 // create a single solution with this path and add it to the
                 // collection of solutions to reeturn. Note the cost of every
                 // path is equal to the overall cost of the centroid indeed!
-                bsolver<T>::_tend = chrono::system_clock::now ();
+                bsolver<T>::_tend = std::chrono::system_clock::now ();
                 solutions += generate_solution (path, centroid.get_cost ());
 
                 // in case the bound has been reached, return the current
@@ -571,13 +575,13 @@ namespace khs {
 
     // brute-force variant of BELA*, the so-called BELA0
     template <typename T>
-    ksolution_t<T, vector> bela<T>::solve0 () {
+    ksolution_t<T, std::vector> bela<T>::solve0 () {
 
         // Start the chrono!
-        bsolver<T>::_tstart = chrono::system_clock::now ();
+        bsolver<T>::_tstart = std::chrono::system_clock::now ();
 
         // First things first, create a container to store all solutions found
-        ksolution_t<T, vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
+        ksolution_t<T, std::vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
 
         // In case the start and the goal nodes are the same, return immediately
         // with a single empty solution, and only one in spite of the number of
@@ -589,7 +593,7 @@ namespace khs {
 
             // create then a single solution with no path (and no expansions!)
             std::vector<T> path;
-            bsolver<T>::_tend = chrono::system_clock::now ();
+            bsolver<T>::_tend = std::chrono::system_clock::now ();
             ksolution += generate_solution (path, 0);
 
             // and return
@@ -599,7 +603,7 @@ namespace khs {
         // if the start and goal nodes are different, then create an open list
         // and add the start state to it with its f-value and no labeled
         // backpointer
-        _start += labeledbackpointer_t{string::npos, 0};
+        _start += labeledbackpointer_t{std::string::npos, 0};
         bucket_t<labelednode_t<T>> open;
         open.insert (_start, 0);
 
@@ -631,7 +635,7 @@ namespace khs {
                 // of solution paths already found, so that achieving that
                 // number it is possible to abort execution and exit with k
                 // shortest-paths
-                ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
+                ksolution_t<T, std::vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
 
                 // and add them to the solutions already found. In case the
                 // requested number of solutions has been already found, then
@@ -652,7 +656,7 @@ namespace khs {
             if (node.get_state () == _goal.get_state ()) {
 
                 // in case it has never been expanded
-                if (ptr == string::npos) {
+                if (ptr == std::string::npos) {
 
                     // then add it to the CLOSED list
                     ptr = closed.insert (node);
@@ -661,6 +665,10 @@ namespace khs {
                     // otherwise, update its labeled backpointers
                     closed[ptr] += node.get_backpointer (0);
                 }
+
+                // and make sure the goal state has a backward g-value equal to
+                // zero
+                closed[ptr] += 0;
 
                 // next, add the edge from the parent to the goal as a centroid
                 // ---in representation of direct paths from the start state to
@@ -681,7 +689,7 @@ namespace khs {
             }
 
             // in case it has never been expanded
-            if (ptr == string::npos) {
+            if (ptr == std::string::npos) {
 
                 // then add it to CLOSED for the first time. Note that the new
                 // node in CLOSED contains only one labeled backpointer, the one
@@ -712,21 +720,20 @@ namespace khs {
 
             // expand this node
             bsolver<T>::_expansions++;
-            vector<tuple<int, int, T>> successors;
-            const_cast<T&>(node.get_state ()).children (0, _goal.get_state (), successors);
+            node.get_state ().children (
+                0,
+                _goal.get_state (),
+                [&] (int g, int h, T&& successor) {
 
-            // and insert them all in OPEN adding the right labeled backpointers
-            for (auto& successor : successors) {
+                    // create a new labeled node with this successor
+                    labelednode_t<T> onode{std::move (successor), 0, node.get_g ()+g};
 
-                // create a new labeled node with this successor
-                labelednode_t<T> onode{get<2>(successor), 0, node.get_g ()+get<0>(successor)};
+                    // set the labeled backpointer to the location of its parent
+                    onode += labeledbackpointer_t{ptr, g};
 
-                // set the labeled backpointer to the location of its parent
-                onode += labeledbackpointer_t{ptr, get<0>(successor)};
-
-                // and add it to OPEN using the f-value as its index
-                open.insert (onode, onode.get_f ());
-            }
+                    // and add it to OPEN using the f-value as its index
+                    open.insert (std::move (onode), onode.get_f ());                
+                });
         }
 
         // At this point, the OPEN list has been exhausted so that the only way
@@ -738,14 +745,14 @@ namespace khs {
             // this might not happen in the case of directed graphs, where the
             // number of paths between two vertices can be bounded
             auto z = centroids.pop_front ();
-            ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
+            ksolution_t<T, std::vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
 
             // and add them to the solutions already found. In case the
             // requested number of solutions has been already found, then
             // stop the chrono and exit immediately. Job done!
             ksolution += solutions;
             if (ksolution.size () >= bsolver<T>::_k) {
-                bsolver<T>::_tend = chrono::system_clock::now ();
+                bsolver<T>::_tend = std::chrono::system_clock::now ();
                 return ksolution;
             }
         }
@@ -758,15 +765,15 @@ namespace khs {
         return ksolution;
     }
 
-    // heuristic implementation of BELA*
+    // heuristic implementation of BELA* with consistent heuristics
     template <typename T>
-    ksolution_t<T, vector> bela<T>::solveStar () {
+    ksolution_t<T, std::vector> bela<T>::solveStar () {
 
         // Start the chrono!
-        bsolver<T>::_tstart = chrono::system_clock::now ();
+        bsolver<T>::_tstart = std::chrono::system_clock::now ();
 
         // First things first, create a container to store all solutions found
-        ksolution_t<T, vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
+        ksolution_t<T, std::vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
 
         // In case the start and the goal nodes are the same, return immediately
         // with a single empty solution, and only one in spite of the number of
@@ -778,7 +785,7 @@ namespace khs {
 
             // create then a single solution with no path (and no expansions!)
             std::vector<T> path;
-            bsolver<T>::_tend = chrono::system_clock::now ();
+            bsolver<T>::_tend = std::chrono::system_clock::now ();
             ksolution += generate_solution (path, 0);
 
             // and return
@@ -788,7 +795,7 @@ namespace khs {
         // if the start and goal nodes are different, then create an open list
         // and add the start state to it with its f-value and no labeled
         // backpointer
-        _start += labeledbackpointer_t{string::npos, 0};
+        _start += labeledbackpointer_t{std::string::npos, 0};
         bucket_t<labelednode_t<T>> open;
         _start.set_h (_start.get_state ().h (_goal.get_state ()));
         open.insert (_start, _start.get_state ().h (_goal.get_state ()));
@@ -821,7 +828,7 @@ namespace khs {
                 // of solution paths already found, so that achieving that
                 // number it is possible to abort execution and exit with k
                 // shortest-paths
-                ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
+                ksolution_t<T, std::vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
 
                 // and add them to the solutions already found. In case the
                 // requested number of solutions has been already found, then
@@ -842,7 +849,7 @@ namespace khs {
             if (node.get_state () == _goal.get_state ()) {
 
                 // in case it has never been expanded
-                if (ptr == string::npos) {
+                if (ptr == std::string::npos) {
 
                     // then add it to the CLOSED list
                     ptr = closed.insert (node);
@@ -851,6 +858,10 @@ namespace khs {
                     // otherwise, update its labeled backpointers
                     closed[ptr] += node.get_backpointer (0);
                 }
+
+                // and make sure the goal state has a backward g-value equal to
+                // zero
+                closed[ptr] += 0;
 
                 // next, add the edge from the parent to the goal as a centroid
                 // ---in representation of direct paths from the start state to
@@ -871,7 +882,7 @@ namespace khs {
             }
 
             // in case it has never been expanded
-            if (ptr == string::npos) {
+            if (ptr == std::string::npos) {
 
                 // then add it to CLOSED for the first time. Note that the new
                 // node in CLOSED contains only one labeled backpointer, the one
@@ -902,21 +913,20 @@ namespace khs {
 
             // expand this node
             bsolver<T>::_expansions++;
-            vector<tuple<int, int, T>> successors;
-            const_cast<T&>(node.get_state ()).children (node.get_h (), _goal.get_state (), successors);
+            node.get_state ().children (
+                node.get_h (),
+                _goal.get_state (),
+                [&] (int g, int h, T&& successor) {
 
-            // and insert them all in OPEN adding the right labeled backpointers
-            for (auto& successor : successors) {
+                    // create a new labeled node with this successor
+                    labelednode_t<T> onode{std::move (successor), h, node.get_g ()+g};
+                    
+                    // set the labeled backpointer to the location of its parent
+                    onode += labeledbackpointer_t{ptr, g};
 
-                // create a new labeled node with this successor
-                labelednode_t<T> onode{get<2>(successor), get<1>(successor), node.get_g ()+get<0>(successor)};
-
-                // set the labeled backpointer to the location of its parent
-                onode += labeledbackpointer_t{ptr, get<0>(successor)};
-
-                // and add it to OPEN using the f-value as its index
-                open.insert (onode, onode.get_f ());
-            }
+                    // and add it to OPEN using the f-value as its index
+                    open.insert (std::move (onode), onode.get_f ());
+                });
         }
 
         // At this point, the OPEN list has been exhausted so that the only way
@@ -928,14 +938,14 @@ namespace khs {
             // this might not happen in the case of directed graphs, where the
             // number of paths between two vertices can be bounded
             auto z = centroids.pop_front ();
-            ksolution_t<T, vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
+            ksolution_t<T, std::vector> solutions = get_paths (z, closed, centroids, bsolver<T>::_k - ksolution.size ());
 
             // and add them to the solutions already found. In case the
             // requested number of solutions has been already found, then
             // stop the chrono and exit immediately. Job done!
             ksolution += solutions;
             if (ksolution.size () >= bsolver<T>::_k) {
-                bsolver<T>::_tend = chrono::system_clock::now ();
+                bsolver<T>::_tend = std::chrono::system_clock::now ();
                 return ksolution;
             }
         }
@@ -953,19 +963,23 @@ namespace khs {
     //
     //    * If brute_force is true, then BELA0*, i.e., with no heuristics is
     //      used
-    //    * If brute_force is false then the heuristic variant of BELA* is
-    //      employed
+    //      
+    //    * If brute_force is false then the heuristic variant of BELA* with
+    //      consistent heuristics is employed
     //
     // Importantly, the solutions shall be returned in the same order they
     // are generated!
     template<typename T>
-    ksolution_t<T, vector> bela<T>::solve () {
+    ksolution_t<T, std::vector> bela<T>::solve () {
 
         // in case _brute_force is given, use the brute-force variant of BELA*,
         // otherwise use the heuristic variant
         if (_brute_force) {
             return solve0 ();
         }
+
+        // In case a heuristic variant is selected, then use the heuristic
+        // variant with consistent heuristics
         return solveStar ();
     }
 

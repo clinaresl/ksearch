@@ -22,8 +22,6 @@
 
 namespace khs {
 
-    using namespace std;
-
     template<typename T>
     class closed_t {
 
@@ -32,13 +30,13 @@ namespace khs {
         // INVARIANT: closed lists are used mostly for membership operations. As
         // such, they are implemented with an unordered associative container
         // indexed by hash values that can handle collisions
-        unordered_multimap<T, size_t> _closed;
+        std::unordered_multimap<T, size_t> _closed;
 
         // in addition, every element in the closed list points to another item
         // in closed as well ---though that's the responsibility of items stored
         // in the closed list. The following list is used to update information
         // about entries stored in the closed list
-        vector<T> _list;
+        std::vector<T> _list;
 
     public:
 
@@ -98,7 +96,7 @@ namespace khs {
 
             // if the item has not been found in closed, then return a null
             // value
-            return string::npos;
+            return std::string::npos;
         }
 
         // capacity

@@ -10,14 +10,79 @@
 // Unit tests of the BELA* search algorithm
 //
 
+#include "../../src/ksearch.h"
 #include "../fixtures/TSTbelafixture.h"
 
-using namespace std;
+// Check that centroids are correctly initialized
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, DefaultValuesCentroid) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a fake sidetrack identified with two random indices to the
+        // closed list
+        auto values = randVectorInt (2, MAX_VALUE);
+
+        // and also determine randomly an overall cost
+        auto costs = randVectorInt (1, MAX_VALUES);
+
+        // and now create a centroid
+        khs::centroid_t z (values[0], values[1], costs[0]);
+
+        // next, verify that all attributes of this centroid take the correct
+        // values
+        ASSERT_EQ (z.get_start(), values[0]);
+        ASSERT_EQ (z.get_end (), values[1]);
+        ASSERT_EQ (z.get_cost (), costs[0]);
+    }
+}
+
+// Check that equality is well-defined for centroids
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, EqualityCentroid) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a fake sidetrack identified with two random indices to the
+        // closed list
+        auto values = randVectorInt (2, MAX_VALUE);
+
+        // and also determine randomly an overall cost
+        auto costs = randVectorInt (1, MAX_VALUES);
+
+        // create a centroid with these values
+        khs::centroid_t tz1 (values[0], values[1], costs[0]);
+
+        // And now create a couple of additional centroids both using the
+        // explicit constructor and the copy constructor
+        khs::centroid_t tz2 (values[0], values[1], costs[0]);
+        khs::centroid_t tz3 (tz2);
+        auto tz4 = tz2;
+
+        // verify next that all the attributes of these centroids are the same
+        ASSERT_EQ (tz1.get_start (), tz2.get_start ());
+        ASSERT_EQ (tz1.get_start (), tz3.get_start ());
+        ASSERT_EQ (tz1.get_start (), tz4.get_start ());
+
+        ASSERT_EQ (tz1.get_end (), tz2.get_end ());
+        ASSERT_EQ (tz1.get_end (), tz3.get_end ());
+        ASSERT_EQ (tz1.get_end (), tz4.get_end ());
+
+        ASSERT_EQ (tz1.get_cost (), tz2.get_cost ());
+        ASSERT_EQ (tz1.get_cost (), tz3.get_cost ());
+        ASSERT_EQ (tz1.get_cost (), tz4.get_cost ());
+
+        // And finally that all centroids are equal
+        ASSERT_EQ (tz1, tz2);
+        ASSERT_EQ (tz1, tz3);
+        ASSERT_EQ (tz2, tz3);
+    }
+}
 
 // Checks that the BELA* search solver can be created. If the search algorithm
 // is not invoked, it returns the default values
 // ----------------------------------------------------------------------------
-TEST_F (BELAFixture, ExplicitConstructorPancake) {
+TEST_F (BELAFixture, ExplicitConstructorNPancake) {
 
     for (auto i = 0 ; i < NB_TESTS ; i++) {
 
@@ -27,19 +92,20 @@ TEST_F (BELAFixture, ExplicitConstructorPancake) {
         int k = 1 + rand () % MAX_VALUES;
         npancake_t start = randInstance (NB_DISCS);
         npancake_t goal = randInstance (NB_DISCS);
-        khs::bela<npancake_t> manager {k, start, goal};
+        npancake_t::init ("unit");
+        khs::bela<npancake_t> manager {k, start, goal, false};
 
-        // because the search algorithm is not invoked, it is expected ...
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
         ASSERT_EQ (manager.get_start (), start);
         ASSERT_EQ (manager.get_goal (), goal);
         ASSERT_EQ (manager.get_k (), k);
         ASSERT_EQ (manager.get_expansions (), 0);
 
-        // Check that the heuristic value is accurately computed
+        // Check that the heuristic value is accurately computed. For this it is
+        // necessary to init the internal tables providing a variant name
         ASSERT_EQ (manager.get_h0 (), start.h (goal));
-
-        // Note that the running CPU time can not be queried and the result is
-        // unpredictable
     }
 }
 
@@ -51,7 +117,7 @@ TEST_F (BELAFixture, ClosedListSimpleGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // Now, verify the g*-value of each node in closed
     for (auto i = 0 ; i < closed.size () ; i++) {
@@ -105,7 +171,7 @@ TEST_F (BELAFixture, ClosedListSimpleGrid) {
                 if (state.get_x () == 0) {
 
                     // which is the null labeled back pointer
-                    khs::labeledbackpointer_t nullbp {string::npos, 0};
+                    khs::labeledbackpointer_t nullbp {std::string::npos, 0};
                     ASSERT_TRUE (closed[i].get_backpointer (0) == nullbp);
                 } else {
 
@@ -129,7 +195,7 @@ TEST_F (BELAFixture, ClosedListGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
-    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // Now, verify the g*-value of each node in closed
     for (auto i = 0 ; i < closed.size () ; i++) {
@@ -240,7 +306,7 @@ TEST_F (BELAFixture, ClosedListGrid) {
 
                 // skip the null labeled backpointer which, at this point, is
                 // known to be stored only in the start state
-                if (bp.get_pointer () == string::npos) {
+                if (bp.get_pointer () == std::string::npos) {
                     continue;
                 }
 
@@ -261,7 +327,7 @@ TEST_F (BELAFixture, NullPrefixSimpleGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
@@ -275,7 +341,7 @@ TEST_F (BELAFixture, NullPrefixSimpleGrid) {
     khs::centroid_t z0 = khs::centroid_t (closed.find (start),
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, 1, 0)),
                                           1);
-    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // verify there is only one prefix, which consists of the start state itself
     ASSERT_TRUE (prefixes.size () == 1);
@@ -303,7 +369,7 @@ TEST_F (BELAFixture, NullPrefixGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
-    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
@@ -317,7 +383,7 @@ TEST_F (BELAFixture, NullPrefixGrid) {
     khs::centroid_t z0 = khs::centroid_t (closed.find (start),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, 1, 0)),
                                           1);
-    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // verify there is only one prefix, which consists of the start state itself
     ASSERT_TRUE (prefixes.size () == 1);
@@ -337,14 +403,14 @@ TEST_F (BELAFixture, NullPrefixGrid) {
 
 // Verify that the number of non-null prefixes is correct in the simple grid domain
 // ----------------------------------------------------------------------------
-TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
+TEST_F (BELAFixture, MultiplePrefixSimpleGrid) {
 
     khs::bucket_t<khs::centroid_t> centroids;
 
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
@@ -365,7 +431,7 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              1);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify there is only one prefix
         ASSERT_TRUE (prefixes.size () == 1);
@@ -390,7 +456,7 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, y)),
                                              1);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify there is only one prefix
         ASSERT_TRUE (prefixes.size () == 1);
@@ -420,7 +486,7 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
         khs::centroid_t z {closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                            closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                            2};
-        vector<vector<size_t>> prefixes = manager.get_prefixes(closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes(closed, z, centroids);
 
         // verify there is only one prefix
         ASSERT_TRUE (prefixes.size () == 1);
@@ -444,14 +510,14 @@ TEST_F (BELAFixture, NonNullPrefixSimpleGrid) {
 
 // Verify that the number of non-null prefixes is correct in the grid domain
 // ----------------------------------------------------------------------------
-TEST_F (BELAFixture, NonNullPrefixGrid) {
+TEST_F (BELAFixture, MultiplePrefixGrid) {
 
     khs::bucket_t<khs::centroid_t> centroids;
 
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
-    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
@@ -465,7 +531,7 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
         khs::centroid_t z {closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
                            closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
                            1};
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify there is only one path
         ASSERT_TRUE (prefixes.size () == 1);
@@ -485,7 +551,7 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
         khs::centroid_t z {closed.find (grid_t (SIMPLE_GRID_LENGTH, i, 0)),
                            closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                            1};
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify there is only one path
         ASSERT_TRUE (prefixes.size () == 1);
@@ -501,7 +567,7 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
 
     // now, all nodes, but the ones considered previously have a significant
     // number of optimal paths
-    vector<vector<size_t>> prefixes;
+    std::vector<std::vector<size_t>> prefixes;
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
         for (auto j = 1 ; j < SIMPLE_GRID_LENGTH ; j++) {
 
@@ -549,7 +615,8 @@ TEST_F (BELAFixture, NonNullPrefixGrid) {
     }
 }
 
-// Check that backward g-values are updated correctly in simple grids using one centroid
+// Check that backward g-values are updated correctly in simple grids using one
+// centroid
 // ----------------------------------------------------------------------------
 TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
 
@@ -570,7 +637,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // note the edge (i, 0) -> (i+1, 0) is not a true centroid as it belongs
         // to the optimal path to get to (i+1,0). Nevertheless, get_prefixes
@@ -578,7 +645,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              SIMPLE_GRID_LENGTH);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 0 ; j <= i ; j++) {
@@ -599,7 +666,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // note the edge (i, 1) -> (i+1, 1) is not a true centroid as it belongs
         // to the optimal path to get to (i+1,1). Nevertheless, get_prefixes
@@ -607,7 +674,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1)),
                                              1+SIMPLE_GRID_LENGTH);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 1 ; j <= i ; j++) {
@@ -628,13 +695,13 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidSimpleGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // note the edge (i, 1) -> (i+1, 0) is a true centroid
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              1+SIMPLE_GRID_LENGTH);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 1 ; j <= i ; j++) {
@@ -671,7 +738,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<grid_t>> closed;
-        populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // note the edge (0, i) -> (0, i+1) is not a true centroid as it belongs
         // to the optimal path to get to (0,i+1). Nevertheless, get_prefixes
@@ -679,7 +746,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
                                              closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
                                              2*SIMPLE_GRID_LENGTH);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 0 ; j <= i ; j++) {
@@ -700,7 +767,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<grid_t>> closed;
-        populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // note the edge (i, 0) -> (i+1, 0) is not a true centroid as it belongs
         // to the optimal path to get to (i+1, 0). Nevertheless, get_prefixes
@@ -708,7 +775,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                              closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              2*(SIMPLE_GRID_LENGTH-1));
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the backward g-values are correct
         for (auto j = 0 ; j <= i ; j++) {
@@ -733,7 +800,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            // First, populate a closed list with the expansions of all nodes in the
            // state space of a simple grid
            khs::closed_t<khs::labelednode_t<grid_t>> closed;
-           populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+           populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
            // note the edge (i, j) -> (i+1, j) is not a true centroid as it belongs
            // to the optimal path to get to (i+1, j). Nevertheless, get_prefixes
@@ -741,7 +808,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)),
                                                 2*(SIMPLE_GRID_LENGTH - 1));
-           vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+           std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
            // verify the backward g-values are correct
            for (auto k = 0 ; k <= i ; k++) {
@@ -768,7 +835,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            // First, populate a closed list with the expansions of all nodes in the
            // state space of a simple grid
            khs::closed_t<khs::labelednode_t<grid_t>> closed;
-           populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+           populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
            // note the edge (i, j) -> (i, j+1) is not a true centroid as it
            // belongs to the optimal path to get to (i, j+1). Nevertheless,
@@ -776,7 +843,7 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
                                                 2*(SIMPLE_GRID_LENGTH - 1));
-           vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+           std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
            // verify the backward g-values are correct
            for (auto k = 0 ; k <= i ; k++) {
@@ -801,13 +868,13 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            // First, populate a closed list with the expansions of all nodes in the
            // state space of a simple grid
            khs::closed_t<khs::labelednode_t<grid_t>> closed;
-           populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+           populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
            // note the edge (i, j) -> (i-1, j) is a true centroid
            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
                                                 2*SIMPLE_GRID_LENGTH);
-           vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+           std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
            // verify the backward g-values are correct
            for (auto k = 0 ; k <= i ; k++) {
@@ -832,13 +899,13 @@ TEST_F (BELAFixture, UpdateBackwardgOneCentroidGrid) {
            // First, populate a closed list with the expansions of all nodes in the
            // state space of a simple grid
            khs::closed_t<khs::labelednode_t<grid_t>> closed;
-           populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+           populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
            // note the edge (i, j) -> (i, j-1) is a true centroid
            khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                 closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j-1)),
                                                 2*SIMPLE_GRID_LENGTH);
-           vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+           std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
            // verify the backward g-values are correct
            for (auto k = 0 ; k <= i ; k++) {
@@ -881,14 +948,14 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsSimpleGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // first, create a centroid with the edge (i, 0) -> (i+1, 0) and
         // propagate the backward g-values
         khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                               closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                               SIMPLE_GRID_LENGTH);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
         // and also consider the edge (i, 1) -> (i+1, 0) and propagate the
         // backward g-values
@@ -933,14 +1000,14 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsSimpleGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // first, create a centroid with the edge (i, 1) -> (i+1, 1) and
         // propagate the backward g-values
         khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                               closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1)),
                                               SIMPLE_GRID_LENGTH+1);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
         // and also consider the edge (i, 1) -> (i+1, 0) and propagate the
         // backward g-values
@@ -1000,7 +1067,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsGrid) {
             // First, populate a closed list with the expansions of all nodes in the
             // state space of a simple grid
             khs::closed_t<khs::labelednode_t<grid_t>> closed;
-            populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+            populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
             // note the edge (i-1, j) -> (i, j) is not a true centroid as it
             // belongs to the optimal path to get to (i,j). Nevertheless,
@@ -1008,7 +1075,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsGrid) {
             khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+            std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
             // note the edge (i, j-1) -> (i, j) is not a true centroid as it
             // belongs to the optimal path to get to (i,j). Nevertheless,
@@ -1056,7 +1123,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsGrid) {
             // First, populate a closed list with the expansions of all nodes in the
             // state space of a simple grid
             khs::closed_t<khs::labelednode_t<grid_t>> closed;
-            populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+            populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
             // note the edge (i, j-1) -> (i, j) is not a true centroid as it
             // belongs to the optimal path to get to (i,j). Nevertheless,
@@ -1064,7 +1131,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsGrid) {
             khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j-1)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+            std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
             // note the edge (i, j) -> (i-1, j) is a true centroid
             khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
@@ -1108,7 +1175,7 @@ TEST_F (BELAFixture, UpdateBackwardgTwoCentroidsGrid) {
 }
 
 // Check that no new centroids are created in a simple grid when a prefix
-// contains no bridge
+// contains no sidetrack
 // ------------------------------------------------------------------------
 TEST_F (BELAFixture, NullCentroidSimpleGrid) {
 
@@ -1118,14 +1185,14 @@ TEST_F (BELAFixture, NullCentroidSimpleGrid) {
     simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
     khs::bela<simplegrid_t> manager {k, start, goal};
 
-    // Nodes on the upper line have no bridges, and thus, any prefix whose start
-    // state lies there should generate no new additional centroid
+    // Nodes on the upper line have no sidetracks, and thus, any prefix whose
+    // start state lies there should generate no new additional centroid
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
 
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // Start with an empty collection of centroids
         khs::bucket_t<khs::centroid_t> centroids;
@@ -1135,7 +1202,7 @@ TEST_F (BELAFixture, NullCentroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              SIMPLE_GRID_LENGTH+1);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify that no new centroids were created
         ASSERT_EQ (centroids.size (), 0);
@@ -1152,7 +1219,7 @@ TEST_F (BELAFixture, NonNullCenntroidSimpleGrid) {
     simplegrid_t goal = simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0);
     khs::bela<simplegrid_t> manager {k, start, goal};
 
-    // Every node on the lower line has one bridge. Thus, when using the
+    // Every node on the lower line has one sidetrack. Thus, when using the
     // centroid (i,0)-->(i+1,0), the enumeration of prefixes should discover up
     // to (i-1) new centroids
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH ; i++) {
@@ -1160,7 +1227,7 @@ TEST_F (BELAFixture, NonNullCenntroidSimpleGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a simple grid
         khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-        populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // Start with an empty collection of centroids
         khs::bucket_t<khs::centroid_t> centroids;
@@ -1170,7 +1237,7 @@ TEST_F (BELAFixture, NonNullCenntroidSimpleGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                              SIMPLE_GRID_LENGTH);
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the correct number of centroids was created
         ASSERT_EQ (centroids.size (), i-1);
@@ -1221,7 +1288,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
         // First, populate a closed list with the expansions of all nodes in the
         // state space of a grid
         khs::closed_t<khs::labelednode_t<grid_t>> closed;
-        populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+        populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
         // start with an empty collection of centroids
         khs::bucket_t<khs::centroid_t> centroids;
@@ -1230,7 +1297,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
         khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i)),
                                               closed.find (grid_t (SIMPLE_GRID_LENGTH, 0, i+1)),
                                               2*(SIMPLE_GRID_LENGTH-1));
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
         // verify the correct number of centroids was created
         ASSERT_EQ (centroids.size (), 2*(i+1));
@@ -1262,7 +1329,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
             // First, populate a closed list with the expansions of all nodes in the
             // state space of a grid
             khs::closed_t<khs::labelednode_t<grid_t>> closed;
-            populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+            populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
             // start with an empty collection of centroids
             khs::bucket_t<khs::centroid_t> centroids;
@@ -1271,7 +1338,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+            std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
             // verify the correct number of centroids was created. Account for
             // the boundary effects. If i=SIMPLE_GRID_LENGTH-1, then there is no
@@ -1301,7 +1368,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
             // First, populate a closed list with the expansions of all nodes in the
             // state space of a grid
             khs::closed_t<khs::labelednode_t<grid_t>> closed;
-            populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+            populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
             // start with an empty collection of centroids
             khs::bucket_t<khs::centroid_t> centroids;
@@ -1310,7 +1377,7 @@ TEST_F (BELAFixture, NonNullCentroidGrid) {
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+            std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
             // verify the correct number of centroids was created. Account for
             // the boundary effects. If j=SIMPLE_GRID_LENGTH-1, then there is no
@@ -1346,19 +1413,23 @@ TEST_F (BELAFixture, NullSuffixSimpleGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
-    // use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH) as a
-    // centroid of all optimal paths getting to the goal through that edge
+    // use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH, 0) as a
+    // centroid of all optimal paths getting to the goal through that edge and
+    // set the backward g-value of the end vertex of the centroid
+    update_gbvalue<khs::labelednode_t, simplegrid_t> (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0),
+                                                      0,
+                                                      closed);
     khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
                                          closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                          SIMPLE_GRID_LENGTH);
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+    std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
     // next, compute the suffixes of the last edge (SIMPLE_GRID_LENGTH-1,
-    // 0)->(SIMPLE_GRID_LENGTH)
-    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
+    // 0)->(SIMPLE_GRID_LENGTH, 0)
+    std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
     // As a result, the backward g-value of the goal should be updated to 0, and
     // it should contain only one
@@ -1387,19 +1458,23 @@ TEST_F (BELAFixture, NullSuffixGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
-    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // use the last horizontal edge leading to the goal as a centroid of all
-    // optimal paths getting to the goal through that edge
+    // optimal paths getting to the goal through that edge and set the backward
+    // g-value of the end vertex of the centroid
+    update_gbvalue<khs::labelednode_t, grid_t> (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1),
+                                                      0,
+                                                      closed);
     khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
                                          closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                          2*(SIMPLE_GRID_LENGTH-1));
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+    std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
 
     // next, compute the suffixes of the last horizontal edge getting to the
     // goal
-    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
+    std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
     // As a result, the backward g-value of the goal should be updated to 0, and
     // it should contain only one
@@ -1417,7 +1492,7 @@ TEST_F (BELAFixture, NullSuffixGrid) {
 // Check that centroids that contain a single non-null suffix correctly compute
 // it correctly in a simple grid
 // -----------------------------------------------------------------------------
-TEST_F (BELAFixture, NonNullSuffixSimpleGrid) {
+TEST_F (BELAFixture, SingleSuffixSimpleGrid) {
 
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
@@ -1428,26 +1503,32 @@ TEST_F (BELAFixture, NonNullSuffixSimpleGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH) as a
-    // centroid of all optimal paths getting to the goal through that edge
+    // centroid of all optimal paths getting to the goal through that edge and
+    // set the backward g-value of the end vertex of the centroid
+    update_gbvalue<khs::labelednode_t, simplegrid_t> (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0),
+                                                      0,
+                                                      closed);
     khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                           SIMPLE_GRID_LENGTH);
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // next, compute the suffixes of the last horizontal edge to get to the
-    // goal. This step is necessary to update the backward g-value of the goal.
-    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
+    // goal. This step is necessary to update the backward g-value of all nodes
+    // to be examined next
+    std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
 
-    // next, consider all horizontal edges in the lower line as centroids (even
-    // if they are not centroids indeed) and verify that all suffixes are
-    // correctly computed
+    // next, consider all horizontal edges in the lower line as quasi-centroids
     for (auto i=0 ; i < SIMPLE_GRID_LENGTH ; i++) {
 
         // consider the edge (i, 0)->(i+1, 0) and compute its suffixes
+        update_gbvalue<khs::labelednode_t, simplegrid_t> (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0),
+                                                          SIMPLE_GRID_LENGTH - i - 1,
+                                                          closed);
         khs::centroid_t z1 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 0)),
                                               closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                               SIMPLE_GRID_LENGTH);
@@ -1475,6 +1556,9 @@ TEST_F (BELAFixture, NonNullSuffixSimpleGrid) {
     for (auto i=1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
 
         // consider the edge (i, 0)->(i+1, 0) and compute its suffixes
+        update_gbvalue<khs::labelednode_t, simplegrid_t> (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0),
+                                                          SIMPLE_GRID_LENGTH - i + 1,
+                                                          closed);
         khs::centroid_t z1 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                               closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 0)),
                                               SIMPLE_GRID_LENGTH+1);
@@ -1501,7 +1585,7 @@ TEST_F (BELAFixture, NonNullSuffixSimpleGrid) {
 // Check that centroids that contain a single non-null suffix correctly compute
 // it correctly in the grid domain
 // -----------------------------------------------------------------------------
-TEST_F (BELAFixture, NonNullSuffixGrid) {
+TEST_F (BELAFixture, SingleSuffixGrid) {
 
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
@@ -1510,29 +1594,35 @@ TEST_F (BELAFixture, NonNullSuffixGrid) {
     khs::bela<grid_t> manager {k, start, goal};
 
     // First, populate a closed list with the expansions of all nodes in the
-    // state space of a simple grid
+    // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
-    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // use the last horizontal edge getting to the goal as a centroid of all
-    // optimal paths getting to the goal through that edge
+    // optimal paths getting to the goal through that edge and set the backward
+    // g-value of the end vertex of the centroid
+    update_gbvalue<khs::labelednode_t, grid_t> (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1),
+                                                0,
+                                                closed);
     khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                           2*(SIMPLE_GRID_LENGTH-1));
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     // next, compute the suffixes of the last horizontal edge to get to the
     // goal. This step is necessary to update the backward g-value of the goal.
-    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
+    std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
 
-    // next, consider all horizontal edges in the upper line as centroids (even
-    // if they are not centroids indeed) and verify that all suffixes are
-    // correctly computed
+    // next, consider all horizontal edges in the upper line as quasi-centroids
+    // and verify that all suffixes are correctly computed
     for (auto i=0 ; i < SIMPLE_GRID_LENGTH-2 ; i++) {
 
         // consider the edge (i, SIMPLE_GRID_LENGTH-1)->(i+1,
         // SIMPLE_GRID_LENGTH-1) and compute its suffixes
+        update_gbvalue<khs::labelednode_t, grid_t> (grid_t (SIMPLE_GRID_LENGTH, i+1, SIMPLE_GRID_LENGTH-1),
+                                                    SIMPLE_GRID_LENGTH - i -1,
+                                                    closed);
         khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, SIMPLE_GRID_LENGTH-1)),
                                               closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, SIMPLE_GRID_LENGTH-1)),
                                               2*(SIMPLE_GRID_LENGTH-1));
@@ -1557,10 +1647,10 @@ TEST_F (BELAFixture, NonNullSuffixGrid) {
     }
 }
 
-// Check that centroids that contain various non-null suffixes are correctly
+// Check that centroids that contain multiple non-null suffixes are correctly
 // computed in a simple grid
 // -----------------------------------------------------------------------------
-TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
+TEST_F (BELAFixture, MultipleSuffixSimpleGrid) {
 
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
@@ -1571,23 +1661,27 @@ TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // First, paths of length SIMPLE_GRID_LENGTH must be discovered, and this
     // means that backward g-values should be propagated to all nodes in those
     // paths. Thus,use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH,
     // 0) as a centroid of all optimal paths getting to the goal through that
-    // edge.
+    // edge and set the backward g-value of the end vertex of the centroid
+    update_gbvalue<khs::labelednode_t, simplegrid_t> (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0),
+                                                      0,
+                                                      closed);
     khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                           SIMPLE_GRID_LENGTH);
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
-    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
+    std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
+    std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
 
     // Secondly, to propagate the backward g-values to nodes in the upper line
-    // it is necessary know to process a true centroid
-    // (SIMPLE_GRID_LENGTH-1,1)-(SIMPLE_GRID_LENGTH,0)
+    // it is necessary now to process a true centroid
+    // (SIMPLE_GRID_LENGTH-1,1)-(SIMPLE_GRID_LENGTH,0) ---note that the backward
+    // g-value of the end vertex of this centroid is already set
     khs::centroid_t z1 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 1)),
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                           SIMPLE_GRID_LENGTH+1);
@@ -1598,12 +1692,15 @@ TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
     // SIMPLE_GRID_LENGTH-1) should lead to several suffixes
     for (auto i = 1 ; i < SIMPLE_GRID_LENGTH-1 ; i++) {
 
+        update_gbvalue<khs::labelednode_t, simplegrid_t> (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1),
+                                                          SIMPLE_GRID_LENGTH - i + 1,
+                                                          closed);
         khs::centroid_t z = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i, 1)),
                                              closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, i+1, 1)),
                                              1+SIMPLE_GRID_LENGTH);
         khs::bucket_t<khs::centroid_t> centroids;
-        vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
-        vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
+        std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z, centroids);
+        std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
         // Next, verify the number of suffixes is correct
         ASSERT_EQ (suffixes.size (), SIMPLE_GRID_LENGTH-i-1);
@@ -1626,7 +1723,7 @@ TEST_F (BELAFixture, MultipleNonNullSuffixSimpleGrid) {
 // Check that centroids that contain various non-null suffixes are correctly
 // computed in the grid domain
 // -----------------------------------------------------------------------------
-TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
+TEST_F (BELAFixture, MultipleSuffixGrid) {
 
     // create a manager to execute BELA*
     int k = rand () % MAX_VALUES;
@@ -1637,32 +1734,27 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
-    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // First, paths of length 2*(SIMPLE_GRID_LENGTH-1) must be discovered, and
     // this means that backward g-values should be propagated to all nodes in
     // those paths. Thus, use the last horizontal and vertical edge to get to
     // the goal as centroids of all optimal paths getting to the goal through
-    // those edges
+    // those edges and set the backward g-value of the end vertex of the
+    // centroid
+    update_gbvalue<khs::labelednode_t, grid_t> (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1),
+                                                0,
+                                                closed);
     khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                           2*(SIMPLE_GRID_LENGTH-1));
     khs::bucket_t<khs::centroid_t> centroids;
-    vector<vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
-
-    // Compute the suffixes of this centroid to ensure that the backward g-value
-    // of the goal state gets updated int CLOSED
-    vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z0);
+    std::vector<std::vector<size_t>> prefixes = manager.get_prefixes (closed, z0, centroids);
 
     khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-2)),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                           2*(SIMPLE_GRID_LENGTH-1));
     prefixes = manager.get_prefixes (closed, z1, centroids);
-
-    // Compute the suffixes of this centroid to ensure that the backward g-value
-    // of the goal state gets updated int CLOSED ---though this is redundand
-    // because it was already done above for the other centroid
-    suffixes = manager.get_suffixes (closed, z1);
 
     // Next, verify the number of suffixes of any edge (i, j)->(i+1, j), i in
     // [1, SIMPLE_GRID_LENGTH-3], j in [1, SIMPLE_GRID_LENGTH-2] is correct
@@ -1670,10 +1762,13 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
         for (auto j = 1 ; j < SIMPLE_GRID_LENGTH-1 ; j++) {
 
             // create the centroid and compute all its suffixes
+            update_gbvalue<khs::labelednode_t, grid_t> (grid_t (SIMPLE_GRID_LENGTH, i+1, j),
+                                                        2*SIMPLE_GRID_LENGTH - i - j - 3,
+                                                        closed);
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i+1, j)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
+            std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
             // Next, verify the number of suffixes is correct, i.e., it is equal
             // to the binomial coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 3))
@@ -1688,10 +1783,13 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
         for (auto j = 1 ; j < SIMPLE_GRID_LENGTH-2 ; j++) {
 
             // create the centroid and compute all its suffixes
+            update_gbvalue<khs::labelednode_t, grid_t> (grid_t (SIMPLE_GRID_LENGTH, i, j+1),
+                                                        2*SIMPLE_GRID_LENGTH - i - j - 3,
+                                                        closed);
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j+1)),
                                                  2*(SIMPLE_GRID_LENGTH-1));
-            vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
+            std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
             // Next, verify the number of suffixes is correct, i.e., it is equal
             // to the binomial coefficient (2*SIMPLE_GRID_LENGTH - (i + j + 3))
@@ -1708,10 +1806,13 @@ TEST_F (BELAFixture, MultipleNonNullSuffixGrid) {
         for (auto j = 1 ; j < SIMPLE_GRID_LENGTH-2 ; j++) {
 
             // create the centroid and compute all its suffixes
+            update_gbvalue<khs::labelednode_t, grid_t> (grid_t (SIMPLE_GRID_LENGTH, i-1, j),
+                                                        2*SIMPLE_GRID_LENGTH - i - j - 1,
+                                                        closed);
             khs::centroid_t z = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, i, j)),
                                                  closed.find (grid_t (SIMPLE_GRID_LENGTH, i-1, j)),
                                                  2*SIMPLE_GRID_LENGTH);
-            vector<vector<size_t>> suffixes = manager.get_suffixes (closed, z);
+            std::vector<std::vector<size_t>> suffixes = manager.get_suffixes (closed, z);
 
             // Next, verify the number of suffixes is correct, i.e., it is equal
             // to the binomial coefficient 2*SIMPLE_GRID_LENGTH - i - j - 3
@@ -1736,13 +1837,16 @@ TEST_F (BELAFixture, GetPathsSimpleGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a simple grid
     khs::closed_t<khs::labelednode_t<simplegrid_t>> closed;
-    populateClosed<simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, simplegrid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // First, paths of length SIMPLE_GRID_LENGTH must be discovered, and this
     // means that backward g-values should be propagated to all nodes in those
     // paths. Thus,use the edge (SIMPLE_GRID_LENGTH-1, 0)->(SIMPLE_GRID_LENGTH,
     // 0) as a centroid of all optimal paths getting to the goal through that
-    // edge.
+    // edge and set the backward g-value of the end vertex of the centroid
+    update_gbvalue<khs::labelednode_t, simplegrid_t> (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0),
+                                                      0,
+                                                      closed);
     khs::centroid_t z0 = khs::centroid_t (closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, 0)),
                                           closed.find (simplegrid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH, 0)),
                                           SIMPLE_GRID_LENGTH);
@@ -1795,7 +1899,7 @@ TEST_F (BELAFixture, GetOptimalPathsGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
-    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // First, paths of length 2*(SIMPLE_GRID_LENGTH-1) must be discovered, and
     // this means that backward g-values should be propagated to all nodes in
@@ -1854,13 +1958,16 @@ TEST_F (BELAFixture, GetSuboptimalPathsGrid) {
     // First, populate a closed list with the expansions of all nodes in the
     // state space of a grid
     khs::closed_t<khs::labelednode_t<grid_t>> closed;
-    populateClosed<grid_t> (closed, SIMPLE_GRID_LENGTH);
+    populateClosed<khs::labelednode_t, grid_t> (closed, SIMPLE_GRID_LENGTH);
 
     // First, paths of length 2*(SIMPLE_GRID_LENGTH-1) must be discovered, and
     // this means that backward g-values should be propagated to all nodes in
     // those paths. Thus,use the last horizontal and vertical edges to get to
     // the goal as centroids of all optimal paths getting to the goal through
-    // them
+    // them and set the backward g-value of the end vertex of the centroid
+    update_gbvalue<khs::labelednode_t, grid_t> (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1),
+                                                0,
+                                                closed);
     khs::centroid_t z0 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-2, SIMPLE_GRID_LENGTH-1)),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                           2*(SIMPLE_GRID_LENGTH-1));
@@ -1870,7 +1977,8 @@ TEST_F (BELAFixture, GetSuboptimalPathsGrid) {
     khs::ksolution_t solutions = manager.get_paths (z0, closed, centroids);
 
     // Repeat the experiment but this time using the last vertical edge to get
-    // to the goal
+    // to the goal ---note the backward g-value of the end vertex of this
+    // centroid has been already set
     khs::centroid_t z1 = khs::centroid_t (closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-2)),
                                           closed.find (grid_t (SIMPLE_GRID_LENGTH, SIMPLE_GRID_LENGTH-1, SIMPLE_GRID_LENGTH-1)),
                                           2*(SIMPLE_GRID_LENGTH-1));
@@ -1913,9 +2021,10 @@ TEST_F (BELAFixture, GetSuboptimalPathsGrid) {
     }
 }
 
-// Checks that solvable instances where start=goal can be correctly solved
+// Checks that BELA0 correctly solves instances where start=goal in the
+// n-pancake
 // ----------------------------------------------------------------------------
-TEST_F (BELAFixture, SolvableSameNPancakeSolution) {
+TEST_F (BELAFixture, NPancakeBruteForceSameSolution) {
 
     for (auto i = 0 ; i < NB_TESTS ; i++) {
 
@@ -1939,180 +2048,523 @@ TEST_F (BELAFixture, SolvableSameNPancakeSolution) {
     }
 }
 
-// Check that BELA* correctly finds one single solution between two instances of
-// the 5-Pancake
-TEST_F (BELAFixture, SolvableNPancakeOne) {
+// Checks that BELA* correctly solves instances where start=goal in the
+// n-pancake with consistent heuristics
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeConsistentSameSolution) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
 
-            // create a manager to find a single solution between a couple of
-            // random instances of the 5-Pancake
-            int k = 1;
-            npancake_t start = randInstance (5);
-            npancake_t goal = randInstance (5);
-            khs::bela<npancake_t> manager {k, start, goal};
+        // create a manager to run the BELA* search algorithm to solve a random
+        // instance a random number of times. h=0 is given for the original node
+        // because no search is performed
+        int k = 1 + rand () % MAX_VALUES;
+        npancake_t start = randInstance (NB_DISCS);
+        npancake_t::init ("unit");
+        khs::bela<npancake_t> manager {k, start, start, false};
 
-            // initialize the static information of the n-pancake
-            npancake_t::init ("unit");
+        // verify the variant is unit and that a consistent heuristic function
+        // is in use
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
 
-            // and invoke the solver
-            auto ksolution = manager.solve ();
+        // and invoke the solver
+        auto ksolution = manager.solve ();
 
-            // verify the solution found contains one single solution
-            ASSERT_EQ (ksolution.size (), k);
+        // now, make sure the result makes sense, i.e., there is only one
+        // solution (in spite of the value of k), which has a null length,
+        // signaled with a value equal to -1 (and thus, null cost also in spite
+        // of the cost model used)
+        ASSERT_EQ (ksolution.size (), 1);
+        ASSERT_EQ (ksolution[0].get_length (), -1);
+        ASSERT_EQ (ksolution[0].get_cost (), 0);
+    }
+}
 
-            // and verify it is correct
-            ASSERT_TRUE (ksolution.doctor ());
+// Check that BELA0 correctly finds one single solution between a random
+// instance and the identity permutation in the 5-Pancake
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeUnitBruteForceOne) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find a single solution between a couple of
+        // random instances of the 5-Pancake
+        int k = 1;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
         }
+        npancake_t::init ("unit");
+        khs::bela<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains one single solution
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify it is correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
+}
+
+// Check that BELA0 correctly finds two single solutions between a random
+// instance of the 5-Pancake and the identity permutation
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeUnitBruteForceTwo) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find two solutions between a couple of random
+        // instances of the 5-Pancake which are guaranteed to be different
+        int k = 2;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        npancake_t::init ("unit");
+        khs::bela<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
+}
+
+// Check that BELA0 correctly finds an arbitrary number of solutions (10 <= k <=
+// 20) between a random instance of the 5-Pancake and the identtity permutation
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeUnitBruteForceArbitrary) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find an arbitrary number of solutions between
+        // a couple of random instances of the 5-Pancake which are
+        // guaranteed to be different
+        int k = 10 + (rand () % 11);
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        npancake_t::init ("unit");
+        khs::bela<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains k solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
+}
+
+// Check that BELA* correctly finds one single solution between a random
+// instance of the 5-Pancake and the identity permutation using a consistent
+// heuristic function
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeUnitConsistentOne) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find a single solution between a couple of
+        // random instances of the 5-Pancake
+        int k = 1;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        npancake_t::init ("unit");
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains one single solution
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify it is correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
 }
 
 // Check that BELA* correctly finds two single solutions between two instances
-// of the 5-Pancake
-TEST_F (BELAFixture, SolvableNPancakeTwo) {
+// of the 5-Pancake randomly generated and the identity permutation using a
+// consistent heuristic function
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeUnitConsistentTwo) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
 
-            // create a manager to find two solutions between a couple of random
-            // instances of the 5-Pancake which are guaranteed to be different
-            int k = 2;
-            npancake_t start = randInstance (5);
-            npancake_t goal = randInstance (5);
-            while (start == goal) {
-                goal = randInstance (5);
-            }
-            khs::bela<npancake_t> manager {k, start, goal};
-
-            // initialize the static information of the n-pancake
-            npancake_t::init ("unit");
-
-            // and invoke the solver
-            auto ksolution = manager.solve ();
-
-            // verify the solution found contains two solutions
-            ASSERT_EQ (ksolution.size (), k);
-
-            // and verify they are correct
-            ASSERT_TRUE (ksolution.doctor ());
+        // create a manager to find two solutions between a couple of random
+        // instances of the 5-Pancake which are guaranteed to be different
+        int k = 2;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
         }
+        npancake_t::init ("unit");
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
 }
 
 // Check that BELA* correctly finds an arbitrary number of solutions (10 <= k <=
-// 20) between two instances of the 5-Pancake
-TEST_F (BELAFixture, SolvableNPancakeArbitrary) {
+// 20) between a random instance of the 5-Pancake and the identity permutation
+// using a consistent heuristic function
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeUnitConsistentArbitrary) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
 
-            // create a manager to find an arbitrary number of solutions between
-            // a couple of random instances of the 5-Pancake which are
-            // guaranteed to be different
-            int k = 10 + (rand () % 11);
-            npancake_t start = randInstance (5);
-            npancake_t goal = randInstance (5);
-            while (start == goal) {
-                goal = randInstance (5);
-            }
-            khs::bela<npancake_t> manager {k, start, goal};
-
-            // initialize the static information of the n-pancake
-            npancake_t::init ("unit");
-
-            // and invoke the solver
-            auto ksolution = manager.solve ();
-
-            // verify the solution found contains k solutions
-            ASSERT_EQ (ksolution.size (), k);
-
-            // and verify they are correct
-            ASSERT_TRUE (ksolution.doctor ());
+        // create a manager to find an arbitrary number of solutions between
+        // a couple of random instances of the 5-Pancake which are
+        // guaranteed to be different
+        int k = 10 + (rand () % 11);
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
         }
+        npancake_t::init ("unit");
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains k solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
 }
 
-// Check that BELA* correctly finds one single solution between two instances of
-// the 5-Pancake in the heavy-cost variant
-TEST_F (BELAFixture, SolvableHeavyCostNPancakeOne) {
+// Check that BELA0 correctly finds one single solution between a random
+// instance of the 5-Pancake and the identity permutation in the heavy-cost
+// variant
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeHeavyCostBruteForceOne) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
 
-            // create a manager to find a single solution between a couple of
-            // random instances of the 5-Pancake
-            int k = 1;
-            npancake_t start = randInstance (5);
-            npancake_t goal = randInstance (5);
-            khs::bela<npancake_t> manager {k, start, goal};
-
-            // initialize the static information of the n-pancake
-            npancake_t::init ("heavy-cost");
-
-            // and invoke the solver
-            auto ksolution = manager.solve ();
-
-            // verify the solution found contains one single solution
-            ASSERT_EQ (ksolution.size (), k);
-
-            // and verify it is correct
-            ASSERT_TRUE (ksolution.doctor ());
+        // create a manager to find a single solution between a couple of
+        // random instances of the 5-Pancake
+        int k = 1;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
         }
+        npancake_t::init ("heavy-cost");
+        khs::bela<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains one single solution
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify it is correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
 }
 
-// Check that BELA* correctly finds two single solutions between two instances
-// of the 5-Pancake in the heavy-cost variant
-TEST_F (BELAFixture, SolvableHeavyCostNPancakeTwo) {
+// Check that BELA0 correctly finds two single solutions between a random
+// instance of the 5-Pancake and the identity permutation in the heavy-cost
+// variant
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeHeavyCostBruteForceTwo) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
 
-            // create a manager to find two solutions between a couple of random
-            // instances of the 5-Pancake which are guaranteed to be different
-            int k = 2;
-            npancake_t start = randInstance (3);
-            npancake_t goal = randInstance (3);
-            while (start == goal) {
-                goal = randInstance (3);
-            }
-            khs::bela<npancake_t> manager {k, start, goal};
-
-            // initialize the static information of the n-pancake
-            npancake_t::init ("heavy-cost");
-
-            // and invoke the solver
-            auto ksolution = manager.solve ();
-
-            // verify the solution found contains two solutions
-            ASSERT_EQ (ksolution.size (), k);
-
-            // and verify they are correct
-            ASSERT_TRUE (ksolution.doctor ());
+        // create a manager to find two solutions between a couple of random
+        // instances of the 5-Pancake which are guaranteed to be different
+        int k = 2;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
         }
+        npancake_t::init ("heavy-cost");
+        khs::bela<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
+}
+
+// Check that BELA0 correctly finds an arbitrary number of solutions (10 <= k <=
+// 20) between a random instance of the 5-Pancake and the identity permutation
+// in the heavy-cost variant
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeHeavyCostBruteForceArbitrary) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find an arbitrary number of solutions between
+        // a couple of random instances of the 5-Pancake which are
+        // guaranteed to be different
+        int k = 10 + (rand () % 11);
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::bela<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains k solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
+}
+
+// Check that BELA* correctly finds one single solution between one instance of
+// the 5-Pancake randomly generated and the identity permutation in the
+// heavy-cost variant using a consistent heuristic function
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeHeavyCostConsistentOne) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find a single solution between a couple of
+        // random instances of the 5-Pancake
+        int k = 1;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains one single solution
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify it is correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
+}
+
+// Check that BELA* correctly finds two single solutions between a random
+// instance of the 5-Pancake and the identity permutation in the heavy-cost
+// variant using a consistent heuristic function
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeHeavyCostConsistentTwo) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find two solutions between a couple of random
+        // instances of the 5-Pancake which are guaranteed to be different
+        int k = 2;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
 }
 
 // Check that BELA* correctly finds an arbitrary number of solutions (10 <= k <=
-// 20) between two instances of the 5-Pancake in the heavy-cost variant
-TEST_F (BELAFixture, SolvableHeavyCostNPancakeArbitrary) {
+// 20) between a random instance of the 5-Pancake and the identity permutation
+// in the heavy-cost variant when using a consistent heuristic function
+// ----------------------------------------------------------------------------
+TEST_F (BELAFixture, NPancakeHeavyCostConsistentArbitrary) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
 
-            // create a manager to find an arbitrary number of solutions between
-            // a couple of random instances of the 5-Pancake which are
-            // guaranteed to be different
-            int k = 10 + (rand () % 11);
-            npancake_t start = randInstance (5);
-            npancake_t goal = randInstance (5);
-            while (start == goal) {
-                goal = randInstance (5);
-            }
-            khs::bela<npancake_t> manager {k, start, goal};
-
-            // initialize the static information of the n-pancake
-            npancake_t::init ("heavy-cost");
-
-            // and invoke the solver
-            auto ksolution = manager.solve ();
-
-            // verify the solution found contains k solutions
-            ASSERT_EQ (ksolution.size (), k);
-
-            // and verify they are correct
-            ASSERT_TRUE (ksolution.doctor ());
+        // create a manager to find an arbitrary number of solutions between a
+        // couple of random instances of the 5-Pancake which are guaranteed to
+        // be different
+        int k = 10 + (rand () % 11);
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
         }
+        npancake_t::init ("heavy-cost");
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve ();
+
+        // verify the solution found contains k solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+
+        // solve now the same task using mA*
+        khs::mA<npancake_t> manager0 {k, start, goal, false};
+        auto ksolution0 = manager0.solve ();
+
+        // and verify the cost of the solutions computed are the same
+        ASSERT_TRUE (ksolution.doctor (ksolution0));
+    }
 }
 
 

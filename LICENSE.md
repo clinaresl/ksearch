@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2016, 2023, 2024, Carlos Linares López, Ian Herman
+Copyright (c) 2016, 2023, 2024, 2026 Carlos Linares López, Ian Herman
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

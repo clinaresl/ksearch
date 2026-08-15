@@ -17,6 +17,7 @@
 #include<initializer_list>
 #include<iostream>
 #include<iterator>
+#include<sstream>
 #include<string>
 #include<tuple>
 #include<utility>
@@ -112,9 +113,16 @@ public:
         auto perm = right.get_perm ();
 
         // Show the permutation indicating the length of the side
-        std::ostream_iterator<int> put (stream, " ");
-        std::copy (perm.begin(), perm.end(), put);
+        std::stringstream ss;
+        for (auto i = 0 ; i < int (perm.size ()) ; i++) {
+            if (i==0) {
+                ss << perm[i];
+            } else {
+                ss << " " << perm[i];
+            }
+        }
 
+        stream << ss.str ();
         return stream;
     }
 
@@ -198,14 +206,23 @@ public:
         }
     }
 
-    // return the children of this state which is known to have the given
-    // heuristic value as a vector of tuples, each containing: first, the cost
-    // of the operator; secondly, its heuristic value; thirdly, the successor
-    // state. Note the goal is also given in case that incremental policies of
-    // the computation of the heuristic value are not used
-    void children (int h, const npuzzle_t& goal,
-                   std::vector<std::tuple<int, int, npuzzle_t>>& successors);
+    // process each child separately through the use of a callable that has to
+    // receive exactly three arguments: cost_t g, cost_t h and the successor
+    // state. It is the responsibility of the caller to provide the right
+    // callable at the calling site.
+    template<typename F>
+    requires std::invocable<F&, int, int, npuzzle_t&&>
+    void children (int h, npuzzle_t const& goal, F&& callable) const {
 
+        for (auto newblank : _oprs[_blank]) {
+            npuzzle_t successor (*this);
+            successor._swap (_blank, newblank);
+            callable ((_variant == "unit") ? 1 : _perm[newblank],
+                      h + _increment[_perm[newblank]][newblank][_blank],
+                      std::move (successor));
+        }
+    }
+    
     // return the heuristic distance to get from this permutation to the
     // identity permutation, i.e., the given goal is ignored
     int h (const npuzzle_t& goal) const;

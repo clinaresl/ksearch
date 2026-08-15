@@ -14,11 +14,13 @@
 #define _KHSKSOLUTION_T_H_
 
 #include <algorithm>
+#include <format>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "KHSiomanip.h"
 #include "KHSsolution_t.h"
 
 namespace khs {
@@ -28,7 +30,7 @@ namespace khs {
 
         // INVARIANT: the solution of a k-shortest path problem (identified with
         // a name) consists of k solution paths with the same start and goal
-        string _name;                                          // instance name
+        std::string _name;                                          // instance name
         int _k;                                                   // value of k
         T _start;                               // start state of all solutions
         T _goal;                                 // goal state of all solutions
@@ -38,6 +40,7 @@ namespace khs {
         // equal to the same statistics of the last single solution reported in
         // this container
         int _nbcentroids;       // # centroids used in the last single solution
+        int _nbpaths;     // # extra paths explored in the last single solution
         int _h0;                       // heuristic distance of the start state
         size_t _expansions;                       // total number of expansions
         double _cpu_time;                                   // elapsed CPU time
@@ -45,7 +48,7 @@ namespace khs {
 
         // all the work being carried out by a specific solver whose signature
         // is stored also in this container
-        string _solver;
+        std::string _solver;
 
         // Importantly, a solution to the k-shortest path problem must be verifiable
         // and, as a result, an error code should be given
@@ -53,7 +56,7 @@ namespace khs {
 
         // Finally, to improve traceability, the version of the code that
         // generated this solution is stored as well
-        string _version;
+        std::string _version;
 
     public:
 
@@ -67,6 +70,7 @@ namespace khs {
             _start { start },
             _goal { goal },
             _nbcentroids { 0 },
+            _nbpaths { 0 },
             _solutions { std::vector<solution_t<T, path_t>>() },
             _h0 { 0 },
             _expansions { 0 },
@@ -81,7 +85,7 @@ namespace khs {
             }
 
         // getters
-        const string& get_name () const {
+        const std::string& get_name () const {
             return _name;
         }
         const int get_k () const {
@@ -93,43 +97,46 @@ namespace khs {
         const T& get_goal () const {
             return _goal;
         }
-        const int get_nbcentroids () const {
+        int get_nbcentroids () const {
             return _nbcentroids;
+        }
+        int get_nbpaths () const {
+            return _nbpaths;
         }
         const std::vector<solution_t<T, path_t>>& get_solutions () const {
             return _solutions;
         }
-        const int get_h0 () const {
+        int get_h0 () const {
             return _h0;
         }
-        const size_t get_expansions () const {
+        size_t get_expansions () const {
             return _expansions;
         }
-        const double get_cpu_time () const {
+        double get_cpu_time () const {
             return _cpu_time;
         }
-        const double get_mem_usage () const {
+        double get_mem_usage () const {
             return _mem_usage;
         }
-        const string& get_solver () const {
+        const std::string& get_solver () const {
             return _solver;
         }
-        const solution_error get_error_code () const {
+        solution_error get_error_code () const {
             return _error_code;
         }
-        const string& get_version () const {
+        const std::string& get_version () const {
             return _version;
         }
 
         // setters
-        void set_name (const string& name) {
+        void set_name (const std::string& name) {
             _name = name;
         }
-        void set_solver (const string& solver) {
+        void set_solver (const std::string& solver) {
             _solver = solver;
         }
 
-        void set_version (const string& version) {
+        void set_version (const std::string& version) {
             _version = version;
         }
 
@@ -168,6 +175,7 @@ namespace khs {
 
             // and update the statistics of the container of solutions
             _nbcentroids = right.get_nbcentroids ();
+            _nbpaths = right.get_nbpaths ();
             _h0 = right.get_h0 ();
             _expansions = right.get_expansions ();
             _cpu_time = right.get_cpu_time ();
@@ -185,10 +193,13 @@ namespace khs {
 
             // and update the statistics of the container of solutions copying
             // those from the last single solution given in right
-            _nbcentroids = right[right.size ()-1].get_nbcentroids ();
-            _h0 = right[right.size ()-1].get_h0 ();
-            _expansions = right[right.size ()-1].get_expansions ();
-            _cpu_time = right[right.size ()-1].get_cpu_time ();
+            if (right.size () > 0) {
+                _nbcentroids = right[right.size ()-1].get_nbcentroids ();
+                _nbpaths = right[right.size ()-1].get_nbpaths ();
+                _h0 = right[right.size ()-1].get_h0 ();
+                _expansions = right[right.size ()-1].get_expansions ();
+                _cpu_time = right[right.size ()-1].get_cpu_time ();
+            }
 
             return *this;
         }
@@ -238,19 +249,7 @@ namespace khs {
                 return false;
             }
 
-            // in case every solution is correct, verify now that the costs are
-            // monotonically increasing
-            int prev = 0;
-            for (auto& solution : _solutions) {
-                if (solution.get_cost () < prev) {
-                    _error_code = solution_error::ERR_INCR_COST;
-                    return false;
-                }
-                prev = solution.get_cost ();
-            }
-
-            // next, verify there are no duplicate solution paths in this
-            // solution to the k shortest-path problem
+            // verify there are no duplicate solution paths
             for (auto i = 0 ; i < _solutions.size () ; i++) {
                 for (auto j = i+1 ; j < _solutions.size () ; j++) {
                     if (_solutions[i].same_solution_path (_solutions[j])) {
@@ -258,6 +257,16 @@ namespace khs {
                         return false;
                     }
                 }
+            }
+
+            // verify the costs are monotonically increasing
+            int prev = 0;
+            for (auto& solution : _solutions) {
+                if (solution.get_cost () < prev) {
+                    _error_code = solution_error::ERR_INCR_COST;
+                    return false;
+                }
+                prev = solution.get_cost ();
             }
 
             // finally, verify the number of solutions is correct
@@ -276,6 +285,32 @@ namespace khs {
             return true;
         }
 
+        // perform a cross-validation of the solutions in this instance and
+        // those given as an argument:
+        //
+        // 1. Verify that both containers contain the same number of solutions
+        // 2. Verify that the cost of the i-th solution is the same
+        //
+        // It returns true if they are equal, and false otherwise
+        bool doctor (ksolution_t& solutions) const {
+
+            // verify that both containers have the same number of solutions
+            if (size () != solutions.size ()) {
+                return false;
+            }
+
+            // verify the cost of every solution
+            for (int i = 0 ; i < size () ; i++) {
+
+                if (_solutions[i].get_cost () != solutions[i].get_cost ()) {
+                    return false;
+                }
+            }
+
+            // At this point, both containers provide the same solutions
+            return true;
+        }
+
         // the following service removes the i-th solution from this container
         void remove (const size_t idx) {
 
@@ -288,28 +323,148 @@ namespace khs {
             _solutions.erase (_solutions.begin () + idx);
         }
 
-        // stream out
-        friend ostream& operator<< (std::ostream& stream, const ksolution_t& solutions) {
+        // provide a numbers of headers with the name of all fields when
+        // printing the contents of this instance on a stream. The headers must
+        // be given a formatter to know how to show the headers
+        std::string headers (const formatter& fmt) const {
 
-            // data is written in the csv format using the semicolon as
-            // separator. Because each line results of the concatenation of data
-            // provided by this instance and also its specific solutions, write
-            // first to a string stream and then copy its output to the given
-            // stream
             std::stringstream ss;
 
-            ss << solutions.get_name () << ";";
-            ss << solutions.get_k () << ";";
-            ss << solutions.get_start () << ";";
-            ss << solutions.get_goal () << ";";
-            ss << solutions.get_h0 () << ";";
-            ss << solutions.get_expansions() << ";";
-            ss << solutions.get_nbcentroids () << ";";
-            ss << solutions.get_mem_usage () << ";";
-            ss << solutions.get_cpu_time() << ";";
-            ss << solutions.get_solver () << ";";
-            ss << solution_t<T, path_t>::get_error_msg (solutions.get_error_code ()) << ";";
-            ss << solutions.get_version ();
+            if (fmt.mode == "csv") {
+                ss << "id;k;start;goal;h0;expansions;#expansions;#centroids;#paths;mem usage;runtime;solver;doctor;version" << std::endl;
+            } else {
+
+                // the width used to print both the start and the goal are
+                // computed using the width required to print them which is
+                // assumed to be the same across diferent instances of the state
+                std::ostringstream ostart;
+                ostart << _start;
+                std::string start_state = ostart.str();
+                if (start_state.size () > max_state_width) {
+                    start_state = start_state.substr (0, max_state_width-3) + "...";
+                }
+
+                const auto state_width = 3 + start_state.size();
+                
+                ss << std::format(
+                    "{}"
+                    "{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}{:>{}}{:>{}}{:>{}}"
+                    "{}",
+
+                    (fmt.mode == "color" ? ansi::Goldenrod : ""),
+                    
+                    "id", 3 + name_width,
+                    "k",  k_width,
+
+                    "start", state_width,
+                    "goal",  state_width,
+
+                    "h0",          h0_width, 
+                    "#expansions", expansions_width, 
+                    "#centroids",  centroids_width, 
+                    "#paths",      paths_width, 
+                    
+                    "mem usage", memory_width, 
+                    "runtime",   runtime_width, 
+                    "solver",    solver_width, 
+                    "doctor",    doctor_width, 
+                    "version",   version_width,
+
+                    (fmt.mode == "color" ? ansi::reset : "")
+                    );                
+            }
+
+            return ss.str ();
+        }
+
+        // stream out
+        friend std::ostream& operator<< (std::ostream& stream, const ksolution_t& solutions) {
+
+            // Get the internal flags in ::ios and show contents accordingly
+            std::stringstream ss;
+            int mode = stream.iword (index ());
+            if (mode == 0) {
+
+                // in csv mode just write the values separated by a semicolon
+                ss << solutions.get_name () << ";";
+                ss << solutions.get_k () << ";";
+                ss << solutions.get_start () << ";";
+                ss << solutions.get_goal () << ";";
+                ss << solutions.get_h0 () << ";";
+                ss << solutions.get_expansions() << ";";
+                ss << solutions.get_nbcentroids () << ";";
+                ss << solutions.get_nbpaths () << ";";
+                ss << solutions.get_mem_usage () << ";";
+                ss << solutions.get_cpu_time() << ";";
+                ss << solutions.get_solver () << ";";
+                ss << solution_t<T, path_t>::get_error_msg (solutions.get_error_code ()) << ";";
+                ss << solutions.get_version ();
+            } else {
+
+                // The width required to show the start and goal states is
+                // assumed to be the same always, i.e., it is the responsability
+                // of the state definition to ensure they use the same length.
+                // In case it exceed the bound max_state_width defined in defs.h
+                // then it is pruned and ellipsis are added at the end.
+                std::ostringstream ostart;
+                ostart << solutions.get_start();
+                std::string start_state = ostart.str();
+                if (start_state.size () > max_state_width) {
+                    start_state = start_state.substr (0, max_state_width-3) + "...";
+                }
+
+                const auto state_width = start_state.size();
+
+                std::ostringstream ogoal;
+                ogoal << solutions.get_goal();
+                std::string goal_state = ogoal.str ();
+                if (goal_state.size () > max_state_width) {
+                    goal_state = goal_state.substr (0, max_state_width-3) + "...";
+                }
+                
+                // in console mode use the same width used in headers, with the
+                // only exception of the name which is three characters shorter.
+                // This is hand-tailored and the reason is that solvers take
+                // exactly three characters to prefix each line
+                ss << std::format(
+                    "{}{:>{}}{:>{}}{}"
+                    "   {}{:>{}}"
+                    "   {:>{}}{}"
+                    "{}{:>{}}{:>{}}{:>{}}{:>{}}"
+                    "{:>{}.{}f}{:>{}.{}f}{}"
+                    "{}{:>{}}{:>{}}{}{:>{}}{}",
+
+                    (mode == 2 ? ansi::LightSteelBlue : ""),
+                    solutions.get_name(), name_width,
+                    solutions.get_k(),    k_width,
+                    (mode == 2 ? ansi::reset : ""),
+
+                    (mode == 2 ? ansi::DarkSeaGreen : ""),
+                    start_state, state_width,
+                    goal_state,  state_width,
+                    (mode == 2 ? ansi::reset : ""),
+
+                    (mode == 2 ? ansi::Tan : ""),
+                    solutions.get_h0(),          h0_width,
+                    solutions.get_expansions(),  expansions_width,
+                    solutions.get_nbcentroids(), centroids_width,
+                    solutions.get_nbpaths(),     paths_width,
+
+                    solutions.get_mem_usage(), memory_width, precision,
+                    solutions.get_cpu_time(),  runtime_width, precision,
+                    (mode == 2 ? ansi::reset : ""),
+
+                    (mode == 2 ? ansi::LightSteelBlue : ""),
+                    solutions.get_solver(), solver_width,
+                    solution_t<T, path_t>::get_error_msg(solutions.get_error_code(), mode==2), doctor_width, 
+                    (mode == 2 ? ansi::LightSteelBlue : ""),
+                    solutions.get_version(), version_width,
+                    (mode == 2 ? ansi::reset : "")
+                    );
+            }
 
             // and now redirect the contents of the string stream to the given
             // stream

@@ -26,6 +26,21 @@
 #include "../src/structs/KHSbucket_t.h"
 #include "../domains/n-pancake/npancake_t.h"
 
+// definition of a struct used to generate a list of numbers of the desired
+// length. succ () returns the next integer index, starting from 1
+struct index_t {
+    int _index;
+    index_t () : _index {0}{}
+    int operator () () {return ++_index;}
+};
+
+template<typename T>
+void print_vec (std::vector<T> vec) {
+    for (auto item : vec) {
+        std::cout << item << " ";
+    }
+}
+
 // Return the binomial coefficient of n choose k
 size_t binomial_coefficient (int n, int k);
 
@@ -37,6 +52,9 @@ std::string randString (int length, std::string exclude="");
 // range [l0, l1) in the sequence ASCII(32) - ASCII(126) which do not appear in
 // the string exclude
 std::string randString (int l0, int l1, std::string exclude="");
+
+// return a vector with a list of numbers from 0 up to n-1
+std::vector<int> succListInt (int n);
 
 // return a vector with n numbers randomly generated in the interval [0, m). If
 // remove_duplicates takes the value true, then no values are duplicated
@@ -62,17 +80,40 @@ const npancake_t randInstance (int length);
 // model used in the initialization of the init table outside this function
 const std::pair<std::vector<npancake_t>, int> randPath (const npancake_t& start, const int length);
 
+// determine whether the given path is simple, i.e., it contains no duplicates
+template<typename D>
+bool isSimplePath (const std::vector<D>& path) {
+
+    // The procedure used here has quadratic complexity which is much worse than
+    // the procedure used in the implementation of the libksearch library. The
+    // reason why a different procedure is implemented here is to ensure that
+    // bugs are spotted!
+    for (auto i = 0 ; i < path.size () ; i++) {
+        for (auto j = i+1; j < path.size () ; j++) {
+
+            // in case there are two items which are equal then return false
+            // immediately
+            if (path[i] == path[j]) {
+                return false;
+            }
+        }
+    }
+
+    // At this point, the path is known to be simple
+    return true;
+}
+
 // Populate a closed list with the expansions of the full state space of the
 // domain given in T with the given length (which is a property of the domain, N)
-template <typename T>
-void populateClosed (khs::closed_t<khs::labelednode_t<T>>& closed, int length) {
+template <template<typename> class T, typename D>
+void populateClosed (khs::closed_t<T<D>>& closed, int length) {
 
     // expand nodes in best-first order. For this, use an open list to store all
     // nodes generated
-    khs::bucket_t<khs::labelednode_t<T>> open;
+    khs::bucket_t<T<D>> open;
 
     // and populate it with the start state with f=g=0 and a null back pointer
-    khs::labelednode_t<T> start {T {length, 0, 0}};
+    T<D> start {D {length, 0, 0}};
     start += khs::labeledbackpointer_t {std::string::npos, 0};
     open.insert (start, 0);
 
@@ -129,24 +170,22 @@ void populateClosed (khs::closed_t<khs::labelednode_t<T>>& closed, int length) {
 
         // expand the current node ---disregarding both the h-value of this node
         // and the goal
-        std::vector<std::tuple<int, int, T>> successors;
-        state.children (0, node.get_state (), successors);
+        state.children (
+            0,
+            node.get_state (),
+            [&] (int g, int h, D&& successor) {
 
-        // and insert them into the open list
-        for (auto& successor : successors) {
+                // create a backnode with this successor. Note that the h value is
+                // dismissed
+                T<D> onode{std::move (successor), 0, node.get_g () + g};
 
-            // create a backnode with this successor. Note that the h value is
-            // dismissed
-            khs::labelednode_t<T> onode{std::get<2>(successor), 0, node.get_g () + std::get<0>(successor)};
+                // set the backpointer to the location of its parent in CLOSED
+                // at the last index
+                onode += khs::labeledbackpointer_t{ptr, g};
 
-            // set the backpointer to the location of its parent in CLOSED
-            // at the last index
-            auto bps = closed[ptr].get_backpointers ();
-            onode += khs::labeledbackpointer_t{ptr, std::get<0>(successor)};
-
-            // and add it to OPEN using f=g
-            open.insert (onode, onode.get_g ());
-        }
+                // and add it to OPEN using f=g
+                open.insert (onode, onode.get_g ());
+            });
     }
 }
 

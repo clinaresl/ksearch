@@ -12,8 +12,6 @@
 
 #include "../fixtures/TSTbacknodefixture.h"
 
-using namespace std;
-
 // Checks the creation of int nodes with default values
 // ----------------------------------------------------------------------------
 TEST_F (BackNodeFixture, DefaultValuesInt) {
@@ -23,17 +21,45 @@ TEST_F (BackNodeFixture, DefaultValuesInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::backnode_t<vector<int>> n {values};
+        khs::backnode_t<std::vector<int>> n {values};
 
         // next, verify that all attributes of this node take the default values
         ASSERT_EQ (n.get_g (), 0);
         ASSERT_EQ (n.get_h (), 0);
         ASSERT_EQ (n.get_f (), 0);
+        ASSERT_EQ (n.get_k (), 0);
 
         // make sure also the stable "pointers" in closed are initialized to
         // an impossible value
-        ASSERT_EQ (n.get_pointer (), string::npos);
+        ASSERT_EQ (n.get_pointer (), std::string::npos);
         ASSERT_EQ (n.get_backpointers ().size (), 0);
+    }
+}
+
+// Checks that the count of expansions, k, works correctly
+// ----------------------------------------------------------------------------
+TEST_F (BackNodeFixture, IncK) {
+
+    // This test is run only 10 times, there is no need to do for longer!
+    for (auto i = 0 ; i < 10 ; i++) {
+
+        // create a node which just holds an array of integers randomly
+        // generated
+        auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
+        khs::backnode_t<std::vector<int>> n {values};
+
+        // verify that the counter of expansions is correctly initialized
+        ASSERT_EQ (n.get_k (), 0);
+
+        // and increment it a random number of times
+        auto expansions = randVectorInt (1, MAX_VALUES*MAX_VALUES);
+        for (auto k = 0 ; k < expansions[0] ; k++) {
+                auto value = n.inc_k ();
+                ASSERT_EQ (value, k+1);
+        }
+
+        // redundant, I know ... but finally verify it holds the correct value
+        ASSERT_EQ (n.get_k (), expansions[0]);
     }
 }
 
@@ -45,7 +71,7 @@ TEST_F (BackNodeFixture, DefaultValuesString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::backnode_t<string> n {value};
+        khs::backnode_t<std::string> n {value};
 
         // next, verify that all attributes of this node take the default values
         ASSERT_EQ (n.get_g (), 0);
@@ -54,7 +80,7 @@ TEST_F (BackNodeFixture, DefaultValuesString) {
 
         // make sure also the stable "pointers" in closed are initialized to an
         // impossible value
-        ASSERT_EQ (n.get_pointer (), string::npos);
+        ASSERT_EQ (n.get_pointer (), std::string::npos);
         ASSERT_EQ (n.get_backpointers ().size (), 0);
     }
 }
@@ -68,7 +94,7 @@ TEST_F (BackNodeFixture, SetValuesInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::backnode_t<vector<int>> n {values};
+        khs::backnode_t<std::vector<int>> n {values};
 
         // verify next that the state of this node is precisely the one given
         ASSERT_EQ (n.get_state (), values);
@@ -83,7 +109,7 @@ TEST_F (BackNodeFixture, SetValuesString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::backnode_t<string> n {value};
+        khs::backnode_t<std::string> n {value};
 
         // verify next that the state of this node is precisely the one given
         ASSERT_EQ (n.get_state (), value);
@@ -98,7 +124,7 @@ TEST_F (BackNodeFixture, EqualString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::backnode_t<string> n {value};
+        khs::backnode_t<std::string> n {value};
 
         // create another node using two different methods: copy constructor and
         // assignment
@@ -120,7 +146,7 @@ TEST_F (BackNodeFixture, NotEqualString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::backnode_t<string> n {value};
+        khs::backnode_t<std::string> n {value};
 
         // randomly choose a location and change its content. A while statement
         // is used because we ensure that the previous string is effectively
@@ -148,7 +174,7 @@ TEST_F (BackNodeFixture, LessThanString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::backnode_t<string> n {value};
+        khs::backnode_t<std::string> n {value};
 
         // randomly choose a location and change its content. A while statement
         // is used because we ensure that the previous string is effectively
@@ -179,7 +205,7 @@ TEST_F (BackNodeFixture, SetgInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::backnode_t<vector<int>> n {values};
+        khs::backnode_t<std::vector<int>> n {values};
 
         // set the g-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -207,7 +233,7 @@ TEST_F (BackNodeFixture, SetgString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::backnode_t<string> n {value};
+        khs::backnode_t<std::string> n {value};
 
         // set the g-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -236,7 +262,7 @@ TEST_F (BackNodeFixture, SethInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::backnode_t<vector<int>> n {values};
+        khs::backnode_t<std::vector<int>> n {values};
 
         // set the h-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -264,7 +290,7 @@ TEST_F (BackNodeFixture, SethString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::backnode_t<string> n {value};
+        khs::backnode_t<std::string> n {value};
 
         // set the h-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -293,7 +319,7 @@ TEST_F (BackNodeFixture, SetBackPointersInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::backnode_t<vector<int>> n {values};
+        khs::backnode_t<std::vector<int>> n {values};
 
         // randomly determine the number of backpointers to set ---to be at
         // least one
@@ -323,7 +349,7 @@ TEST_F (BackNodeFixture, SetBackPointersString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::backnode_t<string> n {value};
+        khs::backnode_t<std::string> n {value};
 
         // randomly determine the number of backpointers to set ---to be at
         // least one

@@ -25,18 +25,43 @@
 namespace khs {
 
     template<typename T>
+    struct error_solution {
+
+        // INVARIANT: an error solution consists of a pair of solutions
+        // generated for the same task with the same value of k which do not
+        // match
+        ksolution_t<T, std::vector> _first;
+        ksolution_t<T, std::vector> _second;
+
+        // Default constructor forbidden
+        error_solution () = delete;
+
+        // Explicit constructor
+        error_solution (const ksolution_t<T, std::vector>& first, const ksolution_t<T, std::vector>& second) :
+            _first {first},
+            _second {second}
+            {}
+
+        // getters
+        const ksolution_t<T, std::vector>& get_first () const
+            {return _first; }
+        const ksolution_t<T, std::vector>& get_second () const
+            {return _second; }
+    };
+
+    template<typename T>
     class ksolutions_t {
 
         // INVARIANT: a sequential container of solutions of the k-shortest path
         // problem consist just of a vector of them that refers to the same
         // domain/variant
-        std::vector<ksolution_t<T, vector>> _ksolutions;   // container of sols
+        std::vector<ksolution_t<T, std::vector>> _ksolutions;   // container of sols
         std::string _domain;
         std::string _variant;
 
         // To improve traceability, the version of the code that generated this
         // solution is stored as well
-        string _version;
+        std::string _version;
 
         // A dedicated flag is used to determine whether to report the
         // information of every single solution path within every solution to a
@@ -44,11 +69,16 @@ namespace khs {
         // information about all solution paths is reported
         bool _summary;  // whether to report only the last solution path or not
 
+        // All the solutions in this container can be cross-validated. In case
+        // of any mistake, a specific container contains the pairs where a
+        // mismatch has been found
+        std::vector<error_solution<T>> _error_solutions;
+
     public:
 
         // Default constructor
         ksolutions_t () :
-            _ksolutions { std::vector<ksolution_t<T, vector>>() },
+            _ksolutions { std::vector<ksolution_t<T, std::vector>>() },
             _domain    { "" },
             _variant { "" },
             _summary {false}
@@ -59,7 +89,7 @@ namespace khs {
         ksolutions_t (ksolutions_t&&) = delete;
 
         // getters
-        std::vector<ksolution_t<T, vector>>& get_ksolutions () {
+        std::vector<ksolution_t<T, std::vector>>& get_ksolutions () {
             return _ksolutions;
         }
         const std::string get_domain () const {
@@ -73,6 +103,9 @@ namespace khs {
         }
         bool get_summary () const {
             return _summary;
+        }
+        const std::vector<error_solution<T>> get_error_solutions () const {
+            return _error_solutions;
         }
 
         // setters
@@ -113,7 +146,7 @@ namespace khs {
         }
 
         // random access operator
-        ksolution_t<T, vector> operator[] (size_t idx) const {
+        ksolution_t<T, std::vector> operator[] (size_t idx) const {
             if (idx >= _ksolutions.size ()) {
                 throw std::out_of_range ("[ksolutions_t::get] out of bounds!");
             }
@@ -121,7 +154,7 @@ namespace khs {
         }
 
         // stream out
-        friend ostream& operator<< (std::ostream& stream, ksolutions_t& ksolutions) {
+        friend std::ostream& operator<< (std::ostream& stream, ksolutions_t& ksolutions) {
 
             // data is written in the csv format using the semicolon as
             // separator. Because each line results of the concatenation of data
@@ -129,7 +162,7 @@ namespace khs {
             // first to a string stream and then copy its output to the given
             // stream
             std::stringstream ss;
-            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;nbcentroids;mem;runtime;expansions/sec;solver;doctor;version" << endl;
+            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;nbcentroids;nbpaths;mem;runtime;expansions/sec;solver;doctor;version" << std::endl;
             for (auto& ksolution : ksolutions.get_ksolutions ()) {
 
                 // in case only a summary report has been requested, provide
@@ -138,7 +171,7 @@ namespace khs {
                     ss << ksolutions.get_domain () << ";";
                     ss << ksolutions.get_variant () << ";";
                     ss << ksolution[ksolution.size ()-1] << ";";
-                    ss << ksolutions.get_version () << endl;
+                    ss << ksolutions.get_version () << std::endl;
                 } else {
 
                     // otherwise, provide information about all the solution
@@ -149,7 +182,7 @@ namespace khs {
                         ss << ksolutions.get_domain () << ";";
                         ss << ksolutions.get_variant () << ";";
                         ss << solution << ";";
-                        ss << ksolutions.get_version () << endl;
+                        ss << ksolutions.get_version () << std::endl;
                     }
                 }
             }
@@ -163,8 +196,46 @@ namespace khs {
 
         // methods
 
+        // perform a cross-validation of all solutions that have been generated
+        // for the same instance with the same value of k
+        //
+        // If they are correct, it returns true. Otherwise, it returns false. In
+        // case any errors have been found, the pairs where the mismatch has
+        // been found are stored separately
+        bool doctor () {
+
+            // Be aware that the vector storing the pairs where an error is
+            // found is not cleared, so that successive calls to this service
+            // add more pairs in case of error.
+            bool correct = true;
+
+            // for all pairs of solutions
+            for (auto i = 0 ; i < _ksolutions.size () ; i++) {
+                for (auto j = i+1 ; j < _ksolutions.size () ; j++) {
+
+                    // perform the cross-validation among collections of the
+                    // same instance with the same value of k
+                    if (_ksolutions[i].get_name () == _ksolutions[j].get_name () &&
+                        _ksolutions[i].get_start () == _ksolutions[j].get_start () &&
+                        _ksolutions[i].get_goal () == _ksolutions[j].get_goal () &&
+                        _ksolutions[i].get_k () == _ksolutions[j].get_k () &&
+                        !_ksolutions[i].doctor (_ksolutions[j])) {
+
+                        // annotate an error has been found
+                        correct = false;
+
+                        // and store the offending solutions
+                        _error_solutions.push_back (error_solution {_ksolutions[i], _ksolutions[j]});
+                    }
+                }
+            }
+
+            // And return whether any errors have been found or not
+            return correct;
+        }
+
         // produce a string to summarize the errors of all ksolutions in this container
-        const string get_error_summary () const {
+        const std::string get_error_summary () const {
 
             // create a string stream to store the summary
             std::stringstream ss;
@@ -178,13 +249,14 @@ namespace khs {
             int nbincrcost = 0;
             int numsolutions = 0;
             int numdups = 0;
+            int nbnonsimple = 0;
             int total = 0;
 
             // for every single solution in this container
             for (const auto& ksolution : _ksolutions) {
                 for (const auto& solution: ksolution.get_solutions ()) {
 
-                    // First, verify the errors that are detected at the lable
+                    // First, verify the errors that are detected at the level
                     // of a single solution
                     switch (solution.get_error_code ()) {
 
@@ -211,11 +283,14 @@ namespace khs {
                         case solution_error::ERR_SOLUTION_COST:
                             nbsolutioncost++;
                             break;
+                        case solution_error::ERR_NON_SIMPLE_PATH:
+                            nbnonsimple++;
+                            break;
                     }
                 }
 
-                // next, verify those errors that are detected in the
-                // solution of a k shortest-path problem
+                // next, verify those errors that are detected in the solution
+                // of a k shortest-path problem
                 switch (ksolution.get_error_code ()) {
 
                     // and I did not forget about these others
@@ -226,6 +301,7 @@ namespace khs {
                     case solution_error::ERR_GOAL:
                     case solution_error::ERR_ADJACENT:
                     case solution_error::ERR_SOLUTION_COST:
+                    case solution_error::ERR_NON_SIMPLE_PATH:
                         break;
 
                     case solution_error::ERR_INCR_COST:
@@ -242,40 +318,43 @@ namespace khs {
 
             // return the number of errors found
             total = nbexpansions + nbstart + nbgoal + nbadjacent + nbsolutioncost + \
-                nbincrcost + numsolutions + numdups;
+                nbincrcost + numsolutions + numdups + nbnonsimple;
             ss << "\tNumber of errors: " << total;
             if (total > 0) {
                 if (nbexpansions > 0) {
-                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_EXPANSIONS) << ": " << nbexpansions;
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_EXPANSIONS) << ": " << nbexpansions;
                 }
                 if (nbstart > 0) {
-                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_START) << ": " << nbstart;
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_START) << ": " << nbstart;
                 }
                 if (nbgoal > 0) {
-                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_GOAL) << ": " << nbgoal;
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_GOAL) << ": " << nbgoal;
                 }
                 if (nbadjacent > 0) {
-                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_ADJACENT) << ": " << nbadjacent;
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_ADJACENT) << ": " << nbadjacent;
                 }
                 if (nbsolutioncost > 0) {
-                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_SOLUTION_COST) << ": " << nbsolutioncost;
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_SOLUTION_COST) << ": " << nbsolutioncost;
                 }
                 if (nbincrcost > 0) {
-                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_INCR_COST) << ": " << nbincrcost;
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_INCR_COST) << ": " << nbincrcost;
                 }
                 if (numsolutions > 0) {
-                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_NUM_SOLUTIONS) << ": " << numsolutions;
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_NUM_SOLUTIONS) << ": " << numsolutions;
                 }
                 if (numdups > 0) {
-                    ss << endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_DUPLICATE_PATH) << ": " << numdups;
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_DUPLICATE_PATH) << ": " << numdups;
+                }
+                if (nbnonsimple > 0) {
+                    ss << std::endl << "\t\t" << solution_t<T, std::vector>::get_error_msg (solution_error::ERR_NON_SIMPLE_PATH) << ": " << nbnonsimple;
                 }
             }
             return ss.str ();
         }
 
         size_t size () const {
-        return _ksolutions.size ();
-    }
+            return _ksolutions.size ();
+        }
 
     }; // class ksolutions_t
 } // namespace khs

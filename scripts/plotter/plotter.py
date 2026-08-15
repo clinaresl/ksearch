@@ -19,14 +19,12 @@ import argparse
 import re
 import time
 
-import numpy
-import pyexcel
 import argparser
 import pltchecker
-import pltGNUfile
 import pltkserie
+import pltpgfplot
 import pltserie
-import plttable
+import pltseries
 import spsreader
 import utils
 
@@ -38,11 +36,14 @@ LOGGER = utils.LOGGER
 
 # regular expressions
 RE_KAPPA = ";"
-RE_SERIES = "\s*(?P<legend>[^:]+)\s*:(?P<condition>.*)\s*"
-RE_PROBLEM_ID = "^\s*(?P<id>\d+)/(?P<k>\d+)\s*$"
+RE_SERIES = r'\s*(?P<legend>[^:]+)\s*:(?P<condition>.*)\s*'
+RE_PROBLEM_ID = r'^\s*(?P<id>\d+)/(?P<k>\d+)\s*$'
 
 # debug messsages
+DEBUG_DATALINE_REMOVED = "Line #{}: {} removed because {}"
 DEBUG_DATALINE = "Data accepted in serie '{}': {}"
+DEBUG_OUTPUT_TABLE = "LaTeX table selected. No images will be generated"
+DEBUG_OUTPUT_IMAGE = "Image generation selected. No tables will be generated"
 
 # info messages
 INFO_ACCESSING_SPREADSHEET = "Opening spreadsheet {} ..."
@@ -50,18 +51,60 @@ INFO_NUMBER_DATAPOINTS = "Number of datapoints:"
 INFO_NUMBER_DATAPOINTS_SERIE = "\tSerie {}: {}"
 INFO_NUMBER_DATALINES = "Number of data lines: {}"
 INFO_ELAPSED_TIME = "Elapsed time: {0}"
+INFO_OUTPUT_FORMAT = "Output format: {}"
 
 # warning message
 WARNING_NO_DATA = "No data met the given criteria in the series"
-WARNING_NO_GNUPLOT_FILE = "No GNUplot file was generated"
+WARNING_NO_TITLE = "No title has been given"
+WARNING_UNNECESSARY_PNG = "No .pgn file is necessary when generating LaTeX code (either TikZ/pgfplot file or tables)"
 
 # error messages
-ERROR_UNKNOWN_HEADER = "The {}-name does not exist in the current line and will be ignored {}"
+ERROR_NO_PNG = "It was requested to generate a gnuplot file, but no png file has been given. Provide one with --png"
 
 # critical messages
+CRITICAL_UNKNOWN_HEADER = "The {}-name does not exist in the current line: {}"
 CRITICAL_DUPLICATED_HEADER = "Duplicated header {}"
 CRITICAL_INVALID_SERIE = "The serie {} can not be parsed. Type '--help' to get additional information"
 
+
+# -----------------------------------------------------------------------------
+# validate_params
+#
+# Check that the values given are compliant with the options given by the parser
+# of this script. In case an error is found, a message is shown and execution is
+# halted
+# -----------------------------------------------------------------------------
+def validate_params(params: argparse.Namespace):
+    """Check that the values given are compliant with the options given by the
+       parser of this script. In case an error is found, a message is shown and
+       execution is halted
+
+    """
+
+    # in case the subcommand 'group' is used, all parameters are assumed to be
+    # correct since that command specifically takes pgfplots and produces a
+    # pgfgroup
+    if params.command != "group":
+   
+        if params.oformat == 'table':
+            LOGGER.debug(DEBUG_OUTPUT_TABLE)
+
+            if params.png is not None:
+                LOGGER.warning(WARNING_UNNECESSARY_PNG)
+
+        else:
+
+            LOGGER.debug(DEBUG_OUTPUT_IMAGE)
+
+            if params.title is None:
+                LOGGER.warning(WARNING_NO_TITLE)
+
+            if params.oformat == "gnuplot" and params.png is None:
+                LOGGER.error(ERROR_NO_PNG)
+                raise ValueError(ERROR_NO_PNG)
+
+            if params.oformat == "pgfplot" and params.png is not None:
+                LOGGER.warning(WARNING_UNNECESSARY_PNG)
 
 # -----------------------------------------------------------------------------
 # filter_data
@@ -72,8 +115,8 @@ CRITICAL_INVALID_SERIE = "The serie {} can not be parsed. Type '--help' to get a
 # those tuples (x, y) that match each condition respectively. The names of the
 # variables x and y are given in xname and yname.
 #
-# In case no serie is provided update data right away with the corresponding
-# tuple from the given line
+# In case no serie (i.e., condition) is provided update data right away with the
+# corresponding tuple from the given line
 # -----------------------------------------------------------------------------
 def filter_data(data: list, line: dict,
                 conditions: list, xname: str, yname: str) -> list:
@@ -83,8 +126,8 @@ def filter_data(data: list, line: dict,
        tuples (x, y) that match each condition respectively. The names of the
        variables x and y are given in xname and yname.
 
-       In case no serie is provided update data right away with the
-       corresponding tuple from the given line
+       In case no serie (i.e., condition) is provided update data right away
+       with the corresponding tuple from the given line
 
     """
 
@@ -120,40 +163,54 @@ def filter_data(data: list, line: dict,
 # -----------------------------------------------------------------------------
 # get_data
 #
-# return a list with all series of data accepted from a list of spreadsheets,
-# each represented as an intance of PLTSerie
+# return an instance of PLTSeries with all series of data accepted from a list
+# of spreadsheets, each represented as an instance of either PLTSerie or
+# PLTKSerie, according to the value of stype.
 #
-# Each serie is defined by a legend and a condition separated by a colon, e.g.,
-# "k=1:k==1" where the condition is any valid Python boolean expression
-# (including matching regular expressions, e.g., ""Problem #0:
-# re.match('00/\d+', id)"") which can use variables that have to be found in the
-# spreadsheet as header names.
+# series consist of a list of series specification. Each serie is defined as a
+# string with a legend and a condition separated by a colon, e.g., "k=1:k==1"
+# where the condition is any valid Python boolean expression (including matching
+# regular expressions, e.g., ""Problem #0: re.match('00/\d+', id)"") which can
+# use variables that have to be found among the header names.
 #
-# In addition, only datapoints relative to any of the k values appearing in
-# kappa are accepted. kappa must be given as a list of integer values
+# remove_if consist of a list of conditions, each being a valid Python boolean
+# expression which can also use variables that have to be found among the header
+# names. Every data line which satisfies any of the conditions given in
+# remove_if is removed.
 #
 # Every datapoint of each serie consists of a tuple (x, y) whose values are
 # given by the contents of the headers xname and yname respectively.
 # -----------------------------------------------------------------------------
-def get_data(spreadsheets: list, delimiter: str,
-             series: list, xname: str, yname: str, kappa: list) -> list:
-    """return a list with all series of data accepted from a list of
-       spreadsheets, each represented as an intance of PLTSerie
+def get_data(stype: str, spreadsheets: list, delimiter,
+             series: list, remove_if: list, xname: str, yname: str) -> pltseries.PLTSeries:
+    """return an instance of PLTSeries with all series of data accepted from a
+       list of spreadsheets, each represented as an instance of either PLTSerie
+       or PLTKSerie, according to the value of stype.
 
-       Each serie is defined by a legend and a condition separated by a colon,
-       e.g., "k=1:k==1" where the condition is any valid Python boolean
-       expression (including matching regular expressions, e.g., ""Problem #0:
-       re.match('00/\d+', id)"") which can use variables that have to be found
-       in the spreadsheet as header names.
+       series consist of a list of series specification. Each serie is defined
+       as a string with a legend and a condition separated by a colon, e.g.,
+       "k=1:k==1" where the condition is any valid Python boolean expression
+       (including matching regular expressions, e.g., ""Problem #0:
+       re.match('00/\\d+', id)"") which can use variables that have to be found
+       among the header names.
 
-       In addition, only datapoints relative to any of the k values appearing in
-       kappa are accepted. kappa must be given as a list of integer values
+       remove_if consist of a list of conditions, each being a valid Python
+       boolean expression which can also use variables that have to be found
+       among the header names. Every data line which satisfies any of the
+       conditions given in remove_if is removed.
 
        Every datapoint of each serie consists of a tuple (x, y) whose values are
        given by the contents of the headers xname and yname respectively.
 
     """
 
+    # depending upon the serie_type given, instances of PLTSerie or PLTKSerie
+    # are created
+    serie_type = {
+        "plot": pltserie.PLTSerie,
+        "ky": pltkserie.PLTKSerie,        
+    }
+    
     # create a list of strings with the legends and conditions of each serie,
     # and also, a container for each serie to reteurn
     data = []
@@ -162,11 +219,13 @@ def get_data(spreadsheets: list, delimiter: str,
     for iserie in series:
 
         # extract the legend and condition of this serie
-        if (m:=re.match(RE_SERIES, iserie)):
+        if (m := re.match(RE_SERIES, iserie)):
             legend = m.group('legend').strip()
             legends.append(legend)
             conditions.append(m.group('condition').strip())
-            data.append(pltserie.PLTSerie(legend, xname, yname))
+
+            # and also add a sample of the corresponding type
+            data.append(serie_type[stype](legend, xname, yname))
 
         else:
 
@@ -198,20 +257,28 @@ def get_data(spreadsheets: list, delimiter: str,
                 # add this key to the dictionary
                 line[ikey] = irecord[ikey]
 
-            # verify this point refers to an accepted k value. If the list of k
-            # values to accept is empty, then accept them all
-            if len(kappa) > 0 and line['k'] not in kappa:
-                continue
-
             # once the entire line has been retrieved, ensure that there are headers
-            # named after the x and y names. If not, skip this line
+            # named after the x and y names
             if xname not in line:
-                LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
-                continue
+                LOGGER.error(CRITICAL_UNKNOWN_HEADER.format("x", line))
+                raise ValueError(CRITICAL_UNKNOWN_HEADER.format("x", line))
             if yname not in line:
-                LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
-                continue
+                LOGGER.error(CRITICAL_UNKNOWN_HEADER.format("y", line))
+                raise ValueError(CRITICAL_UNKNOWN_HEADER.format("y", line))
 
+            # remove this line in case it matches any of the conditions in
+            # remove_if
+            if remove_if and len(remove_if) > 0:
+                checker = pltchecker.PLTChecker(line, remove_if)
+                results = checker.check()
+                if any(results):
+
+                    # get the first condition in remove_if verified and show it on
+                    # the debug line
+                    idx = next(i for i, v in enumerate(results) if v)
+                    LOGGER.debug(DEBUG_DATALINE_REMOVED.format(1+nblines, line, remove_if[idx]))
+                    continue
+            
             # once the entire line has been retrieved in an ordinary dictionary,
             # check what series are verified, in case any has been given
             filter_data(data, line, conditions, xname, yname)
@@ -223,310 +290,22 @@ def get_data(spreadsheets: list, delimiter: str,
         LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
 
     # before leaving, remove all series which contain no data
-    output = []
+    output = pltseries.PLTSeries()
     for iserie in data:
         if len(iserie) > 0:
-            output.append(iserie)
+            output += iserie
 
     # and return the data computed with all series
     return output
 
 
 # -----------------------------------------------------------------------------
-# get_k_data
+# do_cmd
 #
-# return a list with all series of data accepted from a list of spreadsheets,
-# each represented as an instance of PLTKSerie.
-#
-# Each serie is defined by a legend and a condition separated by a colon, e.g.,
-# "k=1:k==1" where the condition is any valid Python boolean expression
-# (including matching regular expressions, e.g., ""Problem #0:
-# re.match('00/\d+', id)"") which can use variables that have to be found in the
-# spreadsheet as header names.
-#
-# In addition, only datapoints relative to any of the k values appearing in
-# kappa are accepted. kappa must be given as a list of integer values
-#
-# Every datapoint of each serie consists of a tuple (x, y) whose values are
-# given by the contents of the headers xname and yname respectively.
+# Execute the specified command in params with the given arguments
 # -----------------------------------------------------------------------------
-def get_k_data(spreadsheets: list, delimiter,
-               series: list, xname: str, yname: str, kappa: list) -> list:
-    """return a list with all series of data accepted from a list of
-       spreadsheets, each represented as an instance of PLTKSerie.
-
-       Each serie is defined by a legend and a condition separated by a colon,
-       e.g., "k=1:k==1" where the condition is any valid Python boolean
-       expression (including matching regular expressions, e.g., ""Problem #0:
-       re.match('00/\d+', id)"") which can use variables that have to be found
-       in the spreadsheet as header names.
-
-       In addition, only datapoints relative to any of the k values appearing in
-       kappa are accepted. kappa must be given as a list of integer values
-
-       Every datapoint of each serie consists of a tuple (x, y) whose values are
-       given by the contents of the headers xname and yname respectively.
-
-    """
-
-    # create a list of strings with the legends and conditions of each serie,
-    # and also, a container for each serie to reteurn
-    data = []
-    legends = []
-    conditions = []
-    for iserie in series:
-
-        # extract the legend and condition of this serie
-        if (m:=re.match(RE_SERIES, iserie)):
-            legend = m.group('legend').strip()
-            legends.append(legend)
-            conditions.append(m.group('condition').strip())
-            data.append(pltkserie.PLTKSerie(legend, xname, yname))
-
-        else:
-
-            # otherweise, this serie was not correctly typed and process must
-            # halt
-            LOGGER.critical(CRITICAL_INVALID_SERIE.format(iserie))
-            raise ValueError(CRITICAL_INVALID_SERIE.format(iserie))
-
-    # process all spreadsheets
-    for spreadsheet in spreadsheets:
-
-        LOGGER.info(INFO_ACCESSING_SPREADSHEET.format(spreadsheet))
-
-        # count the processed lines
-        nblines = 0
-
-        # process all records to get a list of ordinary dictionaries
-        reader = spsreader.SPSReader(spreadsheet, delimiter=";")
-        for irecord in reader:
-
-            # create an ordinary dictionary to represent the information of this line
-            line = {}
-            for ikey in irecord:
-
-                # check this header is not duplicated
-                if ikey in line:
-                    LOGGER.critical(CRITICAL_DUPLICATED_HEADER.format(ikey))
-
-                # add this key to the dictionary
-                line[ikey] = irecord[ikey]
-
-            # verify whether this is the case where the number of paths found equals
-            # the number of paths requested. If not, skip it
-            m = re.match(RE_PROBLEM_ID, line["id"])
-            if int(m.group("k")) != int(line["k"]):
-                continue
-
-            # even if this line is accepted, remove it in case this k value is
-            # not among those requested by the user
-            if len(kappa) > 0 and line['k'] not in kappa:
-                continue
-
-            # once the entire line has been retrieved, ensure that there are headers
-            # named after the x and y names. If not, skip this line
-            if xname not in line:
-                LOGGER.error(ERROR_UNKNOWN_HEADER.format("x", line))
-                continue
-            if yname not in line:
-                LOGGER.error(ERROR_UNKNOWN_HEADER.format("y", line))
-                continue
-
-            # once the entire line has been retrieved in an ordinary dictionary,
-            # check what series are verified, in case any has been given
-            filter_data(data, line, conditions, xname, yname)
-
-            # and increment the number of processed lines
-            nblines += 1
-
-        # show the number of lines processed
-        LOGGER.info(INFO_NUMBER_DATALINES.format(nblines))
-
-    # before leaving, remove all series which contain no data
-    output = []
-    for iserie in data:
-        if len(iserie) > 0:
-            output.append(iserie)
-
-    # and return the data computed with all series
-    return output
-
-
-# -----------------------------------------------------------------------------
-# create_gnuplotfile
-#
-# Given a list of series represented as instances of either PLTserie or
-# PLTKSerie, return a GNUplotfile named after gnufilename which contains all
-# those series and the specified title if any is given. In case a png filename
-# is given, specific commands are added to generate the png file
-# -----------------------------------------------------------------------------
-def create_gnuplotfile(series: list, gnufilename: str, title: str, png: str) -> pltGNUfile.PLTGNUfile:
-    """Given a list of series represented as instances of either PLTserie or
-       PLTKSerie, return a GNUplotfile named after gnufilename which contains
-       all those series and the specified title if any is given. In case a png
-       filename is given, specific commands are added to generate the png file
-
-    """
-
-    # --initialization
-    gnustream = None
-
-    # in case no serie has been created, then return immediately
-    if len(series) > 0:
-
-        # get the x- and y- titles. It is assumed that all series have been
-        # created with the same values for the x- and y- axis
-        (xname, yname) = (series[0].get_xtitle(), series[0].get_ytitle())
-
-        # create a GNUplot file with the information of all the given series, in
-        # case any has been given. Note the titles for the x and y axis are the same
-        # for all series
-        if gnufilename is not None and len(gnufilename) > 0:
-            gnustream = pltGNUfile.PLTGNUfile(gnufilename, xname, yname)
-
-            # and add all series
-            for iserie in series:
-
-                # in case this is a kserie, then apply the operator and add the
-                # resulting serie to the gnuplot file
-                if isinstance(iserie, pltkserie.PLTKSerie):
-                    iserie.exec(numpy.average)
-                    gnustream += iserie
-                else:
-
-                    # otherwise, add the serie straight away
-                    gnustream += iserie
-
-            # create a png image, in case it was requested
-            if png is not None and len(png) > 0:
-                gnustream.set_png(png)
-
-            # give the plot file a title, if any was given
-            if title is not None and len(title) > 0:
-                gnustream.set_title(title)
-
-    # finally, return the GNUplot file with all series extracted from the
-    # spreadsheet
-    return gnustream
-
-
-# -----------------------------------------------------------------------------
-# create_tablefile
-#
-# Given a list of series represented as instances of either PLTserie or
-# PLTKSerie, return an instance of a plttable named after tablefilename which
-# contains all those series and the specified title if any is given.
-# -----------------------------------------------------------------------------
-def create_tablefile(series: list, tablefilename: str, title: str) -> plttable.PLTTable:
-    """Given a list of series represented as instances of either PLTserie or
-       PLTKSerie, return an instance of a plttable named after tablefilename
-       which contains all those series and the specified title if any is given.
-
-    """
-
-    # --initialization
-    tablestream: plttable.PLTTable
-
-    # in case no serie has been created, then return immediately
-    if len(series) > 0:
-
-        # get the x- and y- titles. It is assumed that all series have been
-        # created with the same values for the x- and y- axis
-        (xname, yname) = (series[0].get_xtitle(), series[0].get_ytitle())
-
-        # create a table with the information of all the given series, in case
-        # any has been given. Note the titles for the x and y axis are the same
-        # for all series
-        if tablefilename is not None and len(tablefilename) > 0:
-            tablestream = plttable.PLTTable(tablefilename, xname, yname)
-
-            # and add all series
-            for iserie in series:
-
-                # in case this is a kserie, then apply the operator and add the
-                # resulting serie to the table
-                if isinstance(iserie, pltkserie.PLTKSerie):
-                    iserie.exec(numpy.average)
-                    tablestream += iserie
-                else:
-
-                    # otherwise, add the serie straight away
-                    tablestream += iserie
-
-            # give the plot file a title, if any was given
-            if title is not None and len(title) > 0:
-                tablestream.set_title(title)
-
-    # finally, return the table file with all series extracted from the
-    # spreadsheet
-    return tablestream
-
-
-# -----------------------------------------------------------------------------
-# do_plot
-#
-# Execute the plot command with the given parameters
-# -----------------------------------------------------------------------------
-def do_plot(params: argparse.Namespace):
-    """Execute the plot command with the given parameters"""
-
-    # get the full list of spreadsheets to process ---which can be of different
-    # types
-    spreadsheets = []
-    for ifile in params.file:
-
-        # ensure each spreadsheet is readable
-        readable, err = utils.check_file_readable(ifile)
-        if not readable:
-            LOGGER.critical(err)
-            raise ValueError(err)
-
-        # finally, add it to the list of spreadsheets to process
-        spreadsheets.append(ifile)
-
-    # importantly, the series requested by the user have to be provided always
-    # as a list. Moreover, if no serie is requested, then one accepting all data
-    # (i.e., with condition True) has to be used instead. In this case the serie
-    # is named after a concatenation of the names of all spreadsheets
-    user_series = ["{}:True".format("/".join(spreadsheets))] if params.series is None else params.series
-
-    # Also, create a list of k values to accept from the user specification. If
-    # none was given, then accept them all
-    kvalues = []
-    if params.k and len(params.k) > 0:
-        kvalues = [int(x) for x in re.split(RE_KAPPA, params.k)]
-
-    # in case any serie is produced from the given spreadsheet using the
-    # variables x and y
-    series = get_data(spreadsheets, params.delimiter, user_series, params.x, params.y, kvalues)
-    if series is not None and len(series) > 0:
-        LOGGER.info(INFO_NUMBER_DATAPOINTS)
-        for iserie in series:
-            LOGGER.info(INFO_NUMBER_DATAPOINTS_SERIE.format(iserie.get_legend(), len(iserie)))
-
-        # in case data was generated, but no output file was given, then issue a
-        # warning
-        if params.output is None or len(params.output) == 0:
-            LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
-        else:
-
-            # generate the gnuplot file with all the specified options including a
-            # title if any was provided by the user
-            gnufile = create_gnuplotfile(series, params.output, params.title, params.png)
-            gnufile.write_gnuplot()
-
-    else:
-         LOGGER.warning(WARNING_NO_DATA)
-
-
-# -----------------------------------------------------------------------------
-# do_ky
-#
-# Execute the ky command with the given parameters
-# -----------------------------------------------------------------------------
-def do_ky(params: argparse.Namespace):
-    """Execute the ky command with the given parameters"""
+def do_cmd(params: argparse.Namespace):
+    """Execute the specified command in params with the given arguments"""
 
     # get the full list of spreadsheets to process ---which can be of different
     # types
@@ -548,44 +327,49 @@ def do_ky(params: argparse.Namespace):
     # is named after a concatenation of the names of all spreadhseets
     user_series = ["{}:True".format("/".join(spreadsheets))] if params.series is None else params.series
 
-    # Also, create a list of k values to accept from the user specification. If
-    # none was given, then accept them all
-    kvalues = []
-    if params.k and len(params.k) > 0:
-        kvalues = [int(x) for x in re.split(RE_KAPPA, params.k)]
+    # get all series of data according to the user parameters
+    series = get_data(params.command, spreadsheets, params.delimiter, user_series, params.remove_if, params.x, params.y)
 
-    # in case any serie si produced from the given spreadsheet using the
-    # variables k and the given y
-    series = get_k_data(spreadsheets, params.delimiter, user_series, "k", params.y, kvalues)
-    if series is not None and len(series) > 0:
+    # show information about the format chosen
+    LOGGER.info(INFO_OUTPUT_FORMAT.format(params.oformat))
+
+    # and now process all series retrieved from the spreadsheets
+    if len(series) > 0:
         LOGGER.info(INFO_NUMBER_DATAPOINTS)
         for iserie in series:
             LOGGER.info(INFO_NUMBER_DATAPOINTS_SERIE.format(iserie.get_legend(), len(iserie)))
 
-        # in case data was generated, but no output file was given, then issue a
-        # warning
-        if params.output is None or len(params.output) == 0:
-            LOGGER.warning(WARNING_NO_GNUPLOT_FILE)
-        else:
+        # guess the extension of the file to generate
+        ext = 'gnuplot' if params.oformat == 'gnuplot' else 'tex'
 
-            # finally, in case a LaTeX table has been requested creat it
-            if params.table:
-                tablefile = create_tablefile(series,
-                                             utils.get_filename(params.output, "tex"),
-                                             params.title)
-                tablefile.write_table()
-
-            else:
-
-                # otherwise, generate the gnuplotfile
-                gnufile = create_gnuplotfile(series,
-                                             utils.get_filename(params.output, "gnuplot"),
-                                             params.title,
-                                             utils.get_filename(params.png, "png"))
-                gnufile.write_gnuplot()
-
+        # create the resource with the information of all series and write its
+        # contents into the output file
+        if canvas := series.create_canvas(params.oformat,
+                                          utils.get_filename(params.output, ext),
+                                          title=params.title,
+                                          png=utils.get_filename(params.png, "png") if params.png else None): 
+            canvas.write()
+                    
     else:
         LOGGER.warning(WARNING_NO_DATA)
+
+
+# -----------------------------------------------------------------------------
+# do_group
+#
+# Execute the group command with the given parameters
+# -----------------------------------------------------------------------------
+def do_group(params: argparse.Namespace):
+    """Execute the group command with the given parameters"""
+
+    # create an instance of a pltpgfgroup
+    group = pltpgfplot.PLTpgfplotgroup(params.file)
+
+    # and process the contents of all files to get all the substitutions
+    # performed to create precisely those contents
+    group.process()
+    group.show_properties()
+    group.write(params.nbcolumns, params.caption, params.output)
 
 # -----------------------------------------------------------------------------
 # main body
@@ -607,10 +391,14 @@ def main():
     # set the requested logging level
     LOGGER.setLevel(utils.get_logging_level(params.level))
 
+    # validate the params
+    validate_params (params)
+
     # execute the specified command
     {
-        "plot": do_plot,
-        "ky": do_ky
+        "plot": do_cmd,
+        "ky": do_cmd,
+        "group": do_group,
     }[params.command](params)
 
     # show the elapsed time

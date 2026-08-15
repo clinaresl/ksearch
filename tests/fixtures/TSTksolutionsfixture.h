@@ -69,11 +69,13 @@ protected:
             int cost = randWalk.second;
             size_t expansions = 1 + rand () % MAX_VALUE;
             double cpu_time = static_cast<double>(rand () % MAX_VALUE);
+            int nbpaths = rand () % MAX_VALUE;
             std::string solver = randString (50);
 
             // Create a solution which stores all this information
             khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, nbcentroids,
-                                                               h0, cost, expansions, cpu_time, solver);
+                                                               h0, cost, expansions, cpu_time,
+                                                               nbpaths, solver, false);
 
             // and add it to the set of solutions of the k-shortest path problem
             ksolution += solution;

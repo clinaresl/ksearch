@@ -15,12 +15,14 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <iomanip>
 #include <map>
 #include <string>
 #include <tuple>
 #include <vector>
 
 #include "graph_t.h"
+#include "../instance.h"
 
 // Class definition
 //
@@ -46,18 +48,21 @@ private:
 
 public:
 
-    // Default constructors are forbidden by default
-    roadmap_t () = delete;
-
     // Explicit constructor
-    roadmap_t (size_t index):
+    roadmap_t (std::size_t index):
         _index {index}
         {}
 
     // getters
-    static const graph_t& get_graph () { return _graph; }
-    const size_t get_index () const { return _index; }
-    static const std::string get_variant () { return _variant; }
+    [[nodiscard]] static const graph_t& get_graph () {
+        return _graph;
+    }
+    [[nodiscard]] const size_t get_index () const {
+        return _index;
+    }
+    [[nodiscard]] static const std::string get_variant () {
+        return _variant;
+    }
 
     // setters
     static void set_variant (std::string variant) {
@@ -66,53 +71,88 @@ public:
         }
         _variant = variant;
     }
-    static void set_brute_force (bool brute_force) { _brute_force = brute_force; }
+    static void set_brute_force (bool brute_force) {
+        _brute_force = brute_force;
+    }
 
     // operator overloading
 
-    // this instance is less than another if and only if its index is strictly
-    // less than the index of the other instance
-    bool operator< (const roadmap_t& other) const {
-        return _index < other.get_index ();
+    // operator overloading
+    std::strong_ordering operator<=>(roadmap_t const& other) const {
+        return _index <=> other.get_index ();
     }
-
+    
     // this instance is equal to another if and only if its indices are the same
     bool operator== (const roadmap_t& other) const {
         return _index == other.get_index ();
     }
 
-    // this instance is not equal to another if and only if its indices are different
-    bool operator!= (const roadmap_t& other) const {
-        return _index != other.get_index ();
-    }
-
-    friend std::ostream& operator<< (std::ostream& stream, const roadmap_t& right) {
-        stream << right.get_index ();
+    friend std::ostream& operator<< (std::ostream& stream, roadmap_t const& right) {
+        stream << std::setfill (' ') << std::setw (10) << right.get_index ();
         return stream;
     }
 
     // methods
 
-    // load the roadmap graph given in the specified file qualifying every
-    // vertex with the coordinates (in radians) given in the second argument
-    // using the given variant. The file should define a graph in the format of
-    // the 9th DIMACS competition.
+    // load the roadmap graph given in the first file. It also loads the
+    // coordinates of every vertex whose filename is derived from the given
+    // filename. The files with the contents of the graph and coordinates should
+    // define a graph in the format of the 9th DIMACS competition.
+    //
+    // In case a binary file with the same information is available (whose name
+    // follows the filename given), it is used instead. If not, after loading
+    // the information, a binary file is created.
     static void init (const std::string& filename,
-                      const std::map<int, std::pair<double, double>>& coordinates,
                       const std::string& variant = "unit") {
 
         // set the given variant
         roadmap_t::_variant = variant;
 
-        // next, load the roadmap graph
-        roadmap_t::_graph.load (filename, coordinates);
+        // next, check whether a binary file exists already containing the
+        // information of the graph. get_bin_filename is a free function
+        // provided along the definition of a graph
+        std::filesystem::path bin{get_bin_filename (filename)};
+        if (std::filesystem::exists (bin)) {
+
+            // then prefer loading the binary file because is much faster.
+            // Prefer verbose output to show information about the binary file
+            // being processed
+            roadmap_t::_graph.read_binary (filename, true);
+        } else {
+        
+            // otherwise, load the graph. Loading the file will automatically
+            // create the binary file in the same directory where the file used
+            // for defining the graph resides so that in the future, the binary
+            // file will be preferred
+            roadmap_t::_graph.load (filename);
+        }
     }
 
-   // return the children of this state as a vector of tuples, each containing:
-   // first, the cost of the operator, secondly, its heuristic value; thirdly,
-   // the successor state.
-    void children (int h, const roadmap_t& goal,
-        std::vector<std::tuple<int, int, roadmap_t>>& successors);
+    // process each child separately through the use of a callable that has to
+    // receive exactly three arguments: cost_t g, cost_t h and the successor
+    // state. It is the responsibility of the caller to provide the right
+    // callable at the calling site.
+    template<typename F>
+    requires std::invocable<F&, int, int, roadmap_t&&>
+    void children (int h, roadmap_t const& goal, F&& callable) const {
+
+        // for all edges issued from this vertex
+        for (edge_t const& iedge: roadmap_t::_graph.get_edges (_index)) {
+
+            // create the successor
+            roadmap_t successor { iedge.get_to () };
+
+            // and invoke the callable with the right arguments: g, h and the
+            // successor
+            if (roadmap_t::_variant == "unit") {
+                callable ( 1, 0, std::move (successor) );
+            } else {
+                callable ( iedge.get_weight (),
+                           (roadmap_t::_brute_force) ? 0 : successor.h (goal),
+                           std::move (successor) );
+            }
+        }        
+    }
 
    // return the heuristic distance to get from this state to the given goal state.
    // The heuristic function implemented is the air distance according to the

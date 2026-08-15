@@ -15,7 +15,7 @@
 
 // definitions
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
-#define CMAKE_VERSION "@CMAKE_PROJECT_VERSION@"
+#define CMAKE_BUILD_CODE @CMAKE_BUILD_CODE@
 
 // ***initialization ***
 #include "KHSdefs.h"
@@ -34,11 +34,14 @@
 #include "structs/KHSclosed_t.h"
 
 // -- solutions
+#include "structs/KHSiomanip.h"
 #include "structs/KHSsolution_t.h"
 #include "structs/KHSksolution_t.h"
 #include "structs/KHSksolutions_t.h"
 
 // *** search algorithms
+
+// K (non-simple) shortest-paths
 
 // --- base definition
 #include "algorithm/KHSbsolver.h"
@@ -52,8 +55,13 @@
 // K* (Ian's Implementation)
 #include "algorithm/KHSIK.h"
 
-// K* (Ian's Implementation, Heuristic enabled)
-#include "algorithm/KHSIKStar.h"
+// K (simple) shortest-paths
+
+// bBELA
+#include "algorithm/KHSbbela.h"
+
+// sBELA
+#include "algorithm/KHSsbela.h"
 
 #endif // _KSEARCH_H_
 

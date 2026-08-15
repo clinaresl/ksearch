@@ -12,8 +12,6 @@
 
 #include "../fixtures/TSTbucketfixture.h"
 
-using namespace std;
-
 // Checks the creation of empty buckets is initialized correctly
 // ----------------------------------------------------------------------------
 TEST_F (BucketFixture, EmptyStringBucket) {
@@ -21,7 +19,7 @@ TEST_F (BucketFixture, EmptyStringBucket) {
     for (auto i = 0 ; i < NB_TESTS ; i++) {
 
         // create a bucket to store strings
-        khs::bucket_t<string> bucket;
+        khs::bucket_t<std::string> bucket;
 
         // now, verify the bucket is properly initialized
         ASSERT_EQ (bucket.get_mini (), 1);
@@ -39,7 +37,7 @@ TEST_F (BucketFixture, SizeStringBucket) {
     // once
 
     // create a bucket to store strings
-    khs::bucket_t<string> bucket;
+    khs::bucket_t<std::string> bucket;
 
     // now insert items at the positions which follow the serie of powers of
     // 2 until a very large number
@@ -68,7 +66,7 @@ TEST_F (BucketFixture, ResizeStringBucket) {
     for (auto i = 0 ; i < NB_TESTS ; i++) {
 
         // create a bucket to store strings
-        khs::bucket_t<string> bucket;
+        khs::bucket_t<std::string> bucket;
 
         // randomly determine the number of buckets which is necessarily larger
         // than 0. Note the maximum length is roughly 1,000, the reason being
@@ -102,17 +100,17 @@ TEST_F (BucketFixture, ResizeStringBucket) {
 TEST_F (BucketFixture, InsertStringBucket) {
 
     // function used for computing the minimum and maximum index
-    auto comp = [] (const string& s1, const string& s2) {
+    auto comp = [] (const std::string& s1, const std::string& s2) {
         return s1.size () < s2.size ();
     };
 
     for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
         // create a bucket to store strings
-        khs::bucket_t<string> bucket;
+        khs::bucket_t<std::string> bucket;
 
         // populate the bucket and get the values inserted
-        vector<string> values = populate (bucket);
+        std::vector<std::string> values = populate (bucket);
 
         // get the minimum and maximum length which should be proven to be equal
         // to the minimum and maximum indexes in the bucket
@@ -128,7 +126,7 @@ TEST_F (BucketFixture, InsertStringBucket) {
         while (bucket.size ()) {
 
             // extract the first element from the bucket
-            string item = bucket.pop_front ();
+            std::string item = bucket.pop_front ();
             ASSERT_GE (item.size (), current);
 
             // and verify the size has decreased accordingly
@@ -147,20 +145,20 @@ TEST_F (BucketFixture, InsertStringBucket) {
 TEST_F (BucketFixture, RemoveStringBucket) {
 
     // function used for computing the minimum and maximum index
-    auto comp = [] (const string& s1, const string& s2) {
+    auto comp = [] (const std::string& s1, const std::string& s2) {
         return s1.size () < s2.size ();
     };
 
     for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
         // create a bucket to store strings
-        khs::bucket_t<string> bucket;
+        khs::bucket_t<std::string> bucket;
 
         // populate the bucket and get the values inserted
-        vector<string> values = populate (bucket);
+        std::vector<std::string> values = populate (bucket);
 
         // create a histogram with the observations of the lengths of all values
-        vector<int> histogram (MAX_NB_CHARS);
+        std::vector<int> histogram (MAX_NB_CHARS);
         for (auto v : values ) {
             histogram[v.size ()]++;
         }
@@ -223,20 +221,20 @@ TEST_F (BucketFixture, RemoveStringBucket) {
 TEST_F (BucketFixture, InsertRemoveStringBucket) {
 
     // function used for computing the minimum and maximum index
-    auto comp = [] (const string& s1, const string& s2) {
+    auto comp = [] (const std::string& s1, const std::string& s2) {
         return s1.size () < s2.size ();
     };
 
     for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
         // create a bucket to store strings
-        khs::bucket_t<string> bucket;
+        khs::bucket_t<std::string> bucket;
 
         // populate the bucket and get the values inserted
-        vector<string> values = populate (bucket);
+        std::vector<std::string> values = populate (bucket);
 
         // create a histogram with the observations of the lengths of all values
-        vector<int> histogram (MAX_NB_CHARS);
+        std::vector<int> histogram (MAX_NB_CHARS);
         for (auto v : values ) {
             histogram[v.size ()]++;
         }
@@ -248,7 +246,7 @@ TEST_F (BucketFixture, InsertRemoveStringBucket) {
 
         // now, create a vector of strings with additional data to insert into
         // the bucket with only a few items
-        vector<string> data;
+        std::vector<std::string> data;
         for (auto j = 0 ; j < MAX_VALUES/10 ; j++) {
             data.push_back (randString (MIN_NB_CHARS, MAX_NB_CHARS));
         }
@@ -317,7 +315,7 @@ TEST_F (BucketFixture, InsertRemoveStringBucket) {
         while (bucket.size ()) {
 
             // extract the first element from the bucket
-            string item = bucket.pop_front ();
+            std::string item = bucket.pop_front ();
             ASSERT_GE (item.size (), current);
 
             // and verify the size has decreased accordingly

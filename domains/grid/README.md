@@ -1,8 +1,9 @@
 # Grid #
 
-The Grid domain consists of a square grid with no obstacles of size *n*. The
-start and goal states can be located anywhere in the grid where the *x* and *y*
-coordinates range from 0 until *n-1*.
+The Grid domain consists of a square grid with no obstacles of size *n* which
+has to be provided with a dedicated flag `--size`. The start and goal states can
+be located anywhere in the grid where the *x* and *y* coordinates range from 0
+until *n-1*.
 
 This domain provides two variants:
 
@@ -46,40 +47,47 @@ An example for the computation of one million distinct paths for every case
 specified above is shown next:
 
 ``` sh
-    $ ./grid --size 10 --solver "belA0" --file test-10 --variant unit --k 1000000 --no-doctor
+./grid --size 10 --solver "BELA0" --file test-10 --variant unit --k 1000000 --no-doctor
     
-      size         : 10
-      solver       : belA0
-      file         : test-10 (10 instances)
-      variant      : unit
-      size         : 10
-      K            : [1000000, 1000000, 1] 
+ size         : 10
+ solver       : BELA0 ijcai-g133903f
+ file         : benchmark/grid-10.test (10 instances)
+ variant      : unit
+ size         : 10
+ K            : [1000000, 1000000, 1]
 
-      ⏺ belA0 ( k=1000000 ): 
-      ⏵ 00;1000000;(0, 0);(9, 9);18;99;1.35236;BELA*;? Unchecked
-      ⏵ 01;1000000;(1, 1);(8, 8);14;99;1.06715;BELA*;? Unchecked
-      ⏵ 02;1000000;(2, 2);(7, 7);10;99;1.19695;BELA*;? Unchecked
-      ⏵ 03;1000000;(3, 3);(6, 6);6;99;1.11041;BELA*;? Unchecked
-      ⏵ 04;1000000;(4, 4);(5, 5);2;99;1.0797;BELA*;? Unchecked
-      ⏵ 05;1000000;(5, 5);(4, 4);2;99;1.09474;BELA*;? Unchecked
-      ⏵ 06;1000000;(6, 6);(3, 3);6;99;1.13207;BELA*;? Unchecked
-      ⏵ 07;1000000;(7, 7);(2, 2);10;99;1.1462;BELA*;? Unchecked
-      ⏵ 08;1000000;(8, 8);(1, 1);14;99;1.0636;BELA*;? Unchecked
-      ⏵ 09;1000000;(9, 9);(0, 0);18;99;1.34752;BELA*;? Unchecked
+ ⏺ BELA0 ( k=1000000 ):
+         id       k    start     goal       h0   #expansions  #centroids  #paths  mem usage   runtime      solver         doctor     version
+ ⏵       00 1000000   (0, 0)   (9, 9)       18            99          95       0    703.000     0.487       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       01 1000000   (1, 1)   (8, 8)       14            99         230       0   1404.000     0.384       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       02 1000000   (2, 2)   (7, 7)       10            99         315       0   2026.000     0.441       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       03 1000000   (3, 3)   (6, 6)        6            99         350       0   2605.000     0.446       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       04 1000000   (4, 4)   (5, 5)        2            99         383       0   3159.000     0.448       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       05 1000000   (5, 5)   (4, 4)        2            99         383       0   3722.000     0.454       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       06 1000000   (6, 6)   (3, 3)        6            99         350       0   4291.000     0.462       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       07 1000000   (7, 7)   (2, 2)       10            99         315       0   4872.000     0.441       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       08 1000000   (8, 8)   (1, 1)       14            99         230       0   5495.000     0.383       BELA0    ? Unchecked  ijcai-g133903f
+ ⏵       09 1000000   (9, 9)   (0, 0)       18            99          95       0   6152.000     0.436       BELA0    ? Unchecked  ijcai-g133903f
 
-      📊 Error summary: <doctor disabled>
-      ⚠ No CSV output generated!
-      🕒 CPU time: 14.3588 seconds
+   🕒 (k=1000000) CPU time: 5.93361 seconds
+
+   🕒 (BELA0) CPU time: 5.93364 seconds
+
+ 📊 Error summary: <doctor disabled>
+        Cross-validation: Ok
+ ⚠ No CSV output generated!
+ 🕒 CPU time: 7.01595 seconds
 ```
 
-Note the importance of using `no-doctor` here and that `--verbose` is unfeasible
-due to the high value of *k*
+Note that `--verbose` is unfeasible due to the high value of *k*. Also, due to
+the large number of solution paths computed `--doctor` slows down the execution
+significantly between consecutive instances.
 
 # License #
 
 MIT License
 
-Copyright (c) 2016, 2023, Carlos Linares López, Ian Herman
+Copyright (c) 2016, 2025, 2026 Carlos Linares López, Ian Herman
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -106,6 +114,6 @@ Carlos Linares Lopez <carlos.linares@uc3m.es>
 Computer Science and Engineering Department <https://www.inf.uc3m.es/en>  
 Universidad Carlos III de Madrid <https://www.uc3m.es/home>
 
-Ian Herman <iankherman@gmail.com>
-Computer Science and Engineering Department https://www.inf.uc3m.es/en
+Ian Herman <iankherman@gmail.com>  
+Computer Science and Engineering Department https://www.inf.uc3m.es/en  
 Universidad Carlos III de Madrid https://www.uc3m.es/home

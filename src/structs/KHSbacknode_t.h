@@ -54,6 +54,9 @@ namespace khs {
         // pointed to.
         std::vector<backpointer_t> _backpointers;
 
+        // backnodes also count the number of times they are expanded.
+        int _k;
+
     public:
 
         // Default constructors are forbidden
@@ -61,7 +64,8 @@ namespace khs {
 
         // Explicit constructors
         backnode_t (const T& state, int h=0, int g=0) :
-            node_t<T> { state, h, g }
+            node_t<T> { state, h, g },
+            _k { 0 }
         {}
 
         // Copy constructor and assignment constructor by default
@@ -73,8 +77,14 @@ namespace khs {
             { return _backpointers; }
         const backpointer_t& get_backpointer (size_t index) const
             { return _backpointers[index]; }
+        const int get_k () const
+            { return _k; }
 
         // operators
+
+        int inc_k () {
+            return ++_k;
+        }
 
         // Adding inserts a new backpointer to the list of backpointers of this
         // node
@@ -89,7 +99,7 @@ namespace khs {
             stream << ", " << node.get_g ();
             stream << " + " << node.get_h ();
             stream << " = " << node.get_f ();
-            stream << "> (";
+            stream << "> ( k: " << node.get_k () << " -- ";
             for (auto bp: node.get_backpointers ()) {
                 stream << "{" << bp.get_pointer () << ", " << bp.get_index () << "} ";
             }

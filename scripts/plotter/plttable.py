@@ -146,7 +146,7 @@ class PLTTable:
 
         self._title = value
 
-    def write_table(self):
+    def write(self):
         """Creates the data body of a LaTeX table from the data given in all series"""
 
         # First, compute the name of each row as the legend of each serie

@@ -10,11 +10,11 @@
 // Unit tests of the solution_t class
 //
 
+#include <memory>
 #include <vector>
 
 #include "../fixtures/TSTsolutionfixture.h"
-
-using namespace std;
+#include "../../src/ksearch.h"
 
 // Checks that solutions can be correctly created using the explicit
 // constructors with non-null solution paths
@@ -25,7 +25,7 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
 
         // explicitly create values to populate a solution
         int k = rand () % MAX_VALUE;
-        vector<int> path = randVectorInt (MAX_VALUES, MAX_VALUES);
+        std::vector<int> path = randVectorInt (MAX_VALUES, MAX_VALUES);
         int start = rand () % MAX_VALUE;
         int goal = rand () % MAX_VALUE;
         int nbcentroids = rand () & MAX_VALUE;
@@ -33,11 +33,13 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         int cost = rand () % MAX_VALUE;
         size_t expansions = rand () % MAX_VALUE;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // create a solution which stores ints
-        khs::solution_t<int, vector> solution{k, path, start, goal, nbcentroids,
-            h0, cost, expansions, cpu_time, solver};
+        khs::solution_t<int, std::vector> solution{k, path, start, goal, nbcentroids,
+            h0, cost, expansions, cpu_time,
+            nbpaths, solver, false};
 
         // and give this instance a name
         auto name = randString (50);
@@ -54,6 +56,7 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         ASSERT_EQ (cost, solution.get_cost ());
         ASSERT_EQ (expansions, solution.get_expansions ());
         ASSERT_EQ (cpu_time, solution.get_cpu_time ());
+        ASSERT_EQ (nbpaths, solution.get_nbpaths ());
         ASSERT_EQ (solver, solution.get_solver ());
 
         // verify also the name is correct
@@ -72,18 +75,20 @@ TEST_F (SolutionFixture, EmptySolutionNPancake) {
         // generated with no expansions at all, and this is correct if and only
         // if the start and goal nodes are the same
         int k = rand () % MAX_VALUE;
-        vector<npancake_t> path;
+        std::vector<npancake_t> path;
         npancake_t start = randInstance (NB_DISCS);
         npancake_t goal = start;
         int h0 = rand () % MAX_VALUE;
         int cost = 0;
         size_t expansions = 0;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // create a solution which stores npancakes
-        khs::solution_t<npancake_t, vector> solution (k, path, start, goal, 0,
-                                                      h0, cost, expansions, cpu_time, solver);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
+                                                           h0, cost, expansions, cpu_time,
+                                                           nbpaths, solver, false);
 
         // check that doctor recognizes this as a correct solution
         ASSERT_TRUE (solution.doctor ());
@@ -104,21 +109,23 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeUnit) {
         npancake_t::init ("unit");
 
         // and randomly generate a path from it with a random length
-        pair<vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
+        std::pair<std::vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
 
         // explicitly create other data for populating this solution
         int k = rand () % MAX_VALUE;
-        vector<npancake_t> path = randWalk.first;
+        std::vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
         int h0 = rand () % MAX_VALUE;
         int cost = randWalk.second;
         size_t expansions = 1 + rand () % MAX_VALUE;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, vector> solution (k, path, start, goal, 0,
-                                                      h0, cost, expansions, cpu_time, solver);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
+                                                           h0, cost, expansions, cpu_time,
+                                                           nbpaths, solver, false);
 
         // verify the solution is correct
         ASSERT_TRUE (solution.doctor ());
@@ -139,21 +146,23 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeHeavy) {
         npancake_t::init ("heavy-cost");
 
         // and randomly generate a path from it with a random length
-        pair<vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
+        std::pair<std::vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
 
         // explicitly create other data for populating this solution
         int k = rand () % MAX_VALUE;
-        vector<npancake_t> path = randWalk.first;
+        std::vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
         int h0 = rand () % MAX_VALUE;
         int cost = randWalk.second;
         size_t expansions = 1 + rand () % MAX_VALUE;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, vector> solution (k, path, start, goal, 0,
-                                                      h0, cost, expansions, cpu_time, solver);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
+                                                           h0, cost, expansions, cpu_time,
+                                                           nbpaths, solver, false);
 
         // verify the solution is correct
         ASSERT_TRUE (solution.doctor ());
@@ -171,18 +180,20 @@ TEST_F (SolutionFixture, ErrorEmptySolutionNPancake) {
         // generated with no expansions at all, and this is correct if and only
         // if the start and goal nodes are the same
         int k = rand () % MAX_VALUE;
-        vector<npancake_t> path;
+        std::vector<npancake_t> path;
         npancake_t start = randInstance (NB_DISCS);
         npancake_t goal = start;
         int h0 = rand () % MAX_VALUE;
         int cost = 0;
         size_t expansions = 1 + rand () % MAX_VALUE;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // create a solution which stores npancakes
-        khs::solution_t<npancake_t, vector> solution (k, path, start, goal, 0,
-                                                      h0, cost, expansions, cpu_time, solver);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
+                                                           h0, cost, expansions, cpu_time,
+                                                           nbpaths, solver, false);
 
         // check that doctor recognizes this solution is incorrect as a strictly
         // positive number of expanions is reported
@@ -208,25 +219,27 @@ TEST_F (SolutionFixture, ErrorStartNPancake) {
         npancake_t::init ("unit");
 
         // and randomly generate a path from it with a random length
-        pair<vector<npancake_t>, int> randWalk = randPath (start, 2 + rand () % MAX_PATH_LENGTH);
+        std::pair<std::vector<npancake_t>, int> randWalk = randPath (start, 2 + rand () % MAX_PATH_LENGTH);
 
         // explicitly create other data for populating this solution where the
         // start state is different. Note that the second state in the random
         // walk is necessarily different than the first one (because no state is
         // a descendant of itself) and thus it can be used to simulate this error.
         int k = rand () % MAX_VALUE;
-        vector<npancake_t> path = randWalk.first;
+        std::vector<npancake_t> path = randWalk.first;
         start = path[1];
         npancake_t goal = path.back ();
         int h0 = rand () % MAX_VALUE;
         int cost = randWalk.second;
         size_t expansions = 1 + rand () % MAX_VALUE;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, vector> solution (k, path, start, goal, 0,
-                                                      h0, cost, expansions, cpu_time, solver);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
+                                                           h0, cost, expansions, cpu_time,
+                                                           nbpaths, solver, false);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -237,7 +250,7 @@ TEST_F (SolutionFixture, ErrorStartNPancake) {
     }
 }
 
-// Check that solutions with a end node other than the one appearing in the
+// Check that solutions with an end node other than the one appearing in the
 // solution path are recognized as incorrect
 // ----------------------------------------------------------------------------
 TEST_F (SolutionFixture, ErrorGoalNPancake) {
@@ -251,7 +264,7 @@ TEST_F (SolutionFixture, ErrorGoalNPancake) {
         npancake_t::init ("unit");
 
         // and randomly generate a path from it with a random length
-        pair<vector<npancake_t>, int> randWalk = randPath (start, 2 + rand () % MAX_PATH_LENGTH);
+        std::pair<std::vector<npancake_t>, int> randWalk = randPath (start, 2 + rand () % MAX_PATH_LENGTH);
 
         // explicitly create other data for populating this solution where the
         // goal state is different. Note that the before last state in the
@@ -259,17 +272,19 @@ TEST_F (SolutionFixture, ErrorGoalNPancake) {
         // state is a descendant of itself) and thus it can be used to simulate
         // this error.
         int k = rand () % MAX_VALUE;
-        vector<npancake_t> path = randWalk.first;
+        std::vector<npancake_t> path = randWalk.first;
         npancake_t goal = path[path.size () - 2];
         int h0 = rand () % MAX_VALUE;
         int cost = randWalk.second;
         size_t expansions = 1 + rand () % MAX_VALUE;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, vector> solution (k, path, start, goal, 0,
-                                                      h0, cost, expansions, cpu_time, solver);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
+                                                           h0, cost, expansions, cpu_time,
+                                                           nbpaths, solver, false);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -295,12 +310,12 @@ TEST_F (SolutionFixture, ErrorAdjacencyNPancake) {
 
         // and randomly generate a path from it with a random length, at least
         // 10
-        pair<vector<npancake_t>, int> randWalk = randPath (start, 10 + rand () % MAX_PATH_LENGTH);
+        std::pair<std::vector<npancake_t>, int> randWalk = randPath (start, 10 + rand () % MAX_PATH_LENGTH);
 
         // modify the path so that a couple of states are not adjacent. To do
         // this, randomly pick a location of the path and remove it
         int k = rand () % MAX_VALUE;
-        vector<npancake_t> path;
+        std::vector<npancake_t> path;
         int idx = 1 + rand () % (randWalk.first.size () - 2);
         copy (randWalk.first.begin (), randWalk.first.begin () + idx, back_inserter (path));
         copy (randWalk.first.begin () + idx + 1, randWalk.first.end (), back_inserter (path));
@@ -315,12 +330,13 @@ TEST_F (SolutionFixture, ErrorAdjacencyNPancake) {
         int h0 = rand () % MAX_VALUE;
         size_t expansions = 1 + rand () % MAX_VALUE;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
-
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, vector> solution (k, path, start, goal, 0,
-                                                      h0, cost, expansions, cpu_time, solver);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
+                                                           h0, cost, expansions, cpu_time,
+                                                           nbpaths, solver, false);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -345,21 +361,23 @@ TEST_F (SolutionFixture, ErrorCostNPancakeHeavy) {
         npancake_t::init ("heavy-cost");
 
         // and randomly generate a path from it with a random length
-        pair<vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
+        std::pair<std::vector<npancake_t>, int> randWalk = randPath (start, rand () % MAX_PATH_LENGTH);
 
         // explicitly create other data for populating this solution
         int k = rand () % MAX_VALUE;
-        vector<npancake_t> path = randWalk.first;
+        std::vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
         int h0 = rand () % MAX_VALUE;
         int cost = randWalk.second + 1 + rand () % MAX_VALUE;
         size_t expansions = 1 + rand () % MAX_VALUE;
         double cpu_time = static_cast<double>(rand () % MAX_VALUE);
-        string solver = randString (50);
+        int nbpaths = rand () & MAX_VALUE;
+        std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, vector> solution (k, path, start, goal, 0,
-                                                      h0, cost, expansions, cpu_time, solver);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
+                                                           h0, cost, expansions, cpu_time,
+                                                           nbpaths, solver, false);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -367,6 +385,90 @@ TEST_F (SolutionFixture, ErrorCostNPancakeHeavy) {
         // ensure the error is indeed that the start state is different than the
         // one appearing in the solution path
         ASSERT_EQ (solution.get_error_code (), khs::solution_error::ERR_SOLUTION_COST);
+    }
+}
+
+// Check that a solver requiring to find simple paths finds no error when given
+// loopless paths
+// ----------------------------------------------------------------------------
+TEST_F (SolutionFixture, ErrorSimplePathPancake) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find a single solution between a couple of random
+        // instances of the 5-Pancake
+        int k = 1;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        npancake_t::init ("unit");
+
+        // use BELA* to find a single optimal solution
+        khs::bela<npancake_t> manager {k, start, goal, false};
+        auto ksolution = manager.solve ();
+
+        // get the only solution path generated, which is known to be loopless
+        // (since it is optimal), and create a solution created on behalf of a
+        // solver which generates simple paths
+        auto s0 = ksolution[0];
+        khs::solution_t<npancake_t, std::vector> optimal (k, s0.get_solution (), start, goal, 0,
+                                                     s0.get_h0 (), s0.get_cost (), s0.get_expansions (), s0.get_cpu_time (),
+                                                     s0.get_nbpaths (), s0.get_solver (), true);
+
+        // verify the solution is correct
+        ASSERT_TRUE (optimal.doctor ());
+    }
+}
+
+// Check that when examining solutions generated by a solver requiring to find
+// simple paths the correct error is generated when a solution contains loops
+// ----------------------------------------------------------------------------
+TEST_F (SolutionFixture, ErrorNonSimplePathPancake) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find up to 10 different solutions between a
+        // couple of random instances of the 5-Pancake
+        int k = 10;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        npancake_t::init ("unit");
+
+        // use BELA* to find a single optimal solution
+        khs::bela<npancake_t> manager {k, start, goal, false};
+        auto ksolution = manager.solve ();
+
+        // traverse all the solutions found and choose any which contains a loop
+        auto solutions = ksolution.get_solutions ();
+        std::unique_ptr<khs::solution_t<npancake_t, std::vector>> ptr;
+        for (const auto& is : solutions) {
+
+            // in case a loop has been found in this solution then store it
+            // separately explicitly saying that this solution was generated by
+            // a solver which is required to generate simple solution paths
+            if (!isSimplePath(is.get_solution ())) {
+
+                ptr = make_unique<khs::solution_t<npancake_t, std::vector>> (1, is.get_solution (), start, goal, 0,
+                                                                        is.get_h0 (), is.get_cost (), is.get_expansions (), is.get_cpu_time (),
+                                                                        is.get_nbpaths (), is.get_solver (), true);
+                break;
+            }
+        }
+
+        // verify the solution is incorrect
+        if (ptr) {
+            ASSERT_FALSE (ptr->doctor ());
+
+            // ensure the error is indeed that the start state is different than the
+            // one appearing in the solution path
+            ASSERT_EQ (ptr->get_error_code (), khs::solution_error::ERR_NON_SIMPLE_PATH);
+
+        }
     }
 }
 

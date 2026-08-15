@@ -18,16 +18,15 @@
 namespace khs {
 
     // Labeled backpointers are used to reconstruct the solution path and also
-    // to discover bridges in a graph: if the optimal cost of the start state
-    // plus the cost of an operator plus the cost of a suffix is larger than the
-    // cost of any optimal path through this edge, a bridge has been found.
-    // Because the cost of an optimal path to the start vertex of the bridge is
-    // stored in the node, and all the different costs of all suffixes of the
-    // ending vertex of the bridge are stored also in the node, the cost of the
-    // operator has to be stored in the labeled backpointer.
+    // to discover sidetracks in a graph: if the optimal cost of the start
+    // vertex plus the cost of an operator is larger than the cost of an optimal
+    // path to the end vertex, a sidetrack has been found. Because the cost of
+    // an optimal path to the start vertex of the sidetrack is stored in the
+    // node, the cost of the operator has to be stored in the labeled
+    // backpointer.
     struct labeledbackpointer_t {
 
-        // INVARIANT: every laeled backpointer contains a pointer to its parent
+        // INVARIANT: every labeled backpointer contains a pointer to its parent
         // and it also stores the cost of the operator that generates the child
         // from its parent
         size_t _pointer;
@@ -43,6 +42,11 @@ namespace khs {
             return _pointer == other._pointer && _cost == other._cost;
         }
 
+        friend std::ostream& operator<< (std::ostream& stream, const labeledbackpointer_t& lbp) {
+            stream << "<" << lbp._pointer << ", " << lbp._cost << ">";
+            return stream;
+        }
+
         // getters
         const size_t& get_pointer () const { return _pointer; }
         const int& get_cost () const { return _cost; }
@@ -54,7 +58,7 @@ namespace khs {
     private:
 
         // INVARIANT: labeled backnodes use a vector of labeled backpointers to
-        // reconstruct the solution path, and also to discover bridges.
+        // reconstruct the solution path, and also to discover centroids.
         std::vector<labeledbackpointer_t> _backpointers;
 
         // In addition, every labeled backnode is equipped with a vector of
@@ -98,7 +102,7 @@ namespace khs {
             _gb.push_back(gb);
             return *this;
         }
-
+        
         friend std::ostream& operator<< (std::ostream& stream, const labelednode_t& node) {
 
             stream << " <" << node.get_state ();
@@ -119,6 +123,22 @@ namespace khs {
         }
 
         // methods
+
+        // return whether the specified backpointer exists in this node or not
+        bool find_bp (const labeledbackpointer_t& backpointer) const {
+            return std::find (_backpointers.begin (), _backpointers.end (), backpointer) != _backpointers.end ();
+        }
+
+        // This second version of the same method ignores the cost and return
+        // true in case this node contains a backpointer to the given index
+        bool find_bp (const size_t ptr) const {
+            for (const auto& ibp: _backpointers) {
+                if (ibp.get_pointer () == ptr) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         // return whether this node has the given backward g-value
         bool find_gb (int gb) const {

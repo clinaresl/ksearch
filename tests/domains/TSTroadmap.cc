@@ -13,7 +13,19 @@
 #include "../TSTdefs.h"
 #include "../fixtures/TSTroadmapfixture.h"
 
-using namespace std;
+graph_t RoadmapFixture::dgraph = graph_t ();
+graph_t RoadmapFixture::tgraph = graph_t ();
+
+// Check that graphs can be created using the default constructor
+// ----------------------------------------------------------------------------
+TEST_F (RoadmapFixture, DefaultGraph) {
+
+    graph_t graph;
+
+    // and check that it contains no vertices and no edges
+    ASSERT_EQ (graph.get_nbvertices (), 0);
+    ASSERT_EQ (graph.get_nbedges (), 0);
+}
 
 // Check that instances of a roadmap are correctly created
 TEST_F (RoadmapFixture, ExplicitRoadmap) {
@@ -29,146 +41,139 @@ TEST_F (RoadmapFixture, ExplicitRoadmap) {
     }
 }
 
-// Check that the static data member with the graph definition is correctly
-// created under the unit variant
-TEST_F (RoadmapFixture, GraphUnitDefinition) {
+// Check that the contents of a full graph with travellend distance are
+// correctly retrieved from a binary file
+// ----------------------------------------------------------------------------
+TEST_F (RoadmapFixture, ReadBinaryDistance) {
 
-    for (auto i = 0 ; i < NB_TESTS/100 ; i++) {
+    graph_t graph_txt;
 
-        // create a file which defines a graph grid of a randome length between
-        // 10 and 50 with unit edge costs
-        int length = 10 + (rand () % 40);
-        string filename = "testgraph";
-        map<int, pair<double, double>> coordinates;
-        generate_graph (filename, coordinates, length, true);
+    // request reading the entire graph of NY from the files stored in testdata/
+    ASSERT_GT(graph_txt.load ("testdata/USA-road-d.NY.gr"), 0);
 
-        // next, load the graph definition under the unit variant
-        roadmap_t::init (filename, coordinates, "unit");
+    // Now, read the contents of the same graph but from the binary file
+    // generated in the previous unit test ---order matters!!
+    graph_t graph_bin;
+    graph_bin.read_binary ("testdata/USA-road-d.NY.gr", false);
 
-        // verify the number of edges is correct: there are (length-2)^2 nodes with
-        // four edges each; (length-2)*4 nodes with three edges each and, finally, 4
-        // nodes with exactly two edges each. This expression simplifies to
-        // 4*length*(length-1)
-        ASSERT_EQ (roadmap_t::get_graph ().get_nbedges (),
-                   4*length*(length-1));
+    // verify the names of the files used for generating data are correct
+    ASSERT_EQ (graph_txt.get_filename (), graph_bin.get_filename ());
 
-        // verify the contents of the graph are correctly loaded into main
-        // memory
-        for (auto i = 0 ; i < length*length ; i++) {
+    // check the information on all vertices
+    ASSERT_EQ (graph_txt.get_nbvertices (), graph_bin.get_nbvertices ());
+    for (std::size_t i = 0 ; i < graph_bin.get_nbvertices () ; i++) {
 
-            // first, take all the successors of the i-th node
-            auto successors = roadmap_t::get_graph ().get_edges (i);
+        // check the longitude and latitude are the same numbers retrieved
+        // directly from the input file
+        ASSERT_EQ (graph_txt.get_vertex (i)._longitude, graph_bin.get_vertex (i)._longitude);
+        ASSERT_EQ (graph_txt.get_vertex (i)._latitude, graph_bin.get_vertex (i)._latitude);
+    }
 
-            // verify the number of immediately accessible locations is correct
-            auto colid = i%length;
-            auto rowid = i/length;
+    // next, ensure that all edges are correctly retrieved
+    ASSERT_EQ (graph_txt.get_nbedges (), graph_bin.get_nbedges ());
+    for (std::size_t i = 0 ; i < graph_txt.get_nbvertices () ; i++) {
 
-            // central locations
-            if ((colid > 0) && (colid < length-1) % (rowid > 0) && (rowid < length-1)) {
-                ASSERT_EQ (successors.size (), 4);
-            }
+        // and verify that this vertex contains exactly the same neighbours in
+        // both graphs. Importantly, equalEdges is used to compare the children
+        // in one graph and the other because the eq operator of edges only uses
+        // the final vertex.
+        auto tchildren = graph_txt.get_edges (i);
+        auto bchildren = graph_bin.get_edges (i);
+        ASSERT_EQ (tchildren.size (), bchildren.size ());
+        ASSERT_TRUE (equalEdges (tchildren, bchildren));
 
-            // side locations: upper and lower rows
-            if ( ((rowid == 0) || (rowid == length-1)) && (colid > 0) && (colid < length-1) ) {
-                ASSERT_EQ (successors.size (), 3);
-            }
+        // and also the same parents
+        auto tparents = graph_txt.get_parents (i);
+        auto bparents = graph_bin.get_parents (i);
+        ASSERT_EQ (tparents.size (), bparents.size ());
+        ASSERT_TRUE (equalEdges (tparents, bparents));
 
-            // side locations: left and right columns
-            if ( ((colid == 0) || (colid == length-1)) && (rowid > 0) && (rowid < length-1) ) {
-                ASSERT_EQ (successors.size (), 3);
-            }
+        // Verify also that the information of parents and successors is
+        // consistent
 
-            // corner locations
-            if ( ((colid == 0) && (rowid == 0 || rowid == length-1)) ||
-                 ((colid == length-1) && (rowid == 0 || rowid == length-1)) ) {
-                ASSERT_EQ (successors.size (), 2);
-            }
-
-            // next, verify that all successors are correctly defined, i.e., the
-            // successors stored in the graph are precisely the neighoburs
-            // defined in a square grid of the randomly chosen length
-            auto neighbours = get_neighbours (i, length, true);
-            ASSERT_EQ (successors.size (), neighbours.size ());
-            for (const auto& successor: successors) {
-                ASSERT_TRUE (find (neighbours.begin (), neighbours.end (), make_pair (successor.get_to (), successor.get_weight ())) != neighbours.end ());
-            }
+        // First, every child of this vertex contains this node as its parent
+        for (auto const& ichild: tchildren) {
+            auto iparents = graph_bin.get_parents (ichild._to);
+            ASSERT_NE (find (iparents.begin (), iparents.end (), edge_t{i, 0}),
+                       iparents.end ());
         }
 
-        // remove the graph file
-        ASSERT_EQ (remove (filename.c_str ()), 0);
+        // Second, every parent of this vertex must contain this node as a
+        // successor
+        for (auto const& iparent: tparents) {
+            auto ichildren = graph_bin.get_edges (iparent._to);
+            ASSERT_NE (find (ichildren.begin (), ichildren.end (), edge_t{i, 0}),
+                       ichildren.end ());
+        }
     }
 }
 
-// Check that the static data member with the graph definition is correctly
-// created under the dimacs variant
-TEST_F (RoadmapFixture, GrapDimacsDefinition) {
+// Check that the contents of a full graph with travellend time are
+// correctly retrieved from a binary file
+// ----------------------------------------------------------------------------
+TEST_F (RoadmapFixture, ReadBinaryTime) {
 
-    for (auto i = 0 ; i < NB_TESTS/100 ; i++) {
+    graph_t graph_txt;
 
-        // create a file which defines a graph grid of a randome length between
-        // 10 and 50 with unit edge costs
-        int length = 10 + (rand () % 40);
-        string filename = "testgraph";
-        map<int, pair<double, double>> coordinates;
-        generate_graph (filename, coordinates, length, false);
+    // request reading the entire graph of NY from the files stored in testdata/
+    ASSERT_GT(graph_txt.load ("testdata/USA-road-t.NY.gr"), 0);
 
-        // next, load the graph definition under the dimacs variant
-        roadmap_t::init (filename, coordinates, "dimacs");
+    // Now, read the contents of the same graph but from the binary file
+    // generated in the previous unit test ---order matters!!
+    graph_t graph_bin;
+    graph_bin.read_binary ("testdata/USA-road-t.NY.gr", false);
 
-        // verify the number of edges is correct: there are (length-2)^2 nodes with
-        // four edges each; (length-2)*4 nodes with three edges each and, finally, 4
-        // nodes with exactly two edges each. This expression simplifies to
-        // 4*length*(length-1)
-        ASSERT_EQ (roadmap_t::get_graph ().get_nbedges (),
-                   4*length*(length-1));
+    // verify the names of the files used for generating data are correct
+    ASSERT_EQ (graph_txt.get_filename (), graph_bin.get_filename ());
 
-        // verify the contents of the graph are correctly loaded into main
-        // memory
-        for (auto i = 0 ; i < length*length ; i++) {
+    // check the information on all vertices
+    ASSERT_EQ (graph_txt.get_nbvertices (), graph_bin.get_nbvertices ());
+    for (std::size_t i = 0 ; i < graph_bin.get_nbvertices () ; i++) {
 
-            // first, take all the successors of the i-th node
-            auto successors = roadmap_t::get_graph ().get_edges (i);
+        // check the longitude and latitude are the same numbers retrieved
+        // directly from the input file
+        ASSERT_EQ (graph_txt.get_vertex (i)._longitude, graph_bin.get_vertex (i)._longitude);
+        ASSERT_EQ (graph_txt.get_vertex (i)._latitude, graph_bin.get_vertex (i)._latitude);
+    }
 
-            // verify the number of immediately accessible locations is correct
-            auto colid = i%length;
-            auto rowid = i/length;
+    // next, ensure that all edges are correctly retrieved
+    ASSERT_EQ (graph_txt.get_nbedges (), graph_bin.get_nbedges ());
+    for (std::size_t i = 0 ; i < graph_txt.get_nbvertices () ; i++) {
 
-            // central locations
-            if ((colid > 0) && (colid < length-1) % (rowid > 0) && (rowid < length-1)) {
-                ASSERT_EQ (successors.size (), 4);
-            }
+        // and verify that this vertex contains exactly the same neighbours in
+        // both graphs. Importantly, equalEdges is used to compare the children
+        // in one graph and the other because the eq operator of edges only uses
+        // the final vertex.
+        auto tchildren = graph_txt.get_edges (i);
+        auto bchildren = graph_bin.get_edges (i);
+        ASSERT_EQ (tchildren.size (), bchildren.size ());
+        ASSERT_TRUE (equalEdges (tchildren, bchildren));
 
-            // side locations: upper and lower rows
-            if ( ((rowid == 0) || (rowid == length-1)) && (colid > 0) && (colid < length-1) ) {
-                ASSERT_EQ (successors.size (), 3);
-            }
+        // and also the same parents
+        auto tparents = graph_txt.get_parents (i);
+        auto bparents = graph_bin.get_parents (i);
+        ASSERT_EQ (tparents.size (), bparents.size ());
+        ASSERT_TRUE (equalEdges (tparents, bparents));
 
-            // side locations: left and right columns
-            if ( ((colid == 0) || (colid == length-1)) && (rowid > 0) && (rowid < length-1) ) {
-                ASSERT_EQ (successors.size (), 3);
-            }
+        // Verify also that the information of parents and successors is
+        // consistent
 
-            // corner locations
-            if ( ((colid == 0) && (rowid == 0 || rowid == length-1)) ||
-                 ((colid == length-1) && (rowid == 0 || rowid == length-1)) ) {
-                ASSERT_EQ (successors.size (), 2);
-            }
-
-            // next, verify that all successors are correctly defined, i.e., the
-            // successors stored in the graph are precisely the neighoburs
-            // defined in a square grid of the randomly chosen length
-            auto neighbours = get_neighbours (i, length, false);
-            ASSERT_EQ (successors.size (), neighbours.size ());
-            for (const auto& successor: successors) {
-                ASSERT_TRUE (find (neighbours.begin (), neighbours.end (), make_pair (successor.get_to (), successor.get_weight ())) != neighbours.end ());
-            }
+        // First, every child of this vertex contains this node as its parent
+        for (auto const& ichild: tchildren) {
+            auto iparents = graph_bin.get_parents (ichild._to);
+            ASSERT_NE (find (iparents.begin (), iparents.end (), edge_t{i, 0}),
+                       iparents.end ());
         }
 
-        // remove the graph file
-        ASSERT_EQ (remove (filename.c_str ()), 0);
+        // Second, every parent of this vertex must contain this node as a
+        // successor
+        for (auto const& iparent: tparents) {
+            auto ichildren = graph_bin.get_edges (iparent._to);
+            ASSERT_NE (find (ichildren.begin (), ichildren.end (), edge_t{i, 0}),
+                       ichildren.end ());
+        }
     }
 }
-
 
 // Local Variables:
 // mode:cpp

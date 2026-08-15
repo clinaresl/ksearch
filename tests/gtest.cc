@@ -10,27 +10,27 @@
 // Main entry point of Google Tests
 //
 
+#include<fstream>
+
 #include "gtest/gtest.h"
 
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 
-    // Run specific tests only
-    // ::testing::GTEST_FLAG(filter) = "NodeFixture.*";
-    // ::testing::GTEST_FLAG(filter) = "ClosedFixture.*";
-    // ::testing::GTEST_FLAG(filter) = "ClassicalPerimeterFixture.*";
-    // ::testing::GTEST_FLAG(filter) = "SolutionFixture*";
-    // ::testing::GTEST_FLAG(filter) = "SolutionsFixture*";
-    // ::testing::GTEST_FLAG(filter) = "NPuzzleFixture.*";
-    // ::testing::GTEST_FLAG(filter) = "IDAFixture.*";
-    // ::testing::GTEST_FLAG(filter) = "BIDAFixture.*";
+    // save the original clog and redirect its output to a logging file
+    std::ofstream log_stream("libksearch_tests.log");
+    std::streambuf* original_buf = std::clog.rdbuf();
+    std::clog.rdbuf(log_stream.rdbuf());
 
-    // Exclude specific tests
-    // ::testing::GTEST_FLAG(filter) = "-NodeFixture.*";
+    // run the selection of tests
+    auto output = RUN_ALL_TESTS();
 
-    // and run the selection of tests
-    return RUN_ALL_TESTS();
+    // restore clog
+    std::clog.rdbuf(original_buf);
+
+    // and return the result
+    return output;
 }
 
 // Local Variables:

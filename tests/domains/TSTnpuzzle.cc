@@ -15,8 +15,6 @@
 
 #include "../fixtures/TSTnpuzzlefixture.h"
 
-using namespace std;
-
 // Check that instances are correctly recognized
 TEST_F (NPuzzleFixture, DefaultInstance) {
 
@@ -47,7 +45,7 @@ TEST_F (NPuzzleFixture, Variant) {
 
         // initialize the incremental table with the updates of the manhattan
         // distance, since that is the service which sets the current variant
-        string variant = rand () % 2 ? "unit" : "heavy-cost";
+        std::string variant = rand () % 2 ? "unit" : "heavy-cost";
         npuzzle_t::initops ();
         npuzzle_t::init (variant);
 
@@ -74,17 +72,15 @@ TEST_F (NPuzzleFixture, UnitIncrementalManhattan) {
 
         // now, examine all successors. Note that the goal is fake, but this
         // doesn't matter as it is not used!
-        vector<tuple<int, int, npuzzle_t>> successors;
-        instance.children (instance.h (instance), instance, successors);
-        for (auto isuccessor : successors) {
-
-            // get the information of this successor
-            auto [_, hval, istate] = isuccessor;
-
-            // and verify that the heuristic value of this successor is equal to
-            // its manhatan distance
-            ASSERT_EQ (hval, istate.h (instance));
-        }
+        instance.children (
+            instance.h (instance),
+            instance,
+            [&] (int g, int h, npuzzle_t&& successor) {
+                
+                // and verify that the heuristic value of this successor is
+                // equal to its manhatan distance
+                ASSERT_EQ (h, successor.h (instance));
+            });
     }
 }
 
@@ -106,17 +102,15 @@ TEST_F (NPuzzleFixture, HeavyCostIncrementalManhattan) {
 
         // now, examine all successors. Note that the goal is fake, but this
         // doesn't matter as it is not used!
-        vector<tuple<int, int, npuzzle_t>> successors;
-        instance.children (instance.h (instance), instance, successors);
-        for (auto isuccessor : successors) {
-
-            // get the information of this successor
-            auto [_, hval, istate] = isuccessor;
-
-            // and verify that the heuristic value of this successor is equal to
-            // its manhatan distance
-            ASSERT_EQ (hval, istate.h (instance));
-        }
+        instance.children (
+            instance.h (instance),
+            instance,
+            [&] (int g, int h, npuzzle_t&& successor) {
+                
+                // and verify that the heuristic value of this successor is equal to
+                // its manhatan distance
+                ASSERT_EQ (h, successor.h (instance));
+            });
     }
 }
 

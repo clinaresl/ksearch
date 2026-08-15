@@ -25,13 +25,9 @@
 
 #include "../solver.h"
 #include "../../src/ksearch.h"
+#include "../../src/version.h"
 
 #include "map_t.h"
-
-#define EXIT_OK 0
-#define EXIT_FAILURE 1
-
-using namespace std;
 
 extern "C" {
     char *xstrdup (char *p);
@@ -53,22 +49,22 @@ static struct option const long_options[] =
 };
 
 int get_instances (int num_instances, int distance,
-                   vector<instance_t<map_t>>& instances);
-void write_instances (const vector<instance_t<map_t>>& instances, string filename);
+                   std::vector<instance_t<map_t>>& instances);
+void write_instances (const std::vector<instance_t<map_t>>& instances, std::string filename);
 static int decode_switches (int argc, char **argv,
-                            string& mapname, int& number, string& filename, int& distance,
+                            std::string& mapname, int& number, std::string& filename, int& distance,
                             bool& want_verbose);
 static void usage (int status);
 
 // main entry point
 int main (int argc, char** argv) {
 
-    string mapname;                    // name of the file with the map to load
+    std::string mapname;                    // name of the file with the map to load
     int number;                              // number of instances to generate
-    string filename;                            // file with all cases to solve
+    std::string filename;                            // file with all cases to solve
     int distance;              // minimum distance between start and goal state
     bool want_verbose;                  // whether verbose output was requested
-    chrono::time_point<chrono::system_clock> tstart, tend;          // CPU time
+    std::chrono::time_point<std::chrono::system_clock> tstart, tend;          // CPU time
 
     // variables
     program_name = argv[0];
@@ -80,30 +76,30 @@ int main (int argc, char** argv) {
 
     // --mapname
     if (mapname == "") {
-        cerr << "\n Please, provide a file with the contents of the map to load" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a file with the contents of the map to load" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --number
     if (number < 0) {
-        cerr << "\n Please, provide a valid number of instances to generate" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a valid number of instances to generate" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --file
     if (filename == "") {
-        cerr << "\n Please, provide a file with the information of all start states to solve" << endl;
-        cerr << " wrt the identity permutation" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a file with the information of all start states to solve" << std::endl;
+        std::cerr << " wrt the identity permutation" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --distance
     if (distance < 0 || distance > 100) {
-        cerr << "\n Please, provide a valid distance between the start and goal states" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a valid distance between the start and goal states" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -116,41 +112,41 @@ int main (int argc, char** argv) {
 
     /* !-------------------------------------------------------------------! */
 
-    cout << endl;
-    cout << " map            : " << mapname << endl;
-    cout << "    width       : " << map_t::get_width () << endl;
-    cout << "    height      : " << map_t::get_height () << endl;
-    cout << " file           : " << filename << " (" << number << " instances)" << endl;
-    cout << " distance       : " << distance << "%" << endl << endl;
+    std::cout << std::endl;
+    std::cout << " map            : " << mapname << std::endl;
+    std::cout << "    width       : " << map_t::get_width () << std::endl;
+    std::cout << "    height      : " << map_t::get_height () << std::endl;
+    std::cout << " file           : " << filename << " (" << number << " instances)" << std::endl;
+    std::cout << " distance       : " << distance << "%" << std::endl << std::endl;
 
     /* !--------------------------- GENERATION ----------------------------! */
 
     // start the clock
-    tstart = chrono::system_clock::now ();
+    tstart = std::chrono::system_clock::now ();
 
     // generate the random instances
-    vector<instance_t<map_t>> tasks;
+    std::vector<instance_t<map_t>> tasks;
     get_instances (number, distance, tasks);
 
     // and write them in the specified file
     write_instances (tasks, filename);
 
     // end the clock
-    tend = chrono::system_clock::now ();
+    tend = std::chrono::system_clock::now ();
 
     /* !-------------------------------------------------------------------! */
 
     // Well done! Keep up the good job!
-    return (EXIT_OK);
+    return (EXIT_SUCCESS);
 }
 
 // Randomly generate num_instances in the specified map and return them in a
-// vector. The heuristic distance between every the start and goal states of
+// std::vector. The heuristic distance between every the start and goal states of
 // every task has to be at least equal to the given distance.
 //
 // Return the number of instances generated
 int get_instances (int num_instances, int distance,
-                   vector<instance_t<map_t>>& instances) {
+                   std::vector<instance_t<map_t>>& instances) {
 
     int width = map_t::get_width ();                        // width of the map
     int height = map_t::get_height ();                     // height of the map
@@ -183,8 +179,8 @@ int get_instances (int num_instances, int distance,
         if (!start.blocked (x0, y0) && !goal.blocked (x1, y1) &&
             h >= distance * max_distance / 100 ) {
 
-            // add this instance to the vector to return
-            instances.push_back (instance_t<map_t>{to_string (instances.size ()),
+            // add this instance to the std::vector to return
+            instances.push_back (instance_t<map_t>{std::to_string (instances.size ()),
                     start, goal});
         }
     }
@@ -193,19 +189,19 @@ int get_instances (int num_instances, int distance,
 }
 
 // write all the given instances in the specified filename
-void write_instances (const vector<instance_t<map_t>>& instances, string filename) {
+void write_instances (const std::vector<instance_t<map_t>>& instances, std::string filename) {
 
-    std::ofstream istream (filename, ios::out);
+    std::ofstream istream (filename, std::ios::out);
 
     // verify I/O operations are available
     if (!istream.good ()) {
-        throw runtime_error ("[write_instances] Error opening file!");
+        throw std::runtime_error ("[write_instances] Error opening file!");
     }
 
     // write all instances in the given file
     for (auto& instance : instances) {
 
-        istream << instance << endl;
+        istream << instance << std::endl;
     }
 }
 
@@ -213,7 +209,7 @@ void write_instances (const vector<instance_t<map_t>>& instances, string filenam
 // index of the first non-option argument
 static int
 decode_switches (int argc, char **argv,
-                 string& mapname, int& number, string& filename, int& distance,
+                 std::string& mapname, int& number, std::string& filename, int& distance,
                  bool& want_verbose) {
 
     int c;
@@ -239,25 +235,25 @@ decode_switches (int argc, char **argv,
             mapname = optarg;
             break;
         case 'n':  /* --solver */
-            number = stoi (optarg);
+            number = std::stoi (optarg);
             break;
         case 'f':  /* --file */
             filename = optarg;
             break;
         case 'D': /* --distance */
-            distance = stoi (optarg);
+            distance = std::stoi (optarg);
             break;
         case 'v':  /* --verbose */
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (maps generator) " << CMAKE_VERSION << endl;
-            cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl;
-            exit (EXIT_OK);
+            std::cout << " khs (maps generator) " << KSEARCH_VERSION << " (" << KSEARCH_GIT_VERSION << ")" << std::endl;
+            std::cout << " " << CMAKE_BUILD_TYPE << " Build Type" << std::endl;
+            exit (EXIT_SUCCESS);
         case 'h':
-            usage (EXIT_OK);
+            usage (EXIT_SUCCESS);
         default:
-            cout << endl << " Unknown argument!" << endl;
+            std::cout << std::endl << " Unknown argument!" << std::endl;
             usage (EXIT_FAILURE);
         }
     }
@@ -268,9 +264,9 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " Random generator of instances for the maps domain" << endl << endl;
-    cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
-    cout << "\
+    std::cout << std::endl << " " << program_name << " Random generator of instances for the maps domain" << std::endl << std::endl;
+    std::cout << " Usage: " << program_name << " [OPTIONS]" << std::endl << std::endl;
+    std::cout << "\
  Mandatory arguments:\n\
       -m, --map [STRING]         filename with the map to load. The file contents should be arranged according to the file format\n\
                                  given in movingai. See the documentation for additional help\n\

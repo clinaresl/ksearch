@@ -39,18 +39,18 @@ namespace khs {
         // return a path of states from the given pointer in closed until the
         // start state (which is recognized because it has a null backwards
         // pointer), and add the specified goal state at the end
-        const vector<T> _reconstruct_path (closed_t<backnode_t<T>>& closed,
+        const std::vector<T> _reconstruct_path (closed_t<backnode_t<T>>& closed,
                                            const backpointer_t& bp,
                                            const T& goal) const {
 
             // create a vector to store the solution path and also a back
             // pointer to use
-            vector<T> path;
+            std::vector<T> path;
             auto backpointer = bp;
 
             // starting from the backpointer move backwards adding nodes from
             // closed in the solution path until the start state is found
-            while (backpointer.get_pointer () != string::npos) {
+            while (backpointer.get_pointer () != std::string::npos) {
 
                 // add this node to the solution path
                 auto node = closed[backpointer.get_pointer ()];
@@ -76,11 +76,12 @@ namespace khs {
 
         // Explicit constructor. Note that the brute-force search variant is
         // used by default. To enable heuristic search use brote_fofce=false
-        mA (const int k, const T& start, const T& goal, const bool brute_force = true) :
+        mA (const int k, const T& start, const T& goal,
+            const bool brute_force = true) :
             bsolver<T>(k),
-            _start       { backnode_t<T> {start}},
-            _goal        { backnode_t<T> {goal }},
-            _brute_force { brute_force }
+            _start                  { backnode_t<T> {start}},
+            _goal                   { backnode_t<T> {goal }},
+            _brute_force            { brute_force }
             {
 
                 // compute the heuristic distance of the start state to the goal
@@ -103,26 +104,31 @@ namespace khs {
 
         // The following method provides a convenient wrapper to generate
         // solutions more comfortably
-        const solution_t<T, vector> generate_solution (const vector<T>& path,
-                                                       const int g,
-                                                       const string& signature) {
+        const solution_t<T, std::vector> generate_solution (const std::vector<T>& path,
+                                                            const int g,
+                                                            const std::string& signature) {
 
             // return a solution with this information
-            return solution_t<T, vector> (bsolver<T>::_k,
-                                          path,
-                                          _start.get_state (),
-                                          _goal.get_state (),
-                                          bsolver<T>::_nbcentroids,
-                                          bsolver<T>::_h0,
-                                          g,
-                                          bsolver<T>::_expansions,
-                                          bsolver<T>::get_cpu_time (),
-                                          signature);
+            return solution_t<T, std::vector> (bsolver<T>::_k,
+                                               path,
+                                               _start.get_state (),
+                                               _goal.get_state (),
+                                               bsolver<T>::_nbcentroids,
+                                               bsolver<T>::_h0,
+                                               g,
+                                               bsolver<T>::_expansions,
+                                               bsolver<T>::get_cpu_time (),
+                                               0,
+                                               signature,
+                                               false);
         }
 
         // every solver must be uniquely identified by a signature
-        const string signature () const {
-            return (_brute_force ? "mDijkstra" : "mA*");
+        const std::string signature () const {
+            if (_brute_force) {
+                return "mDijkstra";
+            }
+            return "mA*";
         }
 
         // the main service of this class computes a solution of the k-shortest path
@@ -131,11 +137,26 @@ namespace khs {
         //    * If brute_force is true, then mDijkstra, i.e., with no heuristics is
         //      used
         //
-        //    * If brute_force is false then mA* is employed
+        //    * If brute_force is false then mA* is employed and the heuristic
+        //      is assumed to be consistent
         //
         // Importantly, the solutions shall be returned in the same order they are
         // generated!
-        ksolution_t<T, vector> solve ();
+        ksolution_t<T, std::vector> solve0 ();
+
+        // the main service of this class computes a solution of the k-shortest
+        // path problem from the start to the goal using one variant of mA*:
+        //
+        //    * If brute_force is true, then mA0, i.e., with no heuristics is
+        //      used
+        //
+        //    * If brute_force is false then the same code of the brute force
+        //      variant is used, with the only exception that f is set to g+h
+        //      with h being a consistent heuristic
+        //
+        // Importantly, the solutions shall be returned in the same order they
+        // are generated!
+        ksolution_t<T, std::vector> solve ();
 
     }; // class mA<T>
 
@@ -145,18 +166,19 @@ namespace khs {
     //    * If brute_force is true, then mDijkstra, i.e., with no heuristics is
     //      used
     //
-    //    * If brute_force is false then mA* is employed
+    //    * If brute_force is false then mA* is employed and the heuristic is
+    //      assumed to be consistent
     //
     // Importantly, the solutions shall be returned in the same order they are
     // generated!
     template<typename T>
-    ksolution_t<T, vector> mA<T>::solve () {
+    ksolution_t<T, std::vector> mA<T>::solve0 () {
 
         // Start the chrono!
-        bsolver<T>::_tstart = chrono::system_clock::now ();
+        bsolver<T>::_tstart = std::chrono::system_clock::now ();
 
         // First things first, create a container to store all solutions found
-        ksolution_t<T, vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
+        ksolution_t<T, std::vector> ksolution{bsolver<T>::_k, _start.get_state (), _goal.get_state ()};
 
         // In case the start and the goal nodes are the same, return immediately
         // with a single empty solution, and only one in spite of the number of
@@ -168,7 +190,7 @@ namespace khs {
 
             // create then a single solution with no path (and no expansions!)
             std::vector<T> path;
-            bsolver<T>::_tend = chrono::system_clock::now ();
+            bsolver<T>::_tend = std::chrono::system_clock::now ();
             ksolution += generate_solution (path, 0, signature ());
 
             // and return
@@ -178,7 +200,7 @@ namespace khs {
         // if the start and goal nodes are different, then create an open list
         // and add the start state to it with a f-value equal to its g-value,
         // and no backpointer
-        _start += backpointer_t{string::npos, 0};
+        _start += backpointer_t{std::string::npos, 0};
         bucket_t<backnode_t<T>> open;
         _start.set_h ((_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
         open.insert (_start, (_brute_force) ? 0 : _start.get_state ().h (_goal.get_state ()));
@@ -200,7 +222,7 @@ namespace khs {
                 // one backpointer, so that is the one used for reconstructing
                 // the path
                 std::vector<T> path;
-                bsolver<T>::_tend = chrono::system_clock::now ();
+                bsolver<T>::_tend = std::chrono::system_clock::now ();
                 ksolution += generate_solution (_reconstruct_path (closed,
                                                                    node.get_backpointer (0),
                                                                    _goal.get_state ()),
@@ -220,7 +242,7 @@ namespace khs {
             auto ptr = closed.find (node);
 
             // In case it has never been expanded
-            if (ptr == string::npos) {
+            if (ptr == std::string::npos) {
 
                 // Then add it to CLOSED for the first time. Note that the new
                 // node in CLOSED contains only one backpointer, the one stored
@@ -243,33 +265,49 @@ namespace khs {
 
             // expand this node. Note that the heuristic value is dismissed
             bsolver<T>::_expansions++;
-            vector<tuple<int, int, T>> successors;
-            const_cast<T&>(node.get_state ()).children ((_brute_force) ? 0 : node.get_h (),
-                                                        _goal.get_state (),
-                                                        successors);
+            node.get_state ().children (
+                (_brute_force) ? 0 : node.get_h (),
+                _goal.get_state (),
+                [&] (int g, int h, T&&successor) {
 
-            // and insert them all in OPEN adding the right backpointers
-            for (auto& successor : successors) {
+                    // create a backnode with this successor
+                    backnode_t<T> onode{std::move (successor),
+                        (_brute_force) ? 0 : h,
+                        node.get_g () + g};
 
-                // create a backnode with this successor
-                backnode_t<T> onode{get<2>(successor),
-                    (_brute_force) ? 0 : get<1>(successor),
-                    node.get_g () + get<0>(successor)};
+                    // set the backpointer to the location of its parent in CLOSED
+                    // at the last index
+                    auto bps = closed[ptr].get_backpointers ();
+                    onode += backpointer_t{ptr, bps.size ()-1};
 
-                // set the backpointer to the location of its parent in CLOSED
-                // at the last index
-                auto bps = closed[ptr].get_backpointers ();
-                onode += backpointer_t{ptr, bps.size ()-1};
-
-                // and add it to OPEN using the f-value as its index
-                open.insert (onode, onode.get_f ());
-            }
+                    // and add it to OPEN using the f-value as its index
+                    open.insert (std::move (onode), onode.get_f ());
+                });
         }
-
+        
         // at this point, not all solutions have been found. The best is to
         // return the number of solutions found
         return ksolution;
     }
+
+    // the main service of this class computes a solution of the k-shortest
+    // path problem from the start to the goal using one variant of mA*:
+    //
+    //    * If brute_force is true, then mA0, i.e., with no heuristics is
+    //      used
+    //
+    //    * If brute_force is false then the same code of the brute force
+    //      variant is used, with the only exception that f is set to g+h
+    //      with h being a consistent heuristic
+    //
+    // Importantly, the solutions shall be returned in the same order they
+    // are generated!
+    template<typename T>
+    ksolution_t<T, std::vector> mA<T>::solve () {
+
+        return solve0 ();
+    }
+
 
 } // namespace khs
 

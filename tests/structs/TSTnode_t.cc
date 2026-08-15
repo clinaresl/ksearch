@@ -15,8 +15,6 @@
 
 #include "../fixtures/TSTnodefixture.h"
 
-using namespace std;
-
 // Checks the creation of int nodes with default values
 // ----------------------------------------------------------------------------
 TEST_F (NodeFixture, DefaultValuesInt) {
@@ -26,7 +24,7 @@ TEST_F (NodeFixture, DefaultValuesInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::node_t<vector<int>> n {values};
+        khs::node_t<std::vector<int>> n {values};
 
         // next, verify that all attributes of this node take the default values
         ASSERT_EQ (n.get_g (), 0);
@@ -35,7 +33,7 @@ TEST_F (NodeFixture, DefaultValuesInt) {
 
         // make sure also the stable "pointers" in closed are initialized to
         // an impossible value
-        ASSERT_EQ (n.get_pointer (), string::npos);
+        ASSERT_EQ (n.get_pointer (), std::string::npos);
     }
 }
 
@@ -47,7 +45,7 @@ TEST_F (NodeFixture, DefaultValuesString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::node_t<string> n {value};
+        khs::node_t<std::string> n {value};
 
         // next, verify that all attributes of this node take the default values
         ASSERT_EQ (n.get_g (), 0);
@@ -56,7 +54,7 @@ TEST_F (NodeFixture, DefaultValuesString) {
 
         // make sure also the stable "pointers" in closed are initialized to an
         // impossible value
-        ASSERT_EQ (n.get_pointer (), string::npos);
+        ASSERT_EQ (n.get_pointer (), std::string::npos);
     }
 }
 
@@ -69,7 +67,7 @@ TEST_F (NodeFixture, SetValuesInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::node_t<vector<int>> n {values};
+        khs::node_t<std::vector<int>> n {values};
 
         // verify next that the state of this node is precisely the one given
         ASSERT_EQ (n.get_state (), values);
@@ -84,7 +82,7 @@ TEST_F (NodeFixture, SetValuesString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::node_t<string> n {value};
+        khs::node_t<std::string> n {value};
 
         // verify next that the state of this node is precisely the one given
         ASSERT_EQ (n.get_state (), value);
@@ -99,7 +97,7 @@ TEST_F (NodeFixture, EqualString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::node_t<string> n {value};
+        khs::node_t<std::string> n {value};
 
         // create another node using two different methods: copy constructor and
         // assignment
@@ -121,7 +119,7 @@ TEST_F (NodeFixture, NotEqualString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::node_t<string> n {value};
+        khs::node_t<std::string> n {value};
 
         // randomly choose a location and change its content. A while statement
         // is used because we ensure that the previous string is effectively
@@ -149,7 +147,7 @@ TEST_F (NodeFixture, LessThanString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::node_t<string> n {value};
+        khs::node_t<std::string> n {value};
 
         // randomly choose a location and change its content. A while statement
         // is used because we ensure that the previous string is effectively
@@ -180,7 +178,7 @@ TEST_F (NodeFixture, SetgInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::node_t<vector<int>> n {values};
+        khs::node_t<std::vector<int>> n {values};
 
         // set the g-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -208,7 +206,7 @@ TEST_F (NodeFixture, SetgString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::node_t<string> n {value};
+        khs::node_t<std::string> n {value};
 
         // set the g-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -237,7 +235,7 @@ TEST_F (NodeFixture, SethInt) {
         // create a node which just holds an array of integers randomly
         // generated
         auto values = randVectorInt (MAX_VALUES, MAX_VALUES, true);
-        khs::node_t<vector<int>> n {values};
+        khs::node_t<std::vector<int>> n {values};
 
         // set the h-value of this node to any value
         int val = rand () % MAX_VALUE;
@@ -265,7 +263,7 @@ TEST_F (NodeFixture, SethString) {
 
         // create a node which just holds a string randomly generated
         auto value = randString (MAX_VALUES);
-        khs::node_t<string> n {value};
+        khs::node_t<std::string> n {value};
 
         // set the h-value of this node to any value
         int val = rand () % MAX_VALUE;

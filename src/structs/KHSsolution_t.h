@@ -14,18 +14,20 @@
 #define _KHSSOLUTION_T_H_
 
 #include "../KHSdefs.h"
+#include "KHSiomanip.h"
 #include "KHSclosed_t.h"
 #include "KHSnode_t.h"
 
 #include <algorithm>
+#include <format>
+#include <sstream>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <type_traits>
 
 namespace khs {
-
-    using namespace std;
 
     // Definition of different error types
     enum class solution_error {
@@ -36,8 +38,9 @@ namespace khs {
         ERR_ADJACENT,
         ERR_SOLUTION_COST,
         ERR_INCR_COST,
-        ERR_NUM_SOLUTIONS,
         ERR_DUPLICATE_PATH,
+        ERR_NUM_SOLUTIONS,
+        ERR_NON_SIMPLE_PATH,
         NO_ERROR
     };
 
@@ -54,7 +57,7 @@ namespace khs {
         // of nodes is expanded and a specific CPU running time and memory are
         // used, so that the number of nodes expanded per second is
         // automatically computed.
-        string _name;                                          // instance name
+        std::string _name;                                     // instance name
         int _k;    // number of paths to compute in the k-shortest path problem
         T _start;                                                // start state
         T _goal;                                                  // goal state
@@ -67,7 +70,18 @@ namespace khs {
         double _cpu_time;                                   // elapsed CPU time
         double _expansions_per_second;       // number of expansions per second
         size_t _mem_usage;                                // Memory usage in MB
-        string _solver;
+
+        // every solution records the solver name that generates it and whether
+        // that solver generates simple paths or not
+        std::string _solver;                                     // solver name
+        bool _simple;         // whether solution paths should be simple or not
+
+        // Also, and only in the context of bBELA we are interested in computing
+        // the *extra* number of paths that are necessary to get k paths, i.e.,
+        // the number of non-simple paths generated while looking for k simple
+        // paths. This parameter is reported with value 0 for all the other
+        // "simple algorithms"
+        int _nbpaths;
 
         // Finally, when verifying a solution, an error code shall be given
         solution_error _error_code;
@@ -85,19 +99,22 @@ namespace khs {
         solution_t (const int k,
                     const path_t<T>& solution, const T& start, const T& goal,
                     const int nbcentroids, const int h0, const int cost,
-                    const size_t expansions, const double cpu_time, const string solver) :
-            _name        { ""          },
-            _k           { k },
-            _start       { start       },
-            _goal        { goal        },
-            _nbcentroids { nbcentroids },
-            _solution    { solution    },
-            _h0          { h0          },
-            _cost        { cost        },
-            _expansions  { expansions  },
-            _cpu_time    { cpu_time    },
-            _mem_usage   { 0           },
-            _solver      { solver      }
+                    const size_t expansions, const double cpu_time,
+                    const int nbpaths, const std::string solver, const bool simple) :
+            _name              { ""                },
+            _k                 { k                 },
+            _start             { start             },
+            _goal              { goal              },
+            _nbcentroids       { nbcentroids       },
+            _solution          { solution          },
+            _h0                { h0                },
+            _cost              { cost              },
+            _expansions        { expansions        },
+            _cpu_time          { cpu_time          },
+            _mem_usage         { 0                 },
+            _nbpaths           {           nbpaths },
+            _solver            { solver            },
+            _simple            { simple            }
             {
 
                 // automatically compute the length of the solution path and the
@@ -115,39 +132,43 @@ namespace khs {
         solution_t (solution_t&&) = default;
 
         // getters
-        const string& get_name () const
+        const std::string& get_name () const
             { return _name; }
-        const int get_k () const
+        int get_k () const
             { return _k; }
         const T& get_start () const
             { return _start; }
         const T& get_goal () const
             { return _goal; }
-        const int get_nbcentroids () const
+        int get_nbcentroids () const
             { return _nbcentroids; }
         const path_t<T>& get_solution () const
             { return _solution; }
-        const int get_h0 () const
+        int get_h0 () const
             { return _h0; }
-        const int get_length () const
+        int get_length () const
             { return _length; }
-        const int get_cost () const
+        int get_cost () const
             { return _cost; }
-        const size_t get_expansions () const
+        size_t get_expansions () const
             { return _expansions; }
-        const double get_cpu_time () const
+        double get_cpu_time () const
             { return _cpu_time; }
-        const size_t get_mem_usage () const
+        size_t get_mem_usage () const
             { return _mem_usage; }
-        const double get_expansions_per_second () const
+        double get_expansions_per_second () const
             { return _expansions_per_second; }
-        const string& get_solver () const
+        int get_nbpaths () const
+            { return _nbpaths; }
+        const std::string& get_solver () const
             { return _solver; }
+        bool get_simple () const
+            { return _simple; }
         const solution_error& get_error_code () const
             { return _error_code; }
 
         // setters
-        void set_name (const string value)
+        void set_name (const std::string value)
             { _name = value;}
         void set_cpu_time (const double value) {
 
@@ -184,7 +205,7 @@ namespace khs {
             return solution_t<T, std::vector>(this->_k, std::vector<T>(_solution.begin(), _solution.end()),
                                               this->_start, this->_goal, this->_nbcentroids,
                                               this->_h0, this->_cost, this->_expansions,
-                                              this->_cpu_time, this->_solver);
+                                              this->_cpu_time, this->_nbpaths, this->_solver, this->_simple);
         }
 
 
@@ -196,22 +217,23 @@ namespace khs {
 
             // compute the children of item1. Neither the heuristic value of
             // this node, nor the goal matter as we are interested only in the
-            // "textual" representation of children
-            vector<tuple<int, int, T>> successors;
-            item1.children (0, item2, successors);
+            // "textual" representation of children. Admittedly, this
+            // implementation examines all children even if the child of
+            // interest is found early. My current implementation of children
+            // does not allow stopping the generation of all descendants
+            bool found = false;
+            item1.children (
+                0,
+                item2,
+                [&] (int g, int h, T&& successor) {
 
-            // now, verify whether item2 is any of these
-            for (auto isuccessor : successors) {
+                    // if this is the item given second, annotate it
+                    // was found
+                    found |= (successor == item2);
+                });
 
-                // if this is the item given second, return true
-                if (get<2>(isuccessor) == item2) {
-                    return true;
-                }
-            }
-
-            // at this point, the element has not been found and thus, return
-            // false
-            return false;
+            // and return whether the element was found, or not
+            return found;
         }
 
         // return the edge cost of the operator that gets to item2 from item1.
@@ -219,25 +241,30 @@ namespace khs {
         // is returned
         static int edge_cost (T item1, T item2) {
 
-            // compute the children of item1. Neither the heuristic value of
-            // this node, nor the goal matter as we are interested only in the
-            // "textual" representation of children
-            vector<tuple<int, int, T>> successors;
-            item1.children (0, item2, successors);
+            // compute the children of item1 and check whether item2 is among
+            // its descendants. If so, return the cost of the operator. Neither
+            // the heuristic value of this node, nor the goal matter as we are
+            // interested only in the "textual" representation of children.
+            // Admittedly, this implementation examines all children even if the
+            // child of interest is found early. My current implementation of
+            // children does not allow stopping the generation of all
+            // descendants
+            int op_cost = -1;
+            item1.children (
+                0,
+                item2,
+                [&] (int g, int h, T&& successor) {
 
-            // now, look for item2 among the successors
-            for (auto isuccessor : successors) {
+                    // if this is the item given second, annotate
+                    // the operator cost
+                    if (successor == item2) {
+                        op_cost = g;
+                    }
+                });
 
-                // if this is the item given second, return the cost of this
-                // edge
-                if (get<2>(isuccessor) == item2) {
-                    return get<0>(isuccessor);
-                }
-            }
-
-            // at this point, the element has not been found and thus, return
-            // a negative value
-            return -1;
+            // and return the cost of the operator that generates item2, or -1
+            // if it was not found
+            return op_cost;
         }
 
         // while the operator== verifies that all data members of two different
@@ -269,10 +296,22 @@ namespace khs {
             return adjacent_find_not (_solution.begin (), _solution.end (), func) == _solution.end ();
         }
 
-        // doctor verifies that this solution is correct by means of using check
-        // with the static member adjacent. It also verifies the first state in
-        // the path is the start state and that the last state in the path is
-        // the goal
+        // doctor verifies that this solution is correct:
+        //
+        // 1. empty solution paths are generated without ever expanding a single
+        //    node. This is not true if the given instance had no solution but
+        //    this never happens in the experiments performed here.
+        //
+        // 2. verify every solution path starts with the start state and ends in
+        //    the goal state
+        //
+        // 3. verify that every path contains states which are indeed adjacent
+        //
+        // 4. verify that the solution cost equals the sum of the cost edges
+        //
+        // 5. in case the manager generating this solution is required to
+        //    generate solution paths, then whether the solution contains loops or
+        //    not is checked also.
         bool doctor () {
 
             // By default, no error is detected
@@ -311,7 +350,7 @@ namespace khs {
                 return false;
             }
 
-            // Finally, verify that the cost of the path equals the sum of the
+            // Verify that the cost of the path equals the sum of the
             // edge costs in the solution path
             int cost = 0;
             for (auto it = _solution.begin () ; it != _solution.end ()-1 ; ++it) {
@@ -319,57 +358,173 @@ namespace khs {
             }
             if (_cost != cost) {
                 _error_code = solution_error::ERR_SOLUTION_COST;
+                return false;
             }
-            return (_cost == cost);
+
+            // Finally, in case the manager generating this solution is required
+            // to generate only simple solution paths, then it is verified
+            // whether the path is loopless or not
+            if (_simple) {
+
+                // traverse the entire solution path and store every state in an
+                // unordered set (which has amortized constant time).
+                std::unordered_set<T> visited;
+                for (const auto& istate: _solution) {
+
+                    // first, verify this node has not been traversed yet
+                    if (visited.find (istate) != visited.end ()) {
+                        _error_code = solution_error::ERR_NON_SIMPLE_PATH;
+                        return false;
+                    }
+
+                    // If not found, add it to the unordered set
+                    visited.insert (istate);
+                }
+            }
+
+            // At this point, the solution is known to be correct
+            return true;
         }
 
-        // return a string representing the given code
-        static const string get_error_msg (const solution_error& code) {
+        // return a string representing the given code. If "color" takes the
+        // value true then it is coloured and false otherwise
+        static const std::string get_error_msg (const solution_error& code, bool const color = false) {
             switch (code) {
-                case solution_error::UNCHECKED: return "? Unchecked";
+            case solution_error::UNCHECKED: return std::format ("{}{:>{}}{}", (color ? ansi::LightYellow : ""), "? Unchecked", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::NO_ERROR: return "✔ No error";
+            case solution_error::NO_ERROR: return std::format ("{}{:>{}}{}", (color ? ansi::LightSteelBlue : ""), "✔ No error", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::ERR_EXPANSIONS: return "✘ No solution found!";
+                case solution_error::ERR_EXPANSIONS: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ No solution found!", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::ERR_START: return "✘ Error start";
+                case solution_error::ERR_START: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ Error start", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::ERR_GOAL: return "✘ Error goal";
+                case solution_error::ERR_GOAL: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ Error goal", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::ERR_ADJACENT: return "✘ Error adjacency";
+                case solution_error::ERR_ADJACENT: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ Error adjacency", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::ERR_SOLUTION_COST: return "✘ Error solution cost";
+                case solution_error::ERR_SOLUTION_COST: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ Error solution cost", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::ERR_INCR_COST: return "✘ Error increasing cost";
+                case solution_error::ERR_INCR_COST: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ Error increasing cost", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::ERR_DUPLICATE_PATH: return "✘ Error duplicate solution path";
+                case solution_error::ERR_DUPLICATE_PATH: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ Error duplicate solution path", doctor_width, (color ? ansi::reset : ""));
                     break;
-                case solution_error::ERR_NUM_SOLUTIONS: return "✘ Error number of solutions";
+            case solution_error::ERR_NUM_SOLUTIONS: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ Error number of solutions", doctor_width, (color ? ansi::reset : ""));
+                    break;
+                case solution_error::ERR_NON_SIMPLE_PATH: return std::format ("{}{:>{}}{}", (color ? ansi::Tomato : ""), "✘ Error non-simple path", doctor_width, (color ? ansi::reset : ""));
                     break;
             }
+        }
+
+        // provide a numbers of headers with the name of all fields when
+        // printing the contents of this instance on a stream. The headers must
+        // be given a formatter to know how to show the headers
+        std::string headers (const formatter& fmt) const {
+
+            std::stringstream ss;
+
+            // When printing a single solution, all the information in this
+            // instance is shown in csv mode. However, in console mode only the
+            // most relevant fields are shown
+            if (fmt.mode == "csv") {
+                ss << "id;k;start;goal;h0;length;cost;#expansions;#centroids;#paths;mem usage;runtime;expansions/sec.;solver;doctor" << std::endl;
+            } else {
+
+                ss << std::format(
+                    "{}"
+                    "{:>{}}{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}{:>{}}{:>{}}"
+                    "{:>{}}"
+                    "{}",
+
+                    (fmt.mode == "color" ? ansi::DimGoldenrod : ""),
+                    
+                    "id",     6+name_width,
+                    "length", length_width, 
+                    "cost",   cost_width, 
+                    
+                    "#expansions", expansions_width, 
+                    "#centroids",  centroids_width, 
+                    
+                    "#paths",          paths_width, 
+                    "mem usage",       memory_width, 
+                    "runtime",         runtime_width, 
+                    "expansions/sec.", expansions_sec_width, 
+                    
+                    "doctor",           doctor_width,
+
+                    (fmt.mode == "color" ? ansi::reset : "")
+                    );
+            }
+
+            return ss.str ();
         }
 
         // stream out --- according to the .csv format using semicolon as a
         // separator
-        friend ostream& operator<< (ostream& stream, const solution_t& solution) {
+        friend std::ostream& operator<< (std::ostream& stream, const solution_t& solution) {
 
-            // Data is written in the same specific order. Note: first, that no
-            // header is generated and this falls within the responsibility of
-            // the owner of a solution; second, the solution is not shown
-            stream << solution.get_name () << ";";
-            stream << solution.get_k () << ";";
-            stream << solution.get_start () << ";";
-            stream << solution.get_goal () << ";";
-            stream << solution.get_h0 () << ";";
-            stream << solution.get_length () << ";";
-            stream << solution.get_cost () << ";";
-            stream << solution.get_expansions () << ";";
-            stream << solution.get_nbcentroids () << ";";
-            stream << solution.get_mem_usage () << ";";
-            stream << solution.get_cpu_time () << ";";
-            stream << solution.get_expansions_per_second () << ";";
-            stream << solution.get_solver () << ";";
-            stream << solution.get_error_msg (solution.get_error_code ());
+            // Get the internal flags in ::ios and show contents accordingly
+            std::stringstream ss;
+            int mode = stream.iword (index ());
+            if (mode == 0) {
+
+                // Data is written in the same specific order. Note: first, that no
+                // header is generated and this falls within the responsibility of
+                // the owner of a solution; second, the solution is not shown
+                ss << solution.get_name () << ";";
+                ss << solution.get_k () << ";";
+                ss << solution.get_start () << ";";
+                ss << solution.get_goal () << ";";
+                ss << solution.get_h0 () << ";";
+                ss << solution.get_length () << ";";
+                ss << solution.get_cost () << ";";
+                ss << solution.get_expansions () << ";";
+                ss << solution.get_nbcentroids () << ";";
+                ss << solution.get_nbpaths () << ";";
+                ss << solution.get_mem_usage () << ";";
+                ss << solution.get_cpu_time () << ";";
+                ss << solution.get_expansions_per_second () << ";";
+                ss << solution.get_solver () << ";";
+                ss << solution.get_error_msg (solution.get_error_code ());
+            } else {
+
+                // in console mode use the same width used in headers, with the
+                // only exception of the name which is six characters shorter.
+                // This is hand-tailored and the reason is that solvers take
+                // exactly three characters to prefix each line                
+                ss << std::format (
+                    "{}{:>{}}{}"
+                    "{}{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}{:>{}.{}f}{:>{}.{}f}"
+                    "{}"
+                    "{:>{}}",
+
+                    (mode == 2 ? ansi::DimLightSteelBlue : ""),
+                    solution.get_name (),   name_width,
+                    (mode == 2 ? ansi::reset : ""),
+
+                    (mode == 2 ? ansi::DimTan : ""),
+                    solution.get_length (), length_width,
+                    solution.get_cost (),   cost_width,
+
+                    solution.get_expansions (),  expansions_width,
+                    solution.get_nbcentroids (), centroids_width,
+                    
+                    solution.get_nbpaths (),               paths_width,
+                    solution.get_mem_usage (),             memory_width,
+                    solution.get_cpu_time (),              runtime_width, precision,
+                    solution.get_expansions_per_second (), expansions_sec_width, precision,
+                    (mode == 2 ? ansi::reset : ""),
+
+                    solution_t<T, path_t>::get_error_msg (solution.get_error_code (), (mode==2)), doctor_width
+                    );                
+            }
+
+            // and now redirect the contents of the string stream to the given
+            // stream
+            stream << ss.str ();
 
             return stream;
         }

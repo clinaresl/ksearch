@@ -20,9 +20,12 @@
 #include <tuple>
 #include <unistd.h>
 #include <vector>
+#include <regex>
 
 #include "helpers.h"
+#include "instance.h"
 #include "../src/ksearch.h"
+#include "../src/version.h"
 
 // the following function provides a report on the memory usage in Kbytes
 // Literally taken from the gist thirdwing/memory_check.cpp
@@ -49,42 +52,6 @@ void process_mem_usage(double& vm_usage, double& resident_set)
 }
 #endif
 
-// Definition of an instance
-template <typename T>
-class instance_t {
-
-private:
-
-    // INVARIANT: every instance consists of a name and a pair of states, the
-    // start and goal state
-    std::string _name;
-    T _start;
-    T _goal;
-
-public:
-
-    // Default constructors are forbidden
-    instance_t () = delete;
-
-    // Explicit constructor
-    instance_t (std::string name, T start, T goal) :
-        _name { name },
-        _start { start },
-        _goal { goal }
-        {}
-
-    // getters
-    std::string get_name () const { return _name; }
-    T get_start () const { return _start; }
-    T get_goal () const { return _goal; }
-
-    friend std::ostream& operator<< (std::ostream& stream, instance_t<T> right) {
-        stream << right.get_name () << " " << right.get_start () << " " << right.get_goal ();
-        return stream;
-    }
-
-}; // class instance_t<T>
-
 // Definition of a "generic" domain-dependent solver for the k shortest-path
 // problem. This solver registers a domain and a variant, a long with a number
 // of k values to try and run specific solvers over a selection of instances.
@@ -96,8 +63,8 @@ class solver {
 private:
 
     // INVARIANT: A domain-dependent solver is applied over a specific domain
-    // and variant ---where the typename D is the domain type of application,
-    // e.g., npancake. A vector of instances must be given, and also a
+    // and variant (where the typename D is the domain type of application,
+    // e.g., npancake). A vector of instances must be given, and also a
     // specification of the k values to try which are given as a string that has
     // to be decoded
     std::string _domain;                                              // Domain
@@ -130,20 +97,79 @@ private:
         // create a pointer to a solver
         khs::bsolver<D>* m;
 
+        // Extract parameters from name if they exist
+        std::regex solver_regex(solver_regex_spec);
+        std::smatch matches;
+        if (not std::regex_search(name, matches, solver_regex)) {
+            throw std::invalid_argument ("[solver<D>::_get_solver] Syntax error in the specification of solver: " + name);
+        }
+        std::string nameProcessed = matches[1];
+
+        // Optional parameters
+        std::vector<std::string> params;
+        try {
+            if (matches[2] != "") {
+                params.push_back (matches[2].str ());
+            } else {
+                params.push_back ("");
+            }
+            if (matches[3] != "") {
+                params.push_back(matches[3].str ());
+            } else {
+                params.push_back ("");
+            }
+            if (matches[4] != "") {
+                params.push_back(matches[4].str ());
+            } else {
+                params.push_back ("");
+            }
+            if (matches[5] != "") {
+                params.push_back(matches[5].str ());
+            } else {
+                params.push_back ("");
+            }
+        } catch (...) {
+            throw std::invalid_argument ("[solver<D>::_get_solver] Syntax error in the parameters of solver: " + name);
+        }
+
         // and now choose according to the given name
-        if (name == "mDijkstra") {
+        if (nameProcessed == "mDijkstra") {
             m = new khs::mA<D> (k, start, goal, true);
-        } else if (name == "belA0") {
+        } else if (nameProcessed == "BELA0") {
             m = new khs::bela<D> (k, start, goal, true);
-        } else if (name == "K0") {
-            m = new khs::kStarBlind<D> (k, start, goal, true, 20, 20, false);
-        } else if (name == "K*") {
-            m = new khs::kStar<D>(k, start, goal, true, 20, 20, false);
-        } else if (name == "mA*") {
+        } else if (nameProcessed == "K0") {
+            // use the default values in case that some parameters have not been given
+            params = union_string (std::vector<std::string>{"20", "20", "1", "0"}, params);
+            m = new khs::kStar<D>(k, start, goal, std::stoul(params[0]), std::stoul(params[1]), std::stoi(params[2]), std::stoi(params[3]), true, false);
+        } else if (nameProcessed == "bBELA0") {
+            // use the default values in case that some parameters have not been given
+            params = union_string (std::vector<std::string>{"0"}, params);
+            auto b = new khs::bbela<D> (k, start, goal, true);
+            b->set_n (std::stoi (params[0]));
+            m = (khs::bsolver<D>*)b;
+        } else if (nameProcessed == "sBELA0") {
+            m = new khs::sbela<D> (k, start, goal, true);
+        }
+
+        else if (nameProcessed == "K*") {
+            // use the default values in case that some parameters have not been given
+            params = union_string (std::vector<std::string>{"20", "20", "1", "0"}, params);
+            m = new khs::kStar<D>(k, start, goal, std::stoul(params[0]), std::stoul(params[1]), std::stoi(params[2]), std::stoi(params[3]), false, false);
+        } else if (nameProcessed == "mA*") {
             m = new khs::mA<D> (k, start, goal, false);
-        } else if (name == "belA*") {
+        } else if (nameProcessed == "BELA*") {
             m = new khs::bela<D> (k, start, goal, false);
-        } else {
+        } else if (nameProcessed == "bBELA*") {
+            // use the default values in case that some parameters have not been given
+            params = union_string (std::vector<std::string>{"0"}, params);
+            auto b = new khs::bbela<D>(k, start, goal, false);
+            b->set_n (std::stoi (params[0]));
+            m = (khs::bsolver<D>*)b;
+        } else if (nameProcessed == "sBELA*") {
+            m = new khs::sbela<D>(k, start, goal, false);
+        }
+
+        else {
             throw std::invalid_argument{"Unknown solver!"};
         }
 
@@ -153,14 +179,12 @@ private:
 
     public:
 
-    // Default constructors are forbidden
-    solver () = delete;
-
     // Explicit constructor. Both the domain and variant should be given, along
     // with a vector of instances to solve, and the specification of the k
     // values to try
-    solver (std::string domain, std::string variant,
-            std::vector<instance_t<D>> instances, std::string kspec) :
+    solver (std::string const domain, std::string const variant,
+            std::vector<instance_t<D>> const instances,
+            std::string const kspec) :
         _domain { domain },
         _variant { variant },
         _instances { instances },
@@ -173,10 +197,10 @@ private:
         }
 
     // getters
-    std::string get_domain () const { return _domain; }
-    std::string get_variant () const { return _variant; }
-    std::vector<instance_t<D>> get_instances () const { return _instances; }
-    std::string get_kspec () const { return _kspec; }
+    [[nodiscard]] const std::string get_domain () const { return _domain; }
+    [[nodiscard]] const std::string get_variant () const { return _variant; }
+    [[nodiscard]] const std::vector<instance_t<D>> get_instances () const { return _instances; }
+    [[nodiscard]] const std::string get_kspec () const { return _kspec; }
 
     // methods
 
@@ -192,15 +216,56 @@ private:
     // found for every instance, or the results of every single solution path,
     // are shown.
     //
-    // In case want_verbose takes the value true additional information is shown
-    // on the standard output
-    void run (std::string solver_name, bool no_doctor, bool want_summary, bool want_verbose) {
+    // In case want_verbose takes the true, different stats are given per
+    // solution
+    //
+    // If want_color is true, then the output is coloured.
+    // 
+    // In case want_solution is given, then every single solution path is given.
+    // It has no effect if verbose is not provided as well
+    void run (std::string solver_name, bool no_doctor, bool want_summary, bool want_verbose, bool want_color, bool want_solution=false) {
 
+        // bBELA0/bBELA* are the only algorithms that might miss some solutions.
+        // In case this possibility is detected, execution immediately halts so
+        // that the user has to be reported. All warnings are stored in the same
+        // string and they are issued together
+        std::ostringstream wstream;
+        if (solver_name.starts_with("bBELA0") or solver_name.starts_with("bBELA*")) {
+            wstream << " ⚠ Warning: " << solver_name << " does not guarantee to produce correct solutions!" << std::endl;
+            wstream << "   In case a possibility of generating incorrect solutions is detected, execution will be halted immediately!" << std::endl;
+        }
+
+        if (want_solution and not want_verbose) {
+            wstream << " ⚠ Warning: --show-solution has no effect without --verbose" << std::endl;
+            want_solution = false;
+        }
+        
+        if (want_summary and not no_doctor) {
+            wstream << " ⚠ Warning: --summary disables the doctor. No solution paths will be verified!" << std::endl;
+            no_doctor = true;
+        }
+        
+        if (want_summary and want_verbose) {
+            wstream << " ⚠ Warning: --summary disables --verbose output. No information about the solution paths will be shown!" << std::endl;
+            want_verbose = false;
+        }
+        
+        if (want_summary and want_solution) {
+            wstream << " ⚠ Warning: --summary disables --show-solution. No solution paths will be shown!" << std::endl;
+            want_verbose = false;
+        }
+
+        // in case any warnings were issued show them together
+        if (wstream.str ().size () > 0 ) {
+            std::cerr << std::endl;
+            std::cerr << std::format ("{}{}{}", khs::ansi::Gold, wstream.str (), khs::ansi::reset);
+        }
+        
         // set the domain and variant in the container of ksolutions, and also
         // the summary flag
         _results.set_domain (_domain);
         _results.set_variant (_variant);
-        _results.set_version (git_describe ());
+        _results.set_version (KSEARCH_GIT_VERSION);
         _results.set_summary (want_summary);
 
         // for all values of k selected by the user
@@ -218,10 +283,16 @@ private:
             // consider this single specification of k values
             for (auto k = std::get<0>(ispec) ; k <= std::get<1>(ispec) ; k+= std::get<2>(ispec)) {
 
-                // for all instances
                 std::cout << std::endl;
+                
+                // for all instances
                 std::cout << " ⏺ " << solver_name << " ( k=" << k <<  " ): " << std::endl;
 
+                // Get the current time to measure the wall-clock time required
+                // to solve all instances with this value of k
+                auto kstart = std::chrono::high_resolution_clock::now();
+
+                int lineno = 0;
                 for (auto i = 0 ; i < _instances.size () ; i++) {
 
                     // create a manager to solve this specific instance
@@ -230,11 +301,23 @@ private:
                                           _instances[i].get_goal (),
                                           k);
 
-                    std::cout << " ⏵ "; std::cout.flush ();
                     auto ksolution = m->solve ();
 
+                    // Get ready to show the stats of this solution. Show the
+                    // information in table mode with blocks of ten lines,
+                    // unless verbose output has been requested
+                    if (lineno%10==0 or want_verbose) {
+
+                        // in case this is not the first line leave a blank line
+                        // to make the next block more visible
+                        if (lineno>0) {
+                            std::cout << std::endl;
+                        }
+                        std::cout << ksolution.headers (khs::set_mode ((want_color ? "color" : "console"))) << std::endl;
+                    }
+                    std::cout << " ⏵ "; std::cout.flush ();
+
                     // in case that no solution has been generated, then skip it
-                    // the stats
                     if (ksolution.size () == 0) {
                         std::cout << _instances[i].get_name () << " ⚠ No solution found!" << std::endl;
                         continue;
@@ -250,7 +333,7 @@ private:
                     // and the version of this code
                     ksolution.set_name (_instances[i].get_name ());
                     ksolution.set_solver (m->signature ());
-                    ksolution.set_version (git_describe ());
+                    ksolution.set_version (KSEARCH_GIT_VERSION);
 
                     // in case a summary was requested then remove all solutions
                     // but the information of the last one, which is used to
@@ -277,7 +360,7 @@ private:
                     if (!no_doctor) {
                         ksolution.doctor ();
                     }
-                    std::cout << ksolution << std::endl;
+                    std::cout << khs::set_mode ((want_color ? "color" : "console")) << ksolution << std::endl;
 
                     // add this solution to all solutions generated by this
                     // solver
@@ -287,18 +370,46 @@ private:
                     // path to this instance
                     if (want_verbose) {
                         for (auto i = 0 ; i < ksolution.size (); i++) {
-                            std::cout << "   → " << ksolution[i] << std::endl;
+
+                            // show information on every solution in blocks of 10
+                            if (i%10 == 0) {
+                                std::cout << std::endl;
+                                std::cout << "      " << ksolution[0].headers (khs::set_mode ((want_color ? "color" : "console"))) << std::endl;
+                            }
+                            std::cout << "          ◦ " << khs::set_mode ((want_color ? "color" : "console")) << ksolution[i] << std::endl;
+                            if (want_solution) {
+                                for (std::size_t idx=0; auto const& istate: ksolution[i].get_solution ()) {
+                                    std::ostringstream sstate;
+                                    sstate << istate;
+                                    
+                                    if (idx == 0) {
+                                        std::cout << "               🙪 " << std::format ("{}{}{}", (want_color ? khs::ansi::Gainsboro : ""), sstate.str (), (want_color ? khs::ansi::reset : "")) << std::endl;
+                                    } else if (idx == ksolution[i].get_solution ().size () - 1) {
+                                        std::cout << "               🙫 " << std::format ("{}{}{}", (want_color ? khs::ansi::Gainsboro : ""), sstate.str (), (want_color ? khs::ansi::reset : "")) << std::endl;
+                                    } else {
+                                        std::cout << "                 " << std::format ("{}{}{}", (want_color ? khs::ansi::LightSlateGrey : ""), sstate.str (), (want_color ? khs::ansi::reset : "")) << std::endl;
+                                    }
+                                    idx++;
+                                }
+                            }
                         }
                     }
+
+                    // and increment the line counter
+                    lineno++;
 
                     // free the manager
                     delete m;
                 }
+
+                // Stop the chronometer and show the time taken to solve all instances with this value of k
+                auto kend = std::chrono::high_resolution_clock::now();
+                std::cout << std::endl << "   🕒 (k=" << k << ") CPU time: " << 1e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(kend - kstart).count() << " seconds" << std::endl;
             }
 
             // Stop the chronometer and show the time taken by this solver
             auto tend = std::chrono::system_clock::now ();
-            std::cout << std::endl << "   🕒 CPU time: " << 1e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(tend - tstart).count() << " seconds" << std::endl;
+            std::cout << std::endl << "   🕒 (" << solver_name << ") CPU time: " << 1e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(tend - tstart).count() << " seconds" << std::endl;
 
             // add all solutions generated to the results to report
             _results += bag;
@@ -307,7 +418,7 @@ private:
 
     // show an error summary of the results obtained by the different
     // invocations to run only if no_doctor is false
-    void show_error_summary (bool no_doctor) const {
+    void show_error_summary (bool no_doctor) {
 
         std::cout << std::endl;
         if (no_doctor) {
@@ -318,6 +429,40 @@ private:
             // invocations to run
             std::cout << " 📊 Error summary: " << std::endl;
             std::cout << _results.get_error_summary () << std::endl;
+        }
+
+        // perform the cross-validation among solutions generated by different
+        // solvers with the same value of k
+        std::cout << "        Cross-validation: ";
+        if (_results.doctor ()) {
+            std::cout << "Ok" << std::endl;
+        } else {
+            std::cout << "Failure" << std::endl;
+
+            // And show the offending pair
+            for (auto const& ierror : _results.get_error_solutions ()) {
+
+                auto first = ierror.get_first ();
+                auto second = ierror.get_second ();
+
+                // The difference can not be in the size of each solution or, in
+                // case it is, that should have been already detected when using
+                // the option --doctor. Thus, each solution is examined just to
+                // find the first pair that did not match
+                for (int i = 0 ; i < first.size () ; i++) {
+
+                    // cost
+                    if (first[i].get_cost () != second[i].get_cost ()) {
+                        std::cout << "\t\t" << first << std::endl;
+                        std::cout << "\t\t\t" << first[i] << std::endl;
+                        std::cout << "\t\t" << second << std::endl;
+                        std::cout << "\t\t\t" << second[i] << std::endl << std::endl;
+
+                        // and stop showing other solutions
+                        continue;
+                    }
+                }
+            }
         }
     }
 

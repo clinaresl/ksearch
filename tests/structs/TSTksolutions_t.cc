@@ -13,8 +13,7 @@
 #include<vector>
 
 #include "../fixtures/TSTksolutionsfixture.h"
-
-using namespace std;
+#include "../../src/ksearch.h"
 
 // checks that attributes of collections of solutions are properly stored
 // ----------------------------------------------------------------------------
@@ -61,7 +60,7 @@ TEST_F (KSolutionsFixture, AddSingleNPancakeSolution) {
             // the parameter k is randomly chosen, but is guaranteed to be at
             // least 1
             int k = 1 + (rand () % MAX_VALUES);
-            khs::ksolution_t<npancake_t, vector> ksolution = randKSolution (k);
+            khs::ksolution_t<npancake_t, std::vector> ksolution = randKSolution (k);
 
             // Add this solution to the container of solutions
             solutions += ksolution;
@@ -94,7 +93,7 @@ TEST_F (KSolutionsFixture, AddMultipleNPancakeSolution) {
             // the parameter k is randomly chosen, but is guaranteed to be at
             // least 1
             int k = 1 + (rand () % MAX_VALUES);
-            khs::ksolution_t<npancake_t, vector> ksolution = randKSolution (k);
+            khs::ksolution_t<npancake_t, std::vector> ksolution = randKSolution (k);
 
             // Add this solution to the container of solutions
             solutions += ksolution;
@@ -122,6 +121,128 @@ TEST_F (KSolutionsFixture, AddMultipleNPancakeSolution) {
                 ASSERT_EQ (solutions[iksolution][jsolution], final[iksolution][jsolution]);
             }
         }
+    }
+}
+
+// Verify that solutions that are equal are correctly classified by doctor
+// ----------------------------------------------------------------------------
+TEST_F (KSolutionsFixture, DoctorCorrectSolution) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // Compute an arbitrary number of solutions, between 1 and 20, to a
+        // problem of the 5-pancake using BELA*
+        int k = 1 + (rand () % 20);
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // initialize the static information of the n-pancake
+        npancake_t::init ("unit");
+
+        // and invoke the solver
+        auto ksolution = manager.solveStar ();
+
+        // and now verify this container contains two sets of solutions and that
+        // they do match
+        khs::ksolutions_t<npancake_t> solutions;
+        solutions += ksolution;
+        solutions += ksolution;
+        ASSERT_EQ (solutions.size (), 2);
+        ASSERT_TRUE (solutions.doctor ());
+
+        // and finally, verify there are no error solutions
+        ASSERT_EQ (solutions.get_error_solutions().size (), 0);
+    }
+}
+
+// Verify that containers with a different number of solutions are correctly
+// classified by doctor
+// ----------------------------------------------------------------------------
+TEST_F (KSolutionsFixture, DoctorDifferentSize) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // Compute an arbitrary number of solutions, between 1 and 20, to a
+        // problem of the 5-pancake using BELA*
+        int k = 1 + (rand () % 20);
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // initialize the static information of the n-pancake
+        npancake_t::init ("unit");
+
+        // and invoke the solver
+        auto ksolution = manager.solveStar ();
+
+        // Make a copy of this container and remove one instance randomly chosen
+        auto csolution = ksolution;
+        csolution.remove (rand ()%ksolution.size ());
+
+        // and now verify these solutions do not match
+        khs::ksolutions_t<npancake_t> solutions;
+        solutions += ksolution;
+        solutions += csolution;
+        ASSERT_EQ (solutions.size (), 2);
+        ASSERT_FALSE (solutions.doctor ());
+
+        // and finally, verify there is one error solution
+        ASSERT_EQ (solutions.get_error_solutions().size (), 1);
+    }
+}
+
+// Verify that containers with a solution with different cost is correctly
+// recognized by doctor
+// ----------------------------------------------------------------------------
+TEST_F (KSolutionsFixture, DoctorDifferentCost) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // Compute 100 solutions to a problem of the 5-pancake using BELA*.
+        // These number is selected to make it more likely that the first and
+        // last solutions have different cost
+        int k = 100;
+        npancake_t start = randInstance (5);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5};
+        while (start == goal) {
+            start = randInstance (5);
+        }
+        khs::bela<npancake_t> manager {k, start, goal, false};
+
+        // initialize the static information of the n-pancake
+        npancake_t::init ("unit");
+
+        // and invoke the solver and accept this case if and only if the first
+        // and last solution have different cost
+        auto ksolution = manager.solveStar ();
+        if (ksolution[0].get_cost () == ksolution[ksolution.size ()-1].get_cost ()) {
+            continue;
+        }
+
+        // Make a copy of this container, remove the last solution and add the
+        // first one
+        auto csolution = ksolution;
+        csolution.remove (0);
+        csolution += ksolution[0];
+
+        // and now verify they have the same number of solutions (so this is not
+        // the testcase shown above) but still these solutions do not match
+        ASSERT_EQ (ksolution.size (), csolution.size ());
+        khs::ksolutions_t<npancake_t> solutions;
+        solutions += ksolution;
+        solutions += csolution;
+        ASSERT_EQ (solutions.size (), 2);
+        ASSERT_FALSE (solutions.doctor ());
+
+        // and finally, verify there is one error solution
+        ASSERT_EQ (solutions.get_error_solutions().size (), 1);
     }
 }
 

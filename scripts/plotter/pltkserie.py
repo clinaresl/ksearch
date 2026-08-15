@@ -28,6 +28,7 @@ LOGGER = utils.LOGGER
 
 # critical messages
 CRITICAL_INVALID_DATA = "The given data is not a bidimensional point: {}"
+CRITICAL_UNKNOWN_FORMAT_SPEC = "Unknown format specification: {}"
 
 # -----------------------------------------------------------------------------
 # PLTKSerie
@@ -120,6 +121,35 @@ class PLTKSerie:
             output += f"\t{x} {y}\n"
 
         # return the output
+        return output
+
+    def __format__(self, format_spec):
+        """returns a string representation of the data stored in the private
+        attribute self._serie, i.e., the serie has to be processed with exec
+        before its contents can be shown.
+
+        It accepts two different format specifications:
+
+        + 'gnuplot': x y
+        + 'pgfplot': (x, y)
+
+        """
+
+        # -- initi
+        output = ""
+
+        if format_spec == "gnuplot":
+            for (x, y) in self._serie:
+                output += f"\t{x} {y}\n"
+
+        elif format_spec == "pgfplot":
+            for (x, y) in self._serie:
+                output += f"\t({x}, {y})\n"
+
+        else:
+            LOGGER.critical(CRITICAL_UNKNOWN_FORMAT_SPEC.format(format_spec))
+            raise ValueError(CRITICAL_UNKNOWN_FORMAT_SPEC.format(format_spec))
+
         return output
 
     def exec(self, op):

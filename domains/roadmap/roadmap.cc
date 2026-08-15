@@ -18,6 +18,7 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <numbers>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -29,15 +30,9 @@
 
 #include "../solver.h"
 #include "../../src/ksearch.h"
+#include "../../src/version.h"
 
 #include "roadmap_t.h"
-
-#define EXIT_OK 0
-#define EXIT_FAILURE 1
-
-constexpr double PI = 3.141592653589793238462643383279502884197;
-
-using namespace std;
 
 extern "C" {
     char *xstrdup (char *p);
@@ -54,343 +49,198 @@ static struct option const long_options[] =
     {"variant", required_argument, 0, 'r'},
     {"k", required_argument, 0, 'k'},
     {"csv", required_argument, 0, 'C'},
+    {"no-color", no_argument, 0, 'X'},
     {"no-doctor", no_argument, 0, 'D'},
     {"summary", no_argument, 0, 'S'},
+    {"show-solution", no_argument, 0, 'P'},
     {"verbose", no_argument, 0, 'v'},
     {"help", no_argument, 0, 'h'},
     {"version", no_argument, 0, 'V'},
     {NULL, 0, NULL, 0}
 };
 
-const string get_domain ();
-const string get_variant ();
-bool brute_force (const string& solver_name);
-void get_testcases (const string& filename, vector<instance_t<roadmap_t>>& instances);
-bool get_coordinates_filename (const string& filename, string& coordinates_filename);
-bool get_coordinates (const string& coordinates_filename,
-                      map<int, pair<double, double>>& coordinates);
+void get_testcases (const std::string& filename, std::vector<instance_t<roadmap_t>>& instances);
 static int decode_switches (int argc, char **argv,
-                            string& graph_name, string& solver_name, string& filename, string& variant,
-                            string& k_params, string& csvname, bool& no_doctor, bool& want_summary,
-                            bool& want_verbose);
+                            std::string& graph_name, std::string& solver_name, std::string& filename, std::string& variant,
+                            std::string& k_params, std::string& csvname, bool& no_color, bool& no_doctor, bool& want_summary,
+                            bool& want_solution, bool& want_verbose);
 static void usage (int status);
 
 // main entry point
 int main (int argc, char** argv) {
 
-    string graph_name;                        // file with the graph definition
-    string coordinates_name;   // filename with the coordinates of all vertices
-    map<int, pair<double, double>> coordinates;  // coordinates of all vertices
-    string solver_name;                            // user selection of solvers
-    string filename;                            // file with all cases to solve
-    string variant;                                    // variant of the domain
-    string k_params;                       // user selection of the values of k
-    string csvname;                          // name of the output csv filename
+    std::string graph_name;                  // file with the graph definition
+    std::string coordinates_name;      // filename with coords of all vertices
+    std::map<size_t, std::pair<double, double>> coordinates; // coords of vert.
+    std::string solver_name;                       // user selection of solvers
+    std::string filename;                       // file with all cases to solve
+    std::string variant;                               // variant of the domain
+    std::string k_params;                  // user selection of the values of k
+    std::string csvname;                     // name of the output csv filename
+    bool no_color;                     // whether the doctor is disabled or not
     bool no_doctor;                    // whether the doctor is disabled or not
     bool want_summary;      // whether a summary of results is requested or not
+    bool want_solution;        // whether solution paths should be shown or not
     bool want_verbose;                  // whether verbose output was requested
-    chrono::time_point<chrono::system_clock> tstart, tend;          // CPU time
+    std::chrono::time_point<std::chrono::system_clock> tstart, tend;// CPU time
 
     // variables
     program_name = argv[0];
-    vector<string> variant_choices = {"unit", "dimacs"};
+    std::vector<std::string> variant_choices = {"unit", "dimacs"};
 
     // arg parse
-    decode_switches (argc, argv, graph_name, solver_name, filename, variant, k_params, csvname, no_doctor, want_summary, want_verbose);
-
-    // get the coordinates filename from the graph name
-    if (!get_coordinates_filename (graph_name, coordinates_name)) {
-        cerr << " Warning: no coordinates file found!" << endl;
-        cerr << "          it will not be possible to apply any heuristics" << endl << endl;
-    }
-
-    if (!get_coordinates (coordinates_name, coordinates)) {
-        cerr << " Error: the coordinates file '" << coordinates_name << "' could not be processed" << endl << endl;
-        exit (EXIT_FAILURE);
-    }
-
-    // process the solver names and get a vector with the signatures of all
-    // solvers to execute
-    vector<string> solvers = split_solver (solver_name);
-
-    // and also process the user selection of the K values
-    auto kspec = split_ks (k_params);
+    decode_switches (argc, argv, graph_name, solver_name, filename, variant, k_params, csvname, no_color, no_doctor, want_summary, want_solution, want_verbose);
 
     // parameter checking
 
     // --graph
     if (graph_name == "") {
-        cerr << "\n Please, provide a filename with the description of the graph" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a filename with the description of the graph" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
+    // --solver
+    if (solver_name == "") {
+        std::cerr << "\n Please, provide at least the name of a solver to use" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
+        exit(EXIT_FAILURE);        
+    }
+    
     // --file
     if (filename == "") {
-        cerr << "\n Please, provide a file with the information of all start states to solve" << endl;
-        cerr << " wrt the identity permutation" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    if (!get_choice (variant, variant_choices)) {
-        cerr << "\n Please, provide a correct name for the variant with --variant" << endl;
-        cerr << " See " << program_name << " --help for more details" << endl << endl;
+        std::cerr << "\n Please, provide a file with the information of all start states to solve" << std::endl;
+        std::cerr << " wrt the identity permutation" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // --variant
+    if (!get_choice (variant, variant_choices)) {
+        std::cerr << "\n Please, provide a correct name for the variant with --variant" << std::endl;
+        std::cerr << " See " << program_name << " --help for more details" << std::endl << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     // In case the variant used is the "unit" then no heuristics are used even
     // if a coordinates file is found
     if (variant == "unit") {
-        cerr << endl;
-        cerr << " Warning: No heuristics are used in the 'unit' variant of this domain" << endl;
+        std::cerr << std::endl;
+        std::cerr << " Warning: No heuristics are used in the 'unit' variant of this domain" << std::endl;
     }
+
+    // --show-solution
 
     /* do the work */
 
     /* !------------------------- INITIALIZATION --------------------------! */
 
+    // process the solver names and get a vector with the signatures of all
+    // solvers to execute
+    std::vector<std::string> solvers = split_option (solver_name, ack_solvers);
+
+    // and also process the user selection of the K values
+    auto kspec = split_ks (k_params);
+
     // initialize the static data members of the definition of a roadmap
-    roadmap_t::init (graph_name, coordinates, variant);
+    roadmap_t::init (graph_name, variant);
     auto nbedges = roadmap_t::get_graph ().get_nbedges ();
 
     // open the given file and retrieve all cases from it
-    vector<instance_t<roadmap_t>> instances;
+    std::vector<instance_t<roadmap_t>> instances;
     get_testcases (filename, instances);
     if (!instances.size ()) {
-        cerr << endl;
-        cerr << " Error: The file '" << filename << "' contains no instances to solve!" << endl;
-        cerr << endl;
+        std::cerr << std::endl;
+        std::cerr << " Error: The file '" << filename << "' contains no instances to solve!" << std::endl;
+        std::cerr << std::endl;
         exit (EXIT_FAILURE);
     }
 
     /* !-------------------------------------------------------------------! */
 
-    cout << endl;
-    cout << " graph        : " << graph_name << " (" << nbedges << " edges processed)" << endl;
-    cout << " solver       : " << solver_name << " " << git_describe () << endl;
-    cout << " file         : " << filename << " (" << instances.size () << " instances)" << endl;
-    cout << " variant      : " << variant << endl;
-    cout << " K            : ";
+    std::cout << std::endl;
+    std::cout << " graph        : " << graph_name << " (" << nbedges << " edges processed)" << std::endl;
+    std::cout << " solver       : " << solver_name << " " << KSEARCH_GIT_VERSION << std::endl;
+    std::cout << " file         : " << filename << " (" << instances.size () << " instances)" << std::endl;
+    std::cout << " variant      : " << variant << std::endl;
+    std::cout << " K            : ";
     for (auto& ispec: kspec) {
-        cout << "[" << get<0>(ispec) << ", " << get<1>(ispec) << ", " << get<2> (ispec) << "] ";
+        std::cout << "[" << std::get<0>(ispec) << ", " << std::get<1>(ispec) << ", " << std::get<2> (ispec) << "] ";
     }
-    cout << endl;
+    std::cout << std::endl;
 
     /* !----------------------------- SEARCH ------------------------------! */
 
     // start the clock
-    tstart = chrono::system_clock::now ();
+    tstart = std::chrono::system_clock::now ();
 
     // create an instance of the "generic" domain-dependent solver
-    solver<roadmap_t> manager (get_domain (), variant,
+    solver<roadmap_t> manager ("roadmap", variant,
                                instances, k_params);
 
     // solve all the instances with each solver selected by the user and in the
-    // same order given
+    // same order given. Note that only consistent heuristic functions are
+    // considered
     for (auto isolver : solvers) {
 
         // before running the solver make it explicit whether the heuristic
-        // should be computed or not
-        if (brute_force (isolver)) {
-            cout << endl << " ⚠ Ignoring the heuristic function!" << endl;
+        // should be computed or not. In case the variant selected is unit, only
+        // the brute force variants can be used because there is no heuristic
+        // available in that case.
+        if (brute_force (isolver) || (variant == "unit")) {
             roadmap_t::set_brute_force (true);
         } else {
             roadmap_t::set_brute_force (false);
         }
-        manager.run (isolver, no_doctor, want_summary, want_verbose);
+        manager.run (isolver, no_doctor, want_summary, want_verbose, not no_color, want_solution);
     }
 
     // and stop the clock
-    tend = chrono::system_clock::now ();
+    tend = std::chrono::system_clock::now ();
 
     // to conclude, show an error summary and store all the results in a csv
     // file in case any was given
     manager.show_error_summary (no_doctor);
     manager.write_csv (csvname);
-    cout << " 🕒 CPU time: " << 1e-9*chrono::duration_cast<chrono::nanoseconds>(tend - tstart).count() << " seconds" << endl;
-    cout << endl;
+    std::cout << " 🕒 Total CPU time: " << 1e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(tend - tstart).count() << " seconds" << std::endl;
+    std::cout << std::endl;
 
     /* !-------------------------------------------------------------------! */
 
     // Well done! Keep up the good job!
-    return (EXIT_OK);
+    return (EXIT_SUCCESS);
 }
 
-// return the domain of this solver
-const string get_domain () {
-    return "roadmap";
-}
+// open the specified filename and retrieve a vector of instances with the name
+// of each instance along with the index to the start and goal locations
+void get_testcases (const std::string& filename, std::vector<instance_t<roadmap_t>>& instances) {
 
-// return the variant of the domain of this solver
-const string get_variant () {
-    return "dimacs";
-}
-
-// given the name of a solver, it returns true if it is a brute-force variant,
-// and false otherwise. The name of the brute-force search algorithms are stored
-// in a separate set
-bool brute_force (const string& solver_name) {
-    return find (brute_force_solvers.begin (),
-                 brute_force_solvers.end (),
-                 solver_name) != brute_force_solvers.end ();
-}
-
-
-// open the specified filename and retrieve the name of every instance (assigned
-// as an integer from 0 onwards) and a vector of strings with the contents of
-// each case, i.e., the start and goal vertices separated by a blank space
-void get_testcases (const string& filename, vector<instance_t<roadmap_t>>& instances) {
-
-   ifstream stream (filename);
-
-   // read both lines and store its contents in two separated vectors. The first
-   // line contains all the starting vertices whereas the second line contains
-   // all goals
-   int lineno = 0;                          // line number: 0->starts; 1->goals
-   string line;
-   vector<string> starts, goals;
-   while (getline (stream, line)) {
-
-       // create a regexp to split this line
-       regex regex ("\\s+");
-       sregex_token_iterator it (line.begin (), line.end (), regex, -1);
-       sregex_token_iterator end;
-
-       // and now process each token separately
-       for ( ; it != end ; ++it) {
-           if (lineno == 0) {                                   // start states
-               starts.push_back (*it);
-           } else if (lineno == 1) {                             // goal states
-               goals.push_back (*it);
-           } else {
-               cerr << " Syntax error: the file with the tests cases should consist of two lines only" << endl;
-               cerr << "               See the documentation for more information" << endl << endl;
-               exit(EXIT_FAILURE);
-           }
-       }
-
-       // increment the line counter
-       lineno += 1;
-   }
-
-   // verify there are the same number of start and goal states
-   if (starts.size () != goals.size ()) {
-       cerr << " Syntax error: The file with the test cases must contain the same number of start and goal states" << endl;
-       cerr << "               See the documentation for more information" << endl << endl;
-       exit(EXIT_FAILURE);
-   }
-
-   // now, create a vector with the information of each instance
-   for (auto i = 0 ; i < starts.size () ; i++) {
-       instances.push_back (instance_t{to_string (i),
-           roadmap_t {size_t (stoll (starts[i]))},
-           roadmap_t {size_t (stoll (goals[i]))}});
-   }
-}
-
-// return true if the coordinates file of the given graph exists and is
-// readable. If true, the name of the coordinates file is returned in the second
-// argument; otherwise, its contents are undefined
-bool get_coordinates_filename (const string& filename, string& coordinates_filename) {
-
-    // replace the extension of the graph name by "co"
-    auto path = filesystem::path (filename);
-    auto cofile = path.replace_extension("co");
-
-    // verify the file exists and it is an ordinary file
-    if (filesystem::exists (cofile) &&
-        filesystem::is_regular_file (cofile)) {
-
-        // check the permissions of the coordinates file
-        std::error_code ec;
-        auto perms = filesystem::status(cofile, ec).permissions();
-        if ((perms & filesystem::perms::owner_read) != filesystem::perms::none &&
-            (perms & filesystem::perms::group_read) != filesystem::perms::none &&
-            (perms & filesystem::perms::others_read) != filesystem::perms::none) {
-
-            coordinates_filename = cofile.string ();
-            return true;
-        }
+    // process the input file to get all the information
+    std::vector<std::string> names;
+    std::vector<std::vector<std::string>> vertices;
+    get_problems (filename, names, vertices);
+    if (vertices.size () == 0) {
+        std::cerr << std::endl;
+        std::cerr << " Error: The file '" << filename << "' contains no instances to solve!" << std::endl;
+        std::cerr << std::endl;
+        exit (EXIT_FAILURE);
     }
 
-    // at this point, the file either does not exist or can not be read, so
-    // return false
-    return false;
-}
-
-// Return true if all data could be properly processed and false otherwise. It
-// retrieves all coordinates of all vertices given in the coordinates_filename
-// and stores them in a map indexed by the vertex id that stores the longitude
-// (x-value) and latitude (y-value). The coordinates are given in radians.
-bool get_coordinates (const string& coordinates_filename,
-                      map<int, pair<double, double>>& coordinates) {
-
-    ifstream stream (coordinates_filename);
-
-    // create regex to process each line separately. Lines in the DIMACS
-    // competition format start with a character: 'c' is used for comments; 'p'
-    // is used for providing properties; 'v' adds a new vertex. In the
-    // following, both 'c' and 'p' are ignored
-    regex comment ("^[cp].*");
-
-    // Lines starting with 'v' add a new vertex, and other than the prefix, they
-    // come with three integers: the vertex id, the longitude (x-value) and the
-    // latitude (y-value). Note the longitude and latitude might come with a
-    // sign, or not
-    regex newedge (R"(^v\s+(\d+)\s+([+-]?\d+)\s+([+-]?\d+)\s*$)");
-
-    // parse the contents of the file
-    string line;
-    int lineno = 0;
-    while (getline (stream, line)) {
-
-        // skip this line in case it should be ignored
-        if (regex_match (line, comment)) {
-
-            // increment the line counter and skip it
-            lineno++;
-            continue;
-        }
-
-        // at this point, lines must match the vertex command 'v'
-        smatch m;
-        if (regex_match (line, m, newedge)) {
-
-            // add a new vertex to the map using the vertex id as the key and
-            // storing a pair with the longitude and latitude. Note that
-            // longitude and latitude are given as integers with six digits of
-            // precision
-            size_t id = stoi (m[1].str ());
-            double lon = stoi (m[2].str ()) / 1'000'000.0;
-            double lat = stoi (m[3].str ()) / 1'000'000.0;
-
-            // and add these coordinates to the vertex with identifier id as
-            // radians
-            coordinates[id] = make_pair (lon*PI/180.0, lat*PI/180.0);
-
-            // and add the number of edges processed
-            lineno++;
-
-        } else {
-
-            // otherwise, a syntax error has been found
-            cerr << " Syntax error in '" << coordinates_filename << "'::" << lineno << endl;
-            return false;
-        }
+    // and now process the specification of each task separately
+    for (size_t idx = 0 ; idx < vertices.size () ; ++idx) {
+       instances.push_back (instance_t{std::to_string (idx),
+           roadmap_t {size_t (stoull (vertices[idx][0]))},
+           roadmap_t {size_t (stoull (vertices[idx][1]))}});
     }
-
-    return true;
 }
 
 // Set all the option flags according to the switches specified. Return the
 // index of the first non-option argument
 static int
 decode_switches (int argc, char **argv,
-                 string& graph_name, string& solver_name, string& filename, string& variant,
-                 string& k_params, string& csvname, bool& no_doctor, bool& want_summary,
-                 bool& want_verbose) {
+                 std::string& graph_name, std::string& solver_name, std::string& filename, std::string& variant,
+                 std::string& k_params, std::string& csvname, bool& no_color, bool& no_doctor, bool& want_summary,
+                 bool& want_solution, bool& want_verbose) {
 
     int c;
 
@@ -401,8 +251,10 @@ decode_switches (int argc, char **argv,
     variant = "dimacs";
     k_params = "";
     csvname = "";
+    no_color = false;
     no_doctor = false;
     want_summary = false;
+    want_solution = false;
     want_verbose = false;
 
     while ((c = getopt_long (argc, argv,
@@ -412,8 +264,10 @@ decode_switches (int argc, char **argv,
                              "r"  /* variant */
                              "k"  /* k */
                              "C"  /* csv */
-                             "S"  /* summary */
+                             "X"  /* no-color */
                              "D"  /* no-doctor */
+                             "S"  /* summary */
+                             "P"  /* show-solution */
                              "v"  /* verbose */
                              "h"  /* help */
                              "V", /* version */
@@ -437,28 +291,34 @@ decode_switches (int argc, char **argv,
         case 'C':  /* --csv */
             csvname = optarg;
             break;
+        case 'X':  /* --no-color */
+            no_color = true;
+            break;
         case 'D':  /* --no-doctor */
             no_doctor = true;
             break;
         case 'S':  /* --summary */
             want_summary = true;
             break;
+        case 'P':  /* --show-solution */
+            want_solution = true;
+            break;
         case 'v':  /* --verbose */
             want_verbose = true;
             break;
         case 'V':
-            cout << " khs (" << get_domain () << ") " << CMAKE_VERSION << endl;
-            cout << " " << CMAKE_BUILD_TYPE << " Build Type" << endl << endl;
+            std::cout << " khs (roadmap) " << KSEARCH_VERSION << " (" << KSEARCH_GIT_VERSION << ")" << std::endl;
+            std::cout << " " << CMAKE_BUILD_TYPE << " Build Type" << std::endl << std::endl;
 
             // show cpu and mem info
-            cout << get_cpu_info() << endl;
-            cout << get_mem_info() << endl;
+            std::cout << get_cpu_info() << std::endl;
+            std::cout << get_mem_info() << std::endl;
 
-            exit (EXIT_OK);
+            exit (EXIT_SUCCESS);
         case 'h':
-            usage (EXIT_OK);
+            usage (EXIT_SUCCESS);
         default:
-            cout << endl << " Unknown argument!" << endl;
+            std::cout << std::endl << " Unknown argument!" << std::endl;
             usage (EXIT_FAILURE);
         }
     }
@@ -469,23 +329,32 @@ decode_switches (int argc, char **argv,
 static void
 usage (int status)
 {
-    cout << endl << " " << program_name << " implements various K shortest-path search algorithms in the 9th DIMACS Implementation Challenge: Shortest Paths" << endl << endl;
-    cout << " Usage: " << program_name << " [OPTIONS]" << endl << endl;
-    cout << "\
+    std::cout << std::endl << " " << program_name << " implements various K shortest-path search algorithms in the 9th DIMACS Implementation Challenge: Shortest Paths" << std::endl << std::endl;
+    std::cout << " Usage: " << program_name << " [OPTIONS]" << std::endl << std::endl;
+    std::cout << "\
  Mandatory arguments:\n\
       -g, --graph [STRING]       filename with the graph to load. The file contents should be arranged according to the 9th DIMACS\n\
                                  Implementation Challenge: Shortest Paths. See the documentation for additional help\n\
       -s, --solver [STRING]+     K shortest-path algorithms to use. Choices are:\n\
-                                    + Brute-force search algorithms:\n\
-                                       > 'mDijkstra': brute-force variant of mA*\n\
-                                       > 'K0': brute-force variant of K*\n\
-                                       > 'belA0': brute-force variant of belA*\n\
-                                    + Heuristic search algorithms:\n\
-                                       > 'mA*': mA*\n\
-                                       > 'K*': K*\n\
-                                       > 'belA*': BELA*\n\
+                                    * (non-simple) shortest-path:\n\
+                                       + Brute-force search algorithms:\n\
+                                          > 'mDijkstra': brute-force variant of mA*\n\
+                                          > 'K0': brute-force variant of K*\n\
+                                          > 'BELA0': brute-force variant of BELA*\n\
+                                       + Heuristic search algorithms:\n\
+                                          > 'mA*': mA*\n\
+                                          > 'K*': K*\n\
+                                          > 'BELA*': BELA*\n\
+                                    * (simple) shortest-path:\n\
+                                       + Brute-force search algorithms:\n\
+                                          > 'bBELA0': brute-force variant of bBELA*\n\
+                                          > 'sBELA0': brute-force variant of sBELA*\n\
+                                       + Heuristic search algorithms:\n\
+                                          > 'bBELA*': baseline simplistic BELA*\n\
+                                          > 'sBELA*': simple BELA*\n\
                                  It is possible to provide as many as desired in a blank separated list between double quotes,\n\
-                                 e.g., \"mDijkstra belA0\"\n\
+                                 e.g., \"mDijkstra belA0\". If non-simple and simple paths are used in the same invocation the cross\n\
+                                 verification will likely fail unless it is disabled with --no-doctor\n\
       -f, --file [STRING]        filename with the test cases to solve. It consists of of precisely two lines. The i-th test case\n\
                                  uses the i-th vertex from the first line as the starting vertex and the i-th vertex from the second\n\
                                  line as the goal.\n\
@@ -500,11 +369,16 @@ usage (int status)
 \n\
  Optional arguments:\n\
       -C, --csv [STRING]         name of the csv output files for storing results. If none is given, no file is generated\n\
+      -X, --no-color             If given, the output is not coloured. It is recommended to use it when running the experiments\n\
+                                 in batch mode and saving the output to files.\n\
       -D, --no-doctor            If given, the automated error checking is disabled. Otherwise, all solutions are automatically\n\
                                  checked for correctness\n\
       -S, --summary              If given, only the results of the last solution path found for every instance are shown. Otherwise,\n\
                                  the results of every single solution path are shown in the output csv file. It has no effect if\n\
                                  --csv is not given\n\
+      -P, --show-solution        If given, every solution path from the start state to the goal state is shown on the standard output\n\
+                                 It applies only, if --verbose (see below) is given. Otherwise, it has no effect\n\
+\n\
  Misc arguments:\n\
       --verbose                  print more information\n\
       -h, --help                 display this help and exit\n\

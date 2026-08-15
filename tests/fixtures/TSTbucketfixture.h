@@ -36,14 +36,13 @@ class BucketFixture : public ::testing::Test {
             srand (time (nullptr));
         }
 
-        // create a vector of strings and populate a bucket with all of them in
-        // increasing order of their size. In doing so, it checks that all
-        // operations are performed correctly
-        std::vector<std::string> populate (khs::bucket_t<std::string>& bucket) {
+        // create a random vector of strings used to populate a bucket
+        std::vector<std::string> randItems () {
 
-            // randomly determine the number of buckets which is necessarily larger
-            // than 0. Note the maximum length is roughly 1,000, the reason being
-            // that creating buckets which are larger is a very costly operation
+            // randomly determine the number of buckets which is necessarily
+            // larger than 0. Note the maximum length is roughly 1,000, the
+            // reason being that creating buckets which are larger is a very
+            // costly operation
             auto length = 1 + random () % MAX_NB_BUCKETS/1'000;
 
             // make sure that the maximum length of the strings to generate next
@@ -61,6 +60,16 @@ class BucketFixture : public ::testing::Test {
             for (auto j = 0 ; j < length ; j++) {
                 values[j] = randString (MIN_NB_CHARS, MAX_NB_CHARS);
             }
+
+            return values;
+        }
+
+        // Populate a bucket with a random sequence of strings in increasing
+        // order of their size
+        std::vector<std::string> populate (khs::bucket_t<std::string>& bucket) {
+
+            // Create the random sequence
+            std::vector<std::string> values = randItems ();
 
             // insert all strings in the bucket sorting them in increasing order
             // of their length. A good practice might be to set the number of

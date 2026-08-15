@@ -92,13 +92,87 @@ public:
         return stream;
     }
 
-    // return the children of this state which is known to have the given
-    // heuristic value as a vector of tuples, each containing: first, the cost
-    // of the operator; secondly, its heuristic value; thirdly, the successor
-    // state
-    void children (int h, const grid_t& goal,
-                   std::vector<std::tuple<int, int, grid_t>>& successors);
+    // process each child separately through the use of a callable that has to
+    // receive exactly three arguments: cost_t g, cost_t h and the successor
+    // state. It is the responsibility of the caller to provide the right
+    // callable at the calling site.
+    template<typename F>
+    requires std::invocable<F&, int, int, grid_t&&>
+    void children (int h, grid_t const& goal, F&& callable) const {
 
+        // first, consider the moves of the unit variant where the only different is
+        // the cost of the operators
+
+        // --west
+        if (_x > 0) {
+            grid_t successor {_x-1, _y};
+            callable ((_variant == "unit") ? 1 : 10,
+                      successor.h (goal),
+                      std::move (successor));
+        }
+
+        // --east
+        if (_x < _n-1) {
+            grid_t successor {_x+1, _y};
+            callable ((_variant == "unit") ? 1 : 10,
+                      successor.h (goal),
+                      std::move (successor));
+        }
+
+        // --south
+        if (_y > 0) {
+            grid_t successor {_x, _y-1};
+            callable ((_variant == "unit") ? 1 : 10,
+                      successor.h (goal),
+                      std::move (successor));
+        }
+
+        // --north
+        if (_y < _n-1) {
+            grid_t successor {_x, _y+1};
+            callable ((_variant == "unit") ? 1 : 10,
+                      successor.h (goal),
+                      std::move (successor));
+        }
+
+        // now, in case the octile variant is being used, consider also the diagonal
+        // moves
+        if (_variant == "octile") {
+
+            // --southwest
+            if (_x > 0 && _y > 0) {
+                grid_t successor {_x-1, _y-1};
+                callable (14,
+                          successor.h (goal),
+                          std::move (successor));
+            }
+
+            // --southeast
+            if (_x < _n-1 && _y > 0) {
+                grid_t successor {_x+1, _y-1};
+                callable (14,
+                          successor.h (goal),
+                          std::move (successor));
+            }
+
+            // --northeast
+            if (_x < _n-1 && _y < _n-1) {
+                grid_t successor {_x+1, _y+1};
+                callable (14,
+                          successor.h (goal),
+                          std::move (successor));
+            }
+
+            // --northwest
+            if (_x > 0 && _y < _n-1) {
+                grid_t successor {_x-1, _y+1};
+                callable (14,
+                          successor.h (goal),
+                          std::move (successor));
+            }
+        }
+    }
+    
     // return the heuristic distance to get from this state to the given goal
     // state
     int h (const grid_t& goal) const;

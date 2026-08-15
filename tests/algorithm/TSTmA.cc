@@ -11,16 +11,13 @@
 //
 
 #include <limits>
-#include <vector>
 
 #include "../fixtures/TSTmAfixture.h"
-
-using namespace std;
 
 // Checks that the mA search solver can be created. If the search algorithm is
 // not invoked, it returns the default values
 // ----------------------------------------------------------------------------
-TEST_F (MAFixture, ExplicitConstructorPancake) {
+TEST_F (MAFixture, ExplicitConstructorNPancake) {
 
     for (auto i = 0 ; i < NB_TESTS ; i++ ) {
 
@@ -47,9 +44,10 @@ TEST_F (MAFixture, ExplicitConstructorPancake) {
 
 }
 
-// Checks that solvable instances where start=goal can be correctly solved
+// Checks that solvable instances where start=goal can be correctly solved in
+// the n-pancake
 // ----------------------------------------------------------------------------
-TEST_F (MAFixture, SolvableSameNPancakeSolution) {
+TEST_F (MAFixture, NPancakeBruteForceSameSolution) {
 
     for (auto i = 0 ; i < NB_TESTS ; i++) {
 
@@ -73,109 +71,444 @@ TEST_F (MAFixture, SolvableSameNPancakeSolution) {
     }
 }
 
-// Check that mA* correctly finds one single solution between two instances of
-// the 5-Pancake
-TEST_F (MAFixture, SolvableNPancakeOne) {
+// Checks that solvable instances where start=goal can be correctly solved in
+// the n-pancake with consistent heuristics
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeConsistentSameSolution) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
 
-            // create a manager to find a single solution between a couple of
-            // random instances of the 5-Pancake
-            int k = 1;
-            npancake_t start = randInstance (5);
-            npancake_t goal = randInstance (5);
-            khs::mA<npancake_t> manager {k, start, goal};
+        // create a manager to run the mA search algorithm to solve a random
+        // instance a random number of times. h=0 is given for the original node
+        // because no search is performed
+        int k = 1 + rand () % MAX_VALUES;
+        npancake_t start = randInstance (NB_DISCS);
+        npancake_t::init ("unit");
+        khs::mA<npancake_t> manager {k, start, start, false};
 
-            // initialize the static information of the n-pancake
-            npancake_t::init ("unit");
+        // verify the variant is unit and that a consistent heuristic function
+        // is in use
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
 
-            // and invoke the solver
-            auto ksolution = manager.solve ();
+        // and invoke the solver
+        auto ksolution = manager.solve ();
 
-            // verify the solution found contains one single solution
-            ASSERT_EQ (ksolution.size (), k);
-
-            // and verify it is correct
-            khs::solution_t solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
-        }
+        // now, make sure the result makes sense, i.e., there is only one
+        // solution (in spite of the value of k), which has a null length,
+        // signaled with a value equal to -1 (and thus, null cost also in spite
+        // of the cost model used)
+        ASSERT_EQ (ksolution.size (), 1);
+        ASSERT_EQ (ksolution[0].get_length (), -1);
+        ASSERT_EQ (ksolution[0].get_cost (), 0);
+    }
 }
 
-// Check that mA* correctly finds two single solutions between two instances of
-// the 5-Pancake
-TEST_F (MAFixture, SolvableNPancakeTwo) {
+// Check that mA0 correctly finds one single solution between a random instance
+// of the 6-Pancake and the identity permutation in the unit domain
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeUnitBruteForceOne) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
 
-            // create a manager to find two solutions between a couple of random
-            // instances of the 5-Pancake which are guaranteed to be different
-            int k = 2;
-            npancake_t start = randInstance (5);
-            npancake_t goal = randInstance (5);
-            while (start == goal) {
-                goal = randInstance (5);
-            }
-            khs::mA<npancake_t> manager {k, start, goal};
-
-            // initialize the static information of the n-pancake
-            npancake_t::init ("unit");
-
-            // and invoke the solver
-            auto ksolution = manager.solve ();
-
-            // verify the solution found contains two solutions
-            ASSERT_EQ (ksolution.size (), k);
-
-            // and verify they are correct
-            khs::solution_t<npancake_t, vector> solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
-
-            solution = ksolution[1];
-            ASSERT_TRUE (solution.doctor ());
-
-            // to conclude, verify that the second solution is strictly larger
-            // or equal than the first one
-            ASSERT_GE (ksolution[1].get_length (), ksolution[0].get_length ());
+        // create a manager to find a single solution between a couple of
+        // random instances of the 6-Pancake
+        int k = 1;
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
         }
+        npancake_t::init ("unit");
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        khs::mA<npancake_t> manager {k, start, goal};
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains one single solution
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify it is correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA0 correctly find two single solutions between a random instance
+// of the 6-Pancake and the identity permutation in the unit domain
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeUnitBruteForceTwo) {
+
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+
+        // create a manager to find two solutions between a couple of random
+        // instances of the 6-Pancake which are guaranteed to be different
+        int k = 2;
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
+        }
+        npancake_t::init ("unit");
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        khs::mA<npancake_t> manager {k, start, goal};
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA0 correctly finds an arbitrary number of solutions (10 <= k <=
+// 20) between a random instance of the 6-Pancake and the identity permutation
+// in the unit variant
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeUnitBruteForceArbitrary) {
+
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+
+        // create a manager to find an arbitrary number of solutions between
+        // a couple of random instances of the 6-Pancake which are
+        // guaranteed to be different
+        int k = 10 + (rand () % 11);
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
+        }
+        npancake_t::init ("unit");
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        khs::mA<npancake_t> manager {k, start, goal};
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA* correctly finds one single solution between a random instance
+// of the 8-Pancake and the identity permutation in the unit domain using a
+// consistent heuristic
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeUnitConsistentOne) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find a single solution between a couple of
+        // random instances of the 8-Pancake
+        int k = 1;
+        npancake_t start = randInstance (8);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6, 7, 8};
+        while (start == goal) {
+            start = randInstance (8);
+        }
+        npancake_t::init ("unit");
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        khs::mA<npancake_t> manager {k, start, goal, false};
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains one single solution
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify it is correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA* correctly find two single solutions between a random instance
+// of the 8-Pancake and the identity permutation in the unit domain using a
+// consistent heuristic
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeUnitConsistentTwo) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find two solutions between a couple of random
+        // instances of the 8-Pancake which are guaranteed to be different
+        int k = 2;
+        npancake_t start = randInstance (8);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6, 7, 8};
+        while (start == goal) {
+            start = randInstance (8);
+        }
+        npancake_t::init ("unit");
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        khs::mA<npancake_t> manager {k, start, goal, false};
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
 }
 
 // Check that mA* correctly finds an arbitrary number of solutions (10 <= k <=
-// 20) between two instances of the 5-Pancake
-TEST_F (MAFixture, SolvableNPancakeArbitrary) {
+// 20) between a random instance of the 8-Pancake and the identity permutation
+// in the unit variant with a consistent heuristic
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeUnitConsistentArbitrary) {
 
-        for (auto i = 0 ; i < NB_TESTS ; i++) {
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
 
-            // create a manager to find an arbitrary number of solutions between
-            // a couple of random instances of the 5-Pancake which are
-            // guaranteed to be different
-            int k = 10 + (rand () % 11);
-            npancake_t start = randInstance (5);
-            npancake_t goal = randInstance (5);
-            while (start == goal) {
-                goal = randInstance (5);
-            }
-            khs::mA<npancake_t> manager {k, start, goal};
-
-            // initialize the static information of the n-pancake
-            npancake_t::init ("unit");
-
-            // and invoke the solver
-            auto ksolution = manager.solve ();
-
-            // verify the solution found contains two solutions
-            ASSERT_EQ (ksolution.size (), k);
-
-            // and verify they are correct
-            khs::solution_t<npancake_t, vector> solution = ksolution[0];
-            ASSERT_TRUE (solution.doctor ());
-
-            solution = ksolution[1];
-            ASSERT_TRUE (solution.doctor ());
-
-            // to conclude, verify that the second solution is strictly larger
-            // or equal than the first one
-            ASSERT_GE (ksolution[1].get_length (), ksolution[0].get_length ());
+        // create a manager to find an arbitrary number of solutions between
+        // a couple of random instances of the 8-Pancake which are
+        // guaranteed to be different
+        int k = 10 + (rand () % 11);
+        npancake_t start = randInstance (8);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6, 7, 8};
+        while (start == goal) {
+            start = randInstance (8);
         }
+        npancake_t::init ("unit");
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "unit");
+
+        khs::mA<npancake_t> manager {k, start, goal, false};
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA0 correctly finds one single solution between a random instance
+// of the 6-Pancake and the identity permutation in the heavy-cost domain
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeHeavyCostBruteForceOne) {
+
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+
+        // create a manager to find a single solution between a couple of
+        // random instances of the 6-Pancake
+        int k = 1;
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::mA<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains one single solution
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify it is correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA0 correctly finds two single solutions between a random instance
+// of the 6-Pancake and the identity permutation in the heavy-cost domain
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeHeavyCostBruteForceTwo) {
+
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+
+        // create a manager to find two solutions between a couple of random
+        // instances of the 6-Pancake which are guaranteed to be different
+        int k = 2;
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::mA<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA0 correctly finds an arbitrary number of solutions (10 <= k <=
+// 20) between a random instance of the 6-Pancake and the identity permutation
+// in the heavy-cost domain
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeHeavyCostBruteForceArbitrary) {
+
+    for (auto i = 0 ; i < NB_TESTS/10 ; i++) {
+
+        // create a manager to find an arbitrary number of solutions between
+        // a couple of random instances of the 6-Pancake which are
+        // guaranteed to be different
+        int k = 10 + (rand () % 11);
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::mA<npancake_t> manager {k, start, goal};
+
+        // verify the variant and whether the heuristic function is consistent
+        // even if no heuristic function is used
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA* correctly finds one single solution between a random instance
+// of the 6-Pancake and the identity permutation in the heavy-cost domain using
+// a consistent heuristic
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeHeavyCostConsistentOne) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find a single solution between a couple of
+        // random instances of the 8-Pancake
+        int k = 1;
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::mA<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains one single solution
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify it is correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA* correctly find two single solutions between a random instance
+// of the 6-Pancake and the identity permutation in the heavy-cost domain using
+// a consistent heuristic
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeHeavyCostConsistentTwo) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find two solutions between a couple of random
+        // instances of the 8-Pancake which are guaranteed to be different
+        int k = 2;
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::mA<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
+}
+
+// Check that mA* correctly finds an arbitrary number of solutions (10 <= k <=
+// 20) between a random instance of the 6-Pancake and the identity permutation
+// in the heavy-cost variant with a consistent heuristic
+// ----------------------------------------------------------------------------
+TEST_F (MAFixture, NPancakeHeavyCostConsistentArbitrary) {
+
+    for (auto i = 0 ; i < NB_TESTS ; i++) {
+
+        // create a manager to find an arbitrary number of solutions between
+        // a couple of random instances of the 8-Pancake which are
+        // guaranteed to be different
+        int k = 10 + (rand () % 11);
+        npancake_t start = randInstance (6);
+        npancake_t goal = npancake_t{1, 2, 3, 4, 5, 6};
+        while (start == goal) {
+            start = randInstance (6);
+        }
+        npancake_t::init ("heavy-cost");
+        khs::mA<npancake_t> manager {k, start, goal, false};
+
+        // verify the variant and whether the heuristic function is consistent
+        ASSERT_EQ (npancake_t::get_variant (), "heavy-cost");
+
+        // and invoke the solver
+        auto ksolution = manager.solve0 ();
+
+        // verify the solution found contains two solutions
+        ASSERT_EQ (ksolution.size (), k);
+
+        // and verify they are correct
+        ASSERT_TRUE (ksolution.doctor ());
+    }
 }
 
 
