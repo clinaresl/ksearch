@@ -156,6 +156,38 @@ location, a path can be provided through the following CMake options:
 * `-DGUNZIP_LOCATION`: Path to Gunzip executable
 * `-DGZIP_LOCATION`: Path to gzip executable
 
+# Publications #
+
+* Linares López, Carlos; Herman, Ian, 2024. Evolving A* to Efficiently Solve the
+  *k* Shortest-Path Problem. Proceedings of the Twenty-Seventh European
+  Conference on Artificial Intelligence (ECAI 2024), pages 4352-4359. Santiago
+  de Compostela (Spain).
+
+  An extended version of the same paper with an example of BELA0 and the results
+  of all the empirical evaluation can be found at:
+
+  + Linares López, Carlos; Herman, Ian, 2024. Evolving A* to Efficiently Solve
+    the k Shortest-Path Problem (Extended Version). arXiv 2024. eprint
+    [2408.08227](https://arxiv.org/abs/2408.08227).
+
+    In addition, all the data used in the experimentation is available in Zenodo:
+
+  + Linares López, C., & Herman, I. (2024). Experimental evaluation of
+    BELA0/BELA* (ECAI 2024) (Data set). Evolving A* to Efficiently Solve the k
+    Shortest-Path Problem (ECAI), Santiago de Compostela (Spain). Zenodo.
+    https://doi.org/10.5281/zenodo.13293103
+
+* Linares López, Carlos; Herman, Ian, 2026. Finding Simple Shortest-Paths via
+  Centroids. Proceedings of the 35th International Joint Conference on Artificial
+  Intelligence (IJCAI 2026). Bremen (Germany).
+  
+  All the data used in the experimentation is available in Zenodo:
+  
+    + Linares López, C. (2026). Experimental evaluation of sBELA0/sBELA* (IJCAI
+      2026) (Version 1.0.0) [Dataset]. Zenodo. International Joint Conference on
+      Artificial Intelligence (IJCAI), Bremen, Germany.
+      https://doi.org/10.5281/zenodo.20184563
+
 # License #
 
 MIT License
