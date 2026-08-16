@@ -34,6 +34,10 @@ LOGGER = utils.LOGGER
 CONDOR_SUFFIX = ".condor"
 SHELL_SUFFIX = ".sh"
 
+# directory components
+SCRIPTS_DIRECTORY = "scripts"
+CONDOR_DIRECTORY = "condor"
+
 # info messages
 INFO_ELAPSED_TIME = "Elapsed time: {0}"
 INFO_K_INTERVAL = "The values of K are in the interval [{0}, {1}]"
@@ -51,7 +55,7 @@ CRITICAL_SIZE_NOT_GIVEN = "The size of the instance must be given for the domain
 CRITICAL_TESTFILE_NOT_GIVEN = "The testfile is mandatory for the domain '{}'"
 CRITICAL_NO_VALID_PROJECTS = "No valid projects were found in cndconf.py"
 CRITICAL_PROJECT_NOT_FOUND = "Project '{}' not found in '{}'"
-
+CRITICAL_UNKNOWN_DIRECTORY = "This script is being executed under {}/{} instead of 'scripts/condor'. Aborting ..."
 
 # -----------------------------------------------------------------------------
 # return the name of the file given in a string which might qualify the file
@@ -124,11 +128,41 @@ def validate_variant(domain: str, variant: str):
     return variant in cndconf.VALID_VARIANTS[domain]
 
 # -----------------------------------------------------------------------------
+# get_dirname
+#
+# return the name of the repository. It is typically either 'libksearch' for the
+# private repository used for development, or 'ksearch' for the public
+# repository offering the latest developments. This function assumes that the
+# script is executed under $dirname/scripts/condor, following the structure of
+# the repository
+# -----------------------------------------------------------------------------
+def get_dirname() -> str:
+    """return the name of the repository. It is typically either 'libksearch'
+       for the private repository used for development, or 'ksearch' for the
+       public repository offering the latest developments. This function assumes
+       that the script is executed under $dirname/scripts/condor, following the
+       structure of the repository
+
+    """
+
+    # get all the different parts of the current working directory
+    parts = Path.cwd().parts
+
+    # check the last two ones are indeed "scripts" and "condor" and that there
+    # is another directory before, the one to extract indeed
+    if len(parts) < 3 or parts[-1] != CONDOR_DIRECTORY or parts[-2] != SCRIPTS_DIRECTORY:
+        LOGGER.critical(CRITICAL_UNKNOWN_DIRECTORY.format(parts[-2], parts[-1]))
+        raise ValueError(CRITICAL_UNKNOWN_DIRECTORY.format(parts[-2], parts[-1]))
+
+    # then return the item before the scripts_directory
+    return parts[-3]
+    
+# -----------------------------------------------------------------------------
 # generate_condor_file
 #
 # generates the condor file from the values given
 # -----------------------------------------------------------------------------
-def generate_condor_file(project: str, domain: str, variant: str, algorithm: str,
+def generate_condor_file(dirname: str, project: str, domain: str, variant: str, algorithm: str,
                          params: str, requirements: str, user: str,
                          mink: int, maxk: int,
                          mapname: str,
@@ -166,7 +200,8 @@ def generate_condor_file(project: str, domain: str, variant: str, algorithm: str
     else:
         requirements = ""
     template = Template(cndconf.CONDOR_FILE[project])
-    contents = template.substitute(project=project,
+    contents = template.substitute(dirname=dirname,
+                                   project=project,
                                    domain=domain,
                                    variant=variant,
                                    algorithm=algorithm,
@@ -186,7 +221,7 @@ def generate_condor_file(project: str, domain: str, variant: str, algorithm: str
 #
 # generates the shell script to execute in the backend node
 # -----------------------------------------------------------------------------
-def generate_shell_file(project: str, domain: str, variant: str, algorithm: str,
+def generate_shell_file(dirname: str, project: str, domain: str, variant: str, algorithm: str,
                         params: str, testfile: str, kspec: str,
                         user:str,
                         mink: int, maxk: int,
@@ -240,7 +275,8 @@ def generate_shell_file(project: str, domain: str, variant: str, algorithm: str,
     # next, create the contents of the condor submission file which depend upon
     # the chosen project.
     template = Template(cndconf.SHELL_FILE[project])
-    contents = template.substitute(project=project,
+    contents = template.substitute(dirname=dirname,
+                                   project=project,
                                    execdomain=execdomain,
                                    executable=cndconf.EXECUTABLE[domain],
                                    args=args)
@@ -283,6 +319,11 @@ def main():
         LOGGER.critical(CRITICAL_INVALID_VARIANT.format(params.variant, params.domain))
         raise ValueError(CRITICAL_INVALID_VARIANT.format(params.variant, params.domain))
 
+    # determine the dirname, usually it is either libksearch for the private
+    # repo used for development or ksearch the public repo for disseminating the
+    # latest official releases
+    dirname = get_dirname()
+    
     # parse the specification of k values, and report the minimum and maximum
     # values of k
     k = cndk.CNDk(params.k)
@@ -329,7 +370,8 @@ def main():
         testfile = Path(utils.get_filename(get_basename(params.testfile), ".test")).stem
 
     # generate the condor file
-    generate_condor_file(project=params.project,
+    generate_condor_file(dirname=dirname,
+                         project=params.project,
                          domain=params.domain,
                          variant=params.variant,
                          algorithm=params.algorithm,
@@ -343,7 +385,8 @@ def main():
                          nbtiles=params.size*params.size-1)
 
     # and also the shell file
-    generate_shell_file(project=params.project,
+    generate_shell_file(dirname=dirname,
+                        project=params.project,
                         domain=params.domain,
                         variant=params.variant,
                         algorithm=params.algorithm,

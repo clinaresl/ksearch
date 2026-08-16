@@ -13,6 +13,11 @@
 Global definitions of filenames and its contents
 """
 
+# imports
+# -----------------------------------------------------------------------------
+from pathlib import Path
+
+
 # globals
 # -----------------------------------------------------------------------------
 
@@ -106,7 +111,7 @@ error = $filename.$$(Cluster).err
 
 should_transfer_files = yes
 transfer_input_files = ${project}_bundle.tar.gz
-transfer_output_files = libksearch/$filename.csv
+transfer_output_files = $dirname/$filename.csv
 
 queue
 """,
@@ -134,7 +139,7 @@ error = $filename.$$(Cluster).err
 
 should_transfer_files = yes
 transfer_input_files = ${project}_bundle.tar.gz
-transfer_output_files = $project/$filename.csv
+transfer_output_files = $dirname/$filename.csv
 
 queue
 """
@@ -173,7 +178,7 @@ tar xvf ${project}_bundle.tar.gz
 # export LD_LIBRARY_PATH="$$PDB_ROOT/lib:$$LD_LIBRARY_PATH"
 
 # # Next, build libksearch ensuring that clang++-20 is used
-# cd ../libksearch
+# cd ../$dirname
 
 # # compile the library, remember to disable the unit tests as GTest might not be
 # # available in the backend node
@@ -184,7 +189,7 @@ tar xvf ${project}_bundle.tar.gz
 # -----------------------------------------------------------------------------
     
 # Next, build libksearch ensuring that clang++-20 is used
-cd libksearch
+cd $dirname
 
 # compile the library, remember to disable the unit tests as GTest might not be
 # available in the backend node
