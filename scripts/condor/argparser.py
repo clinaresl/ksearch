@@ -173,6 +173,21 @@ def createFilesArgParser():
     rm_optional.add_argument('-j', '--remove-incomplete-and-invalid',
                              action="store_true",
                              help="removes all files from each incomplete and invalid bundle")
+    rm_optional.add_argument('-k', '--domain',
+                             type=str,
+                             help="lists all bundles of the given domain")
+    rm_optional.add_argument('-l', '--project',
+                             type=str,
+                             help="lists all bundles of the given project")
+    rm_optional.add_argument('-m', '--algorithm',
+                             type=str,
+                             help="lists all bundles of the given algorithm")
+    rm_optional.add_argument('-n', '--variant',
+                             type=str,
+                             help="lists all bundles of the given variant")
+    rm_optional.add_argument('-o', '--size',
+                             type=str,
+                             help="lists all bundles of the given size")
 
     # ls
     # -------------------------------------------------------------------------

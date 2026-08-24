@@ -141,11 +141,11 @@ class CNDContainer:
              incomplete_and_valid: bool,
              complete_and_invalid: bool,
              incomplete_and_invalid: bool,
-             domain,
-             project,
-             algorithm,
-             variant,
-             size):
+             domain: str,
+             project: str,
+             algorithm: str,
+             variant: str,
+             size: str):
         """show all bundles that satisfy the given criteria and belong to any of
            the given fields
 
@@ -223,9 +223,14 @@ class CNDContainer:
                remove_complete_and_valid: bool,
                remove_incomplete_and_valid: bool,
                remove_complete_and_invalid: bool,
-               remove_incomplete_and_invalid: bool):
-        """remove all files from a bundle that belongs to any of the given
-        groups whose meaning is self explanatory.
+               remove_incomplete_and_invalid: bool,
+               domain: str,
+               project: str,
+               algorithm: str,
+               variant: str,
+               size: str):
+        """remove all files from a bundle that satisfy the given criteria and
+           belong to any of the given fields in the given order
 
         """
 
@@ -243,8 +248,15 @@ class CNDContainer:
                (remove_complete_and_invalid and ibundle.is_complete() and not ibundle.is_valid()) or \
                (remove_incomplete_and_invalid and not ibundle.is_complete() and not ibundle.is_valid()):
 
-                # then remove the files of this bundle
-                ibundle.remove(dry_run)
+                # if any field is given check it matches
+                if (domain is None or imetadata.get_domain() == domain) and \
+                   (project is None or imetadata.get_project() == project) and \
+                   (algorithm is None or imetadata.get_algorithm() == algorithm) and \
+                   (variant is None or imetadata.get_variant() == variant) and \
+                   (size is None or imetadata.get_size() == size):
+                
+                    # then remove the files of this bundle
+                    ibundle.remove(dry_run)
 
     def tar(self,
             archive:Path,
@@ -257,11 +269,11 @@ class CNDContainer:
             incomplete_and_valid: bool,
             complete_and_invalid: bool,
             incomplete_and_invalid: bool,
-            domain,
-            project,
-            algorithm,
-            variant,
-            size):
+            domain: str,
+            project: str,
+            algorithm: str,
+            variant: str,
+            size: str):
         """compress all files from all bundles that satisfy the given criteria
            and belong to any of the given fields in the given archive
 

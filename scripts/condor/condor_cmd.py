@@ -93,7 +93,12 @@ def main():
                          params.remove_complete_and_valid,
                          params.remove_incomplete_and_valid,
                          params.remove_complete_and_invalid,
-                         params.remove_incomplete_and_invalid)
+                         params.remove_incomplete_and_invalid,
+                         params.domain,
+                         params.project,
+                         params.algorithm,
+                         params.variant,
+                         params.size)
     elif params.command == "ls":
         container.list(params.all,
                        params.valid,
