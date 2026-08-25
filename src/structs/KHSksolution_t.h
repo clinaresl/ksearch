@@ -40,6 +40,7 @@ namespace khs {
         // equal to the same statistics of the last single solution reported in
         // this container
         int _z_exp;                                    // # centroid expansions 
+        int _z_gen;                                    // # generated centroids
         int _nbpaths;     // # extra paths explored in the last single solution
         int _h0;                       // heuristic distance of the start state
         size_t _expansions;                       // total number of expansions
@@ -70,6 +71,7 @@ namespace khs {
             _start { start },
             _goal { goal },
             _z_exp { 0 },
+            _z_gen { 0 },
             _nbpaths { 0 },
             _solutions { std::vector<solution_t<T, path_t>>() },
             _h0 { 0 },
@@ -99,6 +101,9 @@ namespace khs {
         }
         int get_z_exp () const {
             return _z_exp;
+        }
+        int get_z_gen () const {
+            return _z_gen;
         }
         int get_nbpaths () const {
             return _nbpaths;
@@ -175,6 +180,7 @@ namespace khs {
 
             // and update the statistics of the container of solutions
             _z_exp = right.get_z_exp ();
+            _z_gen = right.get_z_gen ();
             _nbpaths = right.get_nbpaths ();
             _h0 = right.get_h0 ();
             _expansions = right.get_expansions ();
@@ -195,6 +201,7 @@ namespace khs {
             // those from the last single solution given in right
             if (right.size () > 0) {
                 _z_exp = right[right.size ()-1].get_z_exp ();
+                _z_gen = right[right.size ()-1].get_z_gen ();
                 _nbpaths = right[right.size ()-1].get_nbpaths ();
                 _h0 = right[right.size ()-1].get_h0 ();
                 _expansions = right[right.size ()-1].get_expansions ();
@@ -207,7 +214,7 @@ namespace khs {
         // random access operator
         solution_t<T, path_t>& operator[] (const size_t idx) {
             if (idx >= _solutions.size ()) {
-                throw std::out_of_range ("[ksolution_t::get] out of bounds!");
+                throw std::out_of_range ("[ksolution_t::operator[]] out of bounds!");
             }
             return _solutions[idx];
         }
@@ -331,7 +338,7 @@ namespace khs {
             std::stringstream ss;
 
             if (fmt.mode == "csv") {
-                ss << "id;k;start;goal;h0;expansions;#expansions;Xz(k);#paths;mem usage;runtime;solver;doctor;version" << std::endl;
+                ss << "id;k;start;goal;h0;expansions;#expansions;Xz(k);Nz(k);#paths;mem usage;runtime;solver;doctor;version" << std::endl;
             } else {
 
                 // the width used to print both the start and the goal are
@@ -350,7 +357,7 @@ namespace khs {
                     "{}"
                     "{:>{}}{:>{}}"
                     "{:>{}}{:>{}}"
-                    "{:>{}}{:>{}}{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}{:>{}}{:>{}}{:>{}}"
                     "{:>{}}{:>{}}{:>{}}{:>{}}{:>{}}"
                     "{}",
 
@@ -365,6 +372,7 @@ namespace khs {
                     "h0",          h0_width, 
                     "#expansions", expansions_width, 
                     "Xz(k)",       centroids_width, 
+                    "Nz(k)",       centroids_width, 
                     "#paths",      paths_width, 
                     
                     "mem usage", memory_width, 
@@ -396,6 +404,7 @@ namespace khs {
                 ss << solutions.get_h0 () << ";";
                 ss << solutions.get_expansions() << ";";
                 ss << solutions.get_z_exp () << ";";
+                ss << solutions.get_z_gen () << ";";
                 ss << solutions.get_nbpaths () << ";";
                 ss << solutions.get_mem_usage () << ";";
                 ss << solutions.get_cpu_time() << ";";
@@ -433,7 +442,7 @@ namespace khs {
                     "{}{:>{}}{:>{}}{}"
                     "   {}{:>{}}"
                     "   {:>{}}{}"
-                    "{}{:>{}}{:>{}}{:>{}}{:>{}}"
+                    "{}{:>{}}{:>{}}{:>{}}{:>{}}{:>{}}"
                     "{:>{}.{}f}{:>{}.{}f}{}"
                     "{}{:>{}}{:>{}}{}{:>{}}{}",
 
@@ -450,7 +459,8 @@ namespace khs {
                     (mode == 2 ? ansi::Tan : ""),
                     solutions.get_h0(),          h0_width,
                     solutions.get_expansions(),  expansions_width,
-                    solutions.get_z_exp(), centroids_width,
+                    solutions.get_z_exp(),       centroids_width,
+                    solutions.get_z_gen(),       centroids_width,
                     solutions.get_nbpaths(),     paths_width,
 
                     solutions.get_mem_usage(), memory_width, precision,
@@ -458,10 +468,10 @@ namespace khs {
                     (mode == 2 ? ansi::reset : ""),
 
                     (mode == 2 ? ansi::LightSteelBlue : ""),
-                    solutions.get_solver(), solver_width,
+                    solutions.get_solver(),                                                    solver_width,
                     solution_t<T, path_t>::get_error_msg(solutions.get_error_code(), mode==2), doctor_width, 
                     (mode == 2 ? ansi::LightSteelBlue : ""),
-                    solutions.get_version(), version_width,
+                    solutions.get_version(),                                                   version_width,
                     (mode == 2 ? ansi::reset : "")
                     );
             }

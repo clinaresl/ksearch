@@ -63,6 +63,7 @@ namespace khs {
         T _goal;                                                  // goal state
         path_t<T> _solution;           // solution path as a sequence of states
         int _z_exp;                            // number of centroid expansions
+        int _z_gen;                            // number of generated centroids
         int _h0;                       // heuristic distance of the start state
         int _length;                  // solution length, i.e., number of steps
         int _cost;           // solution cost, i.e., sum of the cost of all ops
@@ -98,14 +99,15 @@ namespace khs {
         // memory usage is measured only when the k shortest paths have been found
         solution_t (const int k,
                     const path_t<T>& solution, const T& start, const T& goal,
-                    const int nbcentroids, const int h0, const int cost,
+                    const int z_exp, const int z_gen, const int h0, const int cost,
                     const size_t expansions, const double cpu_time,
                     const int nbpaths, const std::string solver, const bool simple) :
             _name              { ""                },
             _k                 { k                 },
             _start             { start             },
             _goal              { goal              },
-            _z_exp             { nbcentroids       },
+            _z_exp             { z_exp             },
+            _z_gen             { z_gen             },
             _solution          { solution          },
             _h0                { h0                },
             _cost              { cost              },
@@ -142,6 +144,8 @@ namespace khs {
             { return _goal; }
         int get_z_exp () const
             { return _z_exp; }
+        int get_z_gen () const
+            { return _z_gen; }
         const path_t<T>& get_solution () const
             { return _solution; }
         int get_h0 () const
@@ -189,6 +193,7 @@ namespace khs {
             return _start == right.get_start () &&
                 _goal == right.get_goal () &&
                 _z_exp == right.get_z_exp () &&
+                _z_gen == right.get_z_gen () &&
                 _solution == right.get_solution () &&
                 _length == right.get_length () &&
                 _cost == right.get_cost () &&
@@ -203,7 +208,7 @@ namespace khs {
         // different container
         operator solution_t<T, std::vector>() {
             return solution_t<T, std::vector>(this->_k, std::vector<T>(_solution.begin(), _solution.end()),
-                                              this->_start, this->_goal, this->_z_exp,
+                                              this->_start, this->_goal, this->_z_exp, this->_z_gen, 
                                               this->_h0, this->_cost, this->_expansions,
                                               this->_cpu_time, this->_nbpaths, this->_solver, this->_simple);
         }
@@ -426,13 +431,13 @@ namespace khs {
             // instance is shown in csv mode. However, in console mode only the
             // most relevant fields are shown
             if (fmt.mode == "csv") {
-                ss << "id;k;start;goal;h0;length;cost;#expansions;Xz(k);#paths;mem usage;runtime;expansions/sec.;#inconsistencies;air;solver;doctor" << std::endl;
+                ss << "id;k;start;goal;h0;length;cost;#expansions;Xz(k);Nz(k);#paths;mem usage;runtime;expansions/sec.;#inconsistencies;air;solver;doctor" << std::endl;
             } else {
 
                 ss << std::format(
                     "{}"
                     "{:>{}}{:>{}}{:>{}}"
-                    "{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}{:>{}}"
                     "{:>{}}{:>{}}{:>{}}{:>{}}"
                     "{:>{}}"
                     "{}",
@@ -444,7 +449,8 @@ namespace khs {
                     "cost",   cost_width, 
                     
                     "#expansions", expansions_width, 
-                    "Xz(k)",      centroids_width, 
+                    "Xz(k)",       centroids_width, 
+                    "Nz(k)",       centroids_width, 
                     
                     "#paths",          paths_width, 
                     "mem usage",       memory_width, 
@@ -481,6 +487,7 @@ namespace khs {
                 ss << solution.get_cost () << ";";
                 ss << solution.get_expansions () << ";";
                 ss << solution.get_z_exp () << ";";
+                ss << solution.get_z_gen () << ";";
                 ss << solution.get_nbpaths () << ";";
                 ss << solution.get_mem_usage () << ";";
                 ss << solution.get_cpu_time () << ";";
@@ -496,7 +503,7 @@ namespace khs {
                 ss << std::format (
                     "{}{:>{}}{}"
                     "{}{:>{}}{:>{}}"
-                    "{:>{}}{:>{}}"
+                    "{:>{}}{:>{}}{:>{}}"
                     "{:>{}}{:>{}}{:>{}.{}f}{:>{}.{}f}"
                     "{}"
                     "{:>{}}",
@@ -510,7 +517,8 @@ namespace khs {
                     solution.get_cost (),   cost_width,
 
                     solution.get_expansions (),  expansions_width,
-                    solution.get_z_exp (), centroids_width,
+                    solution.get_z_exp (),       centroids_width,
+                    solution.get_z_gen (),       centroids_width,
                     
                     solution.get_nbpaths (),               paths_width,
                     solution.get_mem_usage (),             memory_width,

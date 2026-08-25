@@ -56,7 +56,8 @@ TEST_F (KSolutionFixture, AddEmptySolution) {
         int k = rand () % MAX_VALUE;
         std::vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
-        int nbcentroids = rand () % MAX_VALUE;
+        int z_exp = rand () % MAX_VALUE;
+        int z_gen = rand () % MAX_VALUE;
         int h0 = rand () % MAX_VALUE;
         int cost = randWalk.second;
         size_t expansions = 1 + rand () % MAX_VALUE;
@@ -67,9 +68,9 @@ TEST_F (KSolutionFixture, AddEmptySolution) {
         // Create a container of solutions with only this solution. Note there
         // is already a specific unit test for verifying that a single solution
         // can be added to an empty container
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, nbcentroids,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, z_exp, z_gen, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths, solver, false);
         khs::ksolution_t<npancake_t, std::vector> k1 {k, start, goal};
         k1 += solution;
 
@@ -106,7 +107,8 @@ TEST_F (KSolutionFixture, AddSingleSolution) {
         int k = rand () % MAX_VALUE;
         std::vector<npancake_t> path = randWalk.first;
         npancake_t goal = path.back ();
-        int nbcentroids = rand () % MAX_VALUE;
+        int z_exp = rand () % MAX_VALUE;
+        int z_gen = rand () % MAX_VALUE;
         int h0 = rand () % MAX_VALUE;
         int cost = randWalk.second;
         size_t expansions = 1 + rand () % MAX_VALUE;
@@ -115,9 +117,9 @@ TEST_F (KSolutionFixture, AddSingleSolution) {
         std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, nbcentroids,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, z_exp, z_gen, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths, solver, false);
 
         // Create a container for storing k solutions from a specific start to
         // another goal
@@ -274,7 +276,7 @@ TEST_F (KSolutionFixture, DoctorSimplePath) {
             }
 
             // and add this solution to the container
-            ssolution += khs::solution_t<npancake_t, std::vector>(1, is.get_solution (), start, goal, 0,
+            ssolution += khs::solution_t<npancake_t, std::vector>(1, is.get_solution (), start, goal, 0, 0, 
                                                                   is.get_h0 (), is.get_cost (), is.get_expansions (), is.get_cpu_time (),
                                                                   is.get_nbpaths (), is.get_solver (), true);
         }

@@ -64,7 +64,8 @@ protected:
             // explicitly create other data for populating this solution
             int k = rand () % MAX_VALUE;
             std::vector<npancake_t> path = randWalk.first;
-            int nbcentroids = rand () % MAX_VALUE;
+            int z_exp = rand () % MAX_VALUE;
+            int z_gen = rand () % MAX_VALUE;
             int h0 = rand () % MAX_VALUE;
             int cost = randWalk.second;
             size_t expansions = 1 + rand () % MAX_VALUE;
@@ -73,7 +74,7 @@ protected:
             std::string solver = randString (50);
 
             // Create a solution which stores all this information
-            khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, nbcentroids,
+            khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, z_exp, z_gen, 
                                                                h0, cost, expansions, cpu_time,
                                                                nbpaths, solver, false);
 

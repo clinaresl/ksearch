@@ -177,7 +177,9 @@ of every task is automatically created. The following information is given:
 * *expansions*: number of expanded nodes for finding one specific solution path.
   This value might be increasing between successive solution paths, but this is
   not necessarily true always.
-* *nbcentroids*: number of expanded centroids for computing the *k* shortest
+* *Xz(k)*: number of centroid expansions for computing the *k* shortest
+  paths when using an algorithm from the BELA* family
+* *Nz(k)*: number of generated centroids for computing the *k* shortest
   paths when using an algorithm from the BELA* family
 * *nbpaths*: number of paths discarded when using bBELA0/bBELA*.
 * *mem*: memory usage in Megabytes. The measurement combines both the virtual

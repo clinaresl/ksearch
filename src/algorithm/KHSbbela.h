@@ -72,6 +72,7 @@ namespace khs {
                                                bela<T>::_start.get_state (),
                                                bela<T>::_goal.get_state (),
                                                bsolver<T>::_z_exp,
+                                               bsolver<T>::_z_gen,
                                                bsolver<T>::_h0,
                                                g,
                                                bsolver<T>::_expansions,

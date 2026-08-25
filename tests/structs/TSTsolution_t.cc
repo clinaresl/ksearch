@@ -28,7 +28,8 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         std::vector<int> path = randVectorInt (MAX_VALUES, MAX_VALUES);
         int start = rand () % MAX_VALUE;
         int goal = rand () % MAX_VALUE;
-        int nbcentroids = rand () & MAX_VALUE;
+        int z_exp = rand () & MAX_VALUE;
+        int z_gen = rand () & MAX_VALUE;
         int h0 = rand () % MAX_VALUE;
         int cost = rand () % MAX_VALUE;
         size_t expansions = rand () % MAX_VALUE;
@@ -37,7 +38,7 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         std::string solver = randString (50);
 
         // create a solution which stores ints
-        khs::solution_t<int, std::vector> solution{k, path, start, goal, nbcentroids,
+        khs::solution_t<int, std::vector> solution{k, path, start, goal, z_exp, z_gen,
             h0, cost, expansions, cpu_time,
             nbpaths, solver, false};
 
@@ -50,7 +51,8 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         ASSERT_EQ (start, solution.get_start ());
         ASSERT_EQ (goal, solution.get_goal ());
         ASSERT_EQ (path, solution.get_solution ());
-        ASSERT_EQ (nbcentroids, solution.get_z_exp ());
+        ASSERT_EQ (z_exp, solution.get_z_exp ());
+        ASSERT_EQ (z_gen, solution.get_z_gen ());
         ASSERT_EQ (h0, solution.get_h0 ());
         ASSERT_EQ (path.size () - 1, solution.get_length ());
         ASSERT_EQ (cost, solution.get_cost ());
@@ -86,9 +88,10 @@ TEST_F (SolutionFixture, EmptySolutionNPancake) {
         std::string solver = randString (50);
 
         // create a solution which stores npancakes
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths,
+                                                      solver, false);
 
         // check that doctor recognizes this as a correct solution
         ASSERT_TRUE (solution.doctor ());
@@ -123,9 +126,10 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeUnit) {
         std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths,
+                                                      solver, false);
 
         // verify the solution is correct
         ASSERT_TRUE (solution.doctor ());
@@ -160,9 +164,10 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeHeavy) {
         std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths,
+                                                      solver, false);
 
         // verify the solution is correct
         ASSERT_TRUE (solution.doctor ());
@@ -191,9 +196,10 @@ TEST_F (SolutionFixture, ErrorEmptySolutionNPancake) {
         std::string solver = randString (50);
 
         // create a solution which stores npancakes
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths,
+                                                      solver, false);
 
         // check that doctor recognizes this solution is incorrect as a strictly
         // positive number of expanions is reported
@@ -237,9 +243,10 @@ TEST_F (SolutionFixture, ErrorStartNPancake) {
         std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths,
+                                                      solver, false);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -282,9 +289,10 @@ TEST_F (SolutionFixture, ErrorGoalNPancake) {
         std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths,
+                                                      solver, false);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -334,9 +342,10 @@ TEST_F (SolutionFixture, ErrorAdjacencyNPancake) {
         std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths,
+                                                      solver, false);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -375,9 +384,10 @@ TEST_F (SolutionFixture, ErrorCostNPancakeHeavy) {
         std::string solver = randString (50);
 
         // Create a solution which stores all this information
-        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0,
-                                                           h0, cost, expansions, cpu_time,
-                                                           nbpaths, solver, false);
+        khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
+                                                      h0, cost, expansions, cpu_time,
+                                                      nbinconsistencies, air, nbpaths,
+                                                      solver, false);
 
         // verify the solution is incorrect
         ASSERT_FALSE (solution.doctor ());
@@ -413,7 +423,7 @@ TEST_F (SolutionFixture, ErrorSimplePathPancake) {
         // (since it is optimal), and create a solution created on behalf of a
         // solver which generates simple paths
         auto s0 = ksolution[0];
-        khs::solution_t<npancake_t, std::vector> optimal (k, s0.get_solution (), start, goal, 0,
+        khs::solution_t<npancake_t, std::vector> optimal (k, s0.get_solution (), start, goal, 0, 0, 
                                                      s0.get_h0 (), s0.get_cost (), s0.get_expansions (), s0.get_cpu_time (),
                                                      s0.get_nbpaths (), s0.get_solver (), true);
 
@@ -453,7 +463,7 @@ TEST_F (SolutionFixture, ErrorNonSimplePathPancake) {
             // a solver which is required to generate simple solution paths
             if (!isSimplePath(is.get_solution ())) {
 
-                ptr = make_unique<khs::solution_t<npancake_t, std::vector>> (1, is.get_solution (), start, goal, 0,
+                ptr = make_unique<khs::solution_t<npancake_t, std::vector>> (1, is.get_solution (), start, goal, 0, 0,
                                                                         is.get_h0 (), is.get_cost (), is.get_expansions (), is.get_cpu_time (),
                                                                         is.get_nbpaths (), is.get_solver (), true);
                 break;

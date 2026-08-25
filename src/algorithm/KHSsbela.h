@@ -146,6 +146,7 @@ namespace khs {
                                                _start.get_state (),
                                                _goal.get_state (),
                                                bsolver<T>::_z_exp,
+                                               bsolver<T>::_z_gen,
                                                bsolver<T>::_h0,
                                                g,
                                                bsolver<T>::_expansions,
@@ -345,6 +346,7 @@ namespace khs {
                         centroid_t z { bps[i].get_pointer (),
                             ptr,
                             closed[bps[i].get_pointer ()].get_g () + bps[i].get_cost () + cost };
+                        bsolver<T>::_z_gen++;
                         centroids.insert (z,
                                           closed[bps[i].get_pointer ()].get_g () + bps[i].get_cost () + cost );
                     }
@@ -453,6 +455,7 @@ namespace khs {
 
                     // and add it to the collection of centroids to process in
                     // case it is necessary to discover new paths
+                    bsolver<T>::_z_gen++;
                     centroids.insert (z, parent.get_g () + ibp.get_cost () + cost);
                 }
             }
@@ -909,6 +912,7 @@ namespace khs {
                 centroid_t z { node.get_backpointer (0).get_pointer (),
                     ptr,
                     parent.get_g () + node.get_backpointer (0).get_cost () };
+                bsolver<T>::_z_gen++;
                 centroids.insert (z, parent.get_g () + node.get_backpointer (0).get_cost ());
 
                 // finally, skip the expansion of the goal state. This is very
@@ -941,6 +945,7 @@ namespace khs {
                     // gb-value
                     auto overall_cost = parent.get_g () + node.get_backpointer (0).get_cost () + ibg;
                     centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
+                    bsolver<T>::_z_gen++;
                     centroids.insert (z, overall_cost);
                 }
 
@@ -1101,6 +1106,7 @@ namespace khs {
                 centroid_t z { node.get_backpointer (0).get_pointer (),
                     ptr,
                     parent.get_g () + node.get_backpointer (0).get_cost () };
+                bsolver<T>::_z_gen++;
                 centroids.insert (z, parent.get_g () + node.get_backpointer (0).get_cost ());
 
                 // finally, skip the expansion of the goal state. This is very
@@ -1133,6 +1139,7 @@ namespace khs {
                     // gb-value
                     auto overall_cost = parent.get_g () + node.get_backpointer (0).get_cost () + ibg;
                     centroid_t z { node.get_backpointer (0).get_pointer (), ptr, overall_cost };
+                    bsolver<T>::_z_gen++;
                     centroids.insert (z, overall_cost);
                 }
 

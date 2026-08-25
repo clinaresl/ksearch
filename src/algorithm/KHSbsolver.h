@@ -43,6 +43,7 @@ namespace khs {
         int _h0;                       // heuristic distance of the start state
         std::size_t _expansions;                   // number of node expansions
         int _z_exp;                            // number of centroid expansions
+        int _z_gen;                            // number of generated centroids
 
         // Also, and only in the context of bBELA we are interested in computing
         // the *extra* number of paths that are necessary to get k paths, i.e.,
@@ -65,6 +66,7 @@ namespace khs {
             _h0 { 0 },
             _expansions { 0 },
             _z_exp { 0 },
+            _z_gen { 0 },
             _nbpaths { 0 }
             {}
 
@@ -78,8 +80,10 @@ namespace khs {
             { return _h0; }
         size_t get_expansions () const
             { return _expansions; }
-        int nb_z_exp () const
+        int get_z_exp () const
             { return _z_exp; }
+        int get_z_gen () const
+            { return _z_gen; }
         int nb_paths () const
             { return _nbpaths; }
         double get_cpu_time () const

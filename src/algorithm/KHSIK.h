@@ -260,17 +260,20 @@ namespace khs {
             bsolver<T>::_tend = std::chrono::system_clock::now ();
             // return a solution with this information
             return solution_t<T, std::list> (bsolver<T>::_k,
-                                        path,
-                                        start,
-                                        goal,
-                                        0,
-                                        bsolver<T>::_h0,
-                                        g,
-                                        bsolver<T>::_expansions,
-                                        bsolver<T>::get_cpu_time (),
-                                        0,
-                                        signature,
-                                        false);
+                                             path,
+                                             start,
+                                             goal,
+                                             bsolver<T>::_z_exp,
+                                             bsolver<T>::_z_gen,
+                                             bsolver<T>::_h0,
+                                             g,
+                                             bsolver<T>::_expansions,
+                                             bsolver<T>::get_cpu_time (),
+                                             bsolver<T>::_nbinconsistencies,
+                                             bsolver<T>::_air,
+                                             0,
+                                             signature,
+                                             false);
         }
 
         /// Wrapper for heuristic function that handles the brute force case
