@@ -153,7 +153,7 @@ namespace khs {
             return _ksolutions[idx];
         }
 
-        // stream out
+        // Shows the contents of this container on the given stream
         friend std::ostream& operator<< (std::ostream& stream, ksolutions_t& ksolutions) {
 
             // data is written in the csv format using the semicolon as
@@ -162,7 +162,7 @@ namespace khs {
             // first to a string stream and then copy its output to the given
             // stream
             std::stringstream ss;
-            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;nbcentroids;nbpaths;mem;runtime;expansions/sec;solver;doctor;version" << std::endl;
+            ss << "domain;variant;id;k;start;goal;h0;length;cost;expansions;Xz(k);nbpaths;mem;runtime;expansions/sec;nbinconsistencies;air;solver;doctor;version" << std::endl;
             for (auto& ksolution : ksolutions.get_ksolutions ()) {
 
                 // in case only a summary report has been requested, provide

@@ -131,7 +131,7 @@ namespace khs {
                                                path,
                                                _start.get_state (),
                                                _goal.get_state (),
-                                               bsolver<T>::_nbcentroids,
+                                               bsolver<T>::_z_exp,
                                                bsolver<T>::_h0,
                                                g,
                                                bsolver<T>::_expansions,
@@ -521,9 +521,8 @@ namespace khs {
                                                     bucket_t<centroid_t>& centroids,
                                                     size_t bound) {
 
-        // Update the number of centroids that are used to compute solution
-        // paths
-        bsolver<T>::_nbcentroids++;
+        // Update Xz (k), the number of centroid expansions
+        bsolver<T>::_z_exp++;
 
         // Every centroid is the representative of a class of paths that get
         // from s to t through it. Their computation is just the cross product

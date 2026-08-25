@@ -71,7 +71,7 @@ namespace khs {
                                                path,
                                                bela<T>::_start.get_state (),
                                                bela<T>::_goal.get_state (),
-                                               bsolver<T>::_nbcentroids,
+                                               bsolver<T>::_z_exp,
                                                bsolver<T>::_h0,
                                                g,
                                                bsolver<T>::_expansions,
@@ -194,7 +194,7 @@ namespace khs {
 
         // Update the number of centroids that are used to compute solution
         // paths
-        bsolver<T>::_nbcentroids++;
+        bsolver<T>::_z_exp++;
 
         // Note that BELA* can not estimate the number of prefixes and suffixes
         // that have to be discored to generate bound paths. The reason is that

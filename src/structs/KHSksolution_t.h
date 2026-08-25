@@ -30,7 +30,7 @@ namespace khs {
 
         // INVARIANT: the solution of a k-shortest path problem (identified with
         // a name) consists of k solution paths with the same start and goal
-        std::string _name;                                          // instance name
+        std::string _name;                                     // instance name
         int _k;                                                   // value of k
         T _start;                               // start state of all solutions
         T _goal;                                 // goal state of all solutions
@@ -39,7 +39,7 @@ namespace khs {
         // In addition, a number of statistics are reported. Note that these are
         // equal to the same statistics of the last single solution reported in
         // this container
-        int _nbcentroids;       // # centroids used in the last single solution
+        int _z_exp;                                    // # centroid expansions 
         int _nbpaths;     // # extra paths explored in the last single solution
         int _h0;                       // heuristic distance of the start state
         size_t _expansions;                       // total number of expansions
@@ -69,7 +69,7 @@ namespace khs {
             _k { k },
             _start { start },
             _goal { goal },
-            _nbcentroids { 0 },
+            _z_exp { 0 },
             _nbpaths { 0 },
             _solutions { std::vector<solution_t<T, path_t>>() },
             _h0 { 0 },
@@ -97,8 +97,8 @@ namespace khs {
         const T& get_goal () const {
             return _goal;
         }
-        int get_nbcentroids () const {
-            return _nbcentroids;
+        int get_z_exp () const {
+            return _z_exp;
         }
         int get_nbpaths () const {
             return _nbpaths;
@@ -174,7 +174,7 @@ namespace khs {
             _solutions.push_back (right);
 
             // and update the statistics of the container of solutions
-            _nbcentroids = right.get_nbcentroids ();
+            _z_exp = right.get_z_exp ();
             _nbpaths = right.get_nbpaths ();
             _h0 = right.get_h0 ();
             _expansions = right.get_expansions ();
@@ -194,7 +194,7 @@ namespace khs {
             // and update the statistics of the container of solutions copying
             // those from the last single solution given in right
             if (right.size () > 0) {
-                _nbcentroids = right[right.size ()-1].get_nbcentroids ();
+                _z_exp = right[right.size ()-1].get_z_exp ();
                 _nbpaths = right[right.size ()-1].get_nbpaths ();
                 _h0 = right[right.size ()-1].get_h0 ();
                 _expansions = right[right.size ()-1].get_expansions ();
@@ -331,7 +331,7 @@ namespace khs {
             std::stringstream ss;
 
             if (fmt.mode == "csv") {
-                ss << "id;k;start;goal;h0;expansions;#expansions;#centroids;#paths;mem usage;runtime;solver;doctor;version" << std::endl;
+                ss << "id;k;start;goal;h0;expansions;#expansions;Xz(k);#paths;mem usage;runtime;solver;doctor;version" << std::endl;
             } else {
 
                 // the width used to print both the start and the goal are
@@ -364,7 +364,7 @@ namespace khs {
 
                     "h0",          h0_width, 
                     "#expansions", expansions_width, 
-                    "#centroids",  centroids_width, 
+                    "Xz(k)",       centroids_width, 
                     "#paths",      paths_width, 
                     
                     "mem usage", memory_width, 
@@ -395,7 +395,7 @@ namespace khs {
                 ss << solutions.get_goal () << ";";
                 ss << solutions.get_h0 () << ";";
                 ss << solutions.get_expansions() << ";";
-                ss << solutions.get_nbcentroids () << ";";
+                ss << solutions.get_z_exp () << ";";
                 ss << solutions.get_nbpaths () << ";";
                 ss << solutions.get_mem_usage () << ";";
                 ss << solutions.get_cpu_time() << ";";
@@ -450,7 +450,7 @@ namespace khs {
                     (mode == 2 ? ansi::Tan : ""),
                     solutions.get_h0(),          h0_width,
                     solutions.get_expansions(),  expansions_width,
-                    solutions.get_nbcentroids(), centroids_width,
+                    solutions.get_z_exp(), centroids_width,
                     solutions.get_nbpaths(),     paths_width,
 
                     solutions.get_mem_usage(), memory_width, precision,

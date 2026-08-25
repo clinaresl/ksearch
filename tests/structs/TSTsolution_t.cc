@@ -50,7 +50,7 @@ TEST_F (SolutionFixture, ExplicitConstructorInt) {
         ASSERT_EQ (start, solution.get_start ());
         ASSERT_EQ (goal, solution.get_goal ());
         ASSERT_EQ (path, solution.get_solution ());
-        ASSERT_EQ (nbcentroids, solution.get_nbcentroids ());
+        ASSERT_EQ (nbcentroids, solution.get_z_exp ());
         ASSERT_EQ (h0, solution.get_h0 ());
         ASSERT_EQ (path.size () - 1, solution.get_length ());
         ASSERT_EQ (cost, solution.get_cost ());
