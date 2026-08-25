@@ -70,7 +70,7 @@ TEST_F (KSolutionFixture, AddEmptySolution) {
         // can be added to an empty container
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, z_exp, z_gen, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths, solver, false);
+                                                      nbpaths, solver, false);
         khs::ksolution_t<npancake_t, std::vector> k1 {k, start, goal};
         k1 += solution;
 
@@ -119,7 +119,7 @@ TEST_F (KSolutionFixture, AddSingleSolution) {
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, z_exp, z_gen, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths, solver, false);
+                                                      nbpaths, solver, false);
 
         // Create a container for storing k solutions from a specific start to
         // another goal

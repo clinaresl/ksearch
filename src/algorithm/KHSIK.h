@@ -269,8 +269,6 @@ namespace khs {
                                              g,
                                              bsolver<T>::_expansions,
                                              bsolver<T>::get_cpu_time (),
-                                             bsolver<T>::_nbinconsistencies,
-                                             bsolver<T>::_air,
                                              0,
                                              signature,
                                              false);

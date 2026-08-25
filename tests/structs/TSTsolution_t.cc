@@ -90,7 +90,7 @@ TEST_F (SolutionFixture, EmptySolutionNPancake) {
         // create a solution which stores npancakes
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths,
+                                                      nbpaths,
                                                       solver, false);
 
         // check that doctor recognizes this as a correct solution
@@ -128,7 +128,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeUnit) {
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths,
+                                                      nbpaths,
                                                       solver, false);
 
         // verify the solution is correct
@@ -166,7 +166,7 @@ TEST_F (SolutionFixture, NonEmptySolutionNPancakeHeavy) {
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths,
+                                                      nbpaths,
                                                       solver, false);
 
         // verify the solution is correct
@@ -198,7 +198,7 @@ TEST_F (SolutionFixture, ErrorEmptySolutionNPancake) {
         // create a solution which stores npancakes
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths,
+                                                      nbpaths,
                                                       solver, false);
 
         // check that doctor recognizes this solution is incorrect as a strictly
@@ -245,7 +245,7 @@ TEST_F (SolutionFixture, ErrorStartNPancake) {
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths,
+                                                      nbpaths,
                                                       solver, false);
 
         // verify the solution is incorrect
@@ -291,7 +291,7 @@ TEST_F (SolutionFixture, ErrorGoalNPancake) {
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths,
+                                                      nbpaths,
                                                       solver, false);
 
         // verify the solution is incorrect
@@ -344,7 +344,7 @@ TEST_F (SolutionFixture, ErrorAdjacencyNPancake) {
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths,
+                                                      nbpaths,
                                                       solver, false);
 
         // verify the solution is incorrect
@@ -386,7 +386,7 @@ TEST_F (SolutionFixture, ErrorCostNPancakeHeavy) {
         // Create a solution which stores all this information
         khs::solution_t<npancake_t, std::vector> solution (k, path, start, goal, 0, 0, 
                                                       h0, cost, expansions, cpu_time,
-                                                      nbinconsistencies, air, nbpaths,
+                                                      nbpaths,
                                                       solver, false);
 
         // verify the solution is incorrect
