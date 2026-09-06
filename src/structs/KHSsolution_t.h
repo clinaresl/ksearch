@@ -431,7 +431,7 @@ namespace khs {
             // instance is shown in csv mode. However, in console mode only the
             // most relevant fields are shown
             if (fmt.mode == "csv") {
-                ss << "id;k;start;goal;h0;length;cost;#expansions;Xz(k);Nz(k);#paths;mem usage;runtime;expansions/sec.;#inconsistencies;air;solver;doctor" << std::endl;
+                ss << "id;k;start;goal;h0;length;cost;#expansions;Xz;Nz;#paths;mem usage;runtime;expansions/sec.;#inconsistencies;air;solver;doctor" << std::endl;
             } else {
 
                 ss << std::format(

@@ -338,7 +338,7 @@ namespace khs {
             std::stringstream ss;
 
             if (fmt.mode == "csv") {
-                ss << "id;k;start;goal;h0;expansions;#expansions;Xz(k);Nz(k);#paths;mem usage;runtime;solver;doctor;version" << std::endl;
+                ss << "id;k;start;goal;h0;expansions;#expansions;Xz;Nz;#paths;mem usage;runtime;solver;doctor;version" << std::endl;
             } else {
 
                 // the width used to print both the start and the goal are
